@@ -1,3 +1,5 @@
+import { logger } from '../utils/logger.js';
+
 const errorMiddleware = (err, req, res, next) => {
   let statusCode = err.statusCode || (res.statusCode && res.statusCode !== 200 ? res.statusCode : 500);
   let message = err.message || 'Internal server error.';
@@ -19,9 +21,22 @@ const errorMiddleware = (err, req, res, next) => {
       .join(', ');
   }
 
+  const isOperationalError = statusCode < 500 || Boolean(err.statusCode);
+  const safeMessage = process.env.NODE_ENV === 'production' && !isOperationalError
+    ? 'Something went wrong'
+    : message;
+
+  logger.error('Request failed', {
+    method: req.method,
+    path: req.originalUrl,
+    statusCode,
+    message,
+    stack: err.stack,
+  });
+
   const response = {
     success: false,
-    message,
+    message: safeMessage,
   };
 
   if (process.env.NODE_ENV === 'development') {

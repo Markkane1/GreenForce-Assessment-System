@@ -17,6 +17,7 @@ const proctorLogSchema = new Schema(
       type: String,
       required: true,
       trim: true,
+      enum: ['fullscreen_exit', 'tab_switch', 'copy_attempt', 'window_blur'],
       index: true,
     },
     timestamp: {

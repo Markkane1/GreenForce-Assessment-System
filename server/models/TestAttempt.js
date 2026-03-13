@@ -58,12 +58,24 @@ const testAttemptSchema = new Schema(
       default: null,
       min: 0,
     },
+    passed: {
+      type: Boolean,
+      default: null,
+      index: true,
+    },
   },
   {
     timestamps: true,
   },
 );
 
+testAttemptSchema.index(
+  { scheduleId: 1, studentId: 1 },
+  {
+    unique: true,
+    partialFilterExpression: { status: 'in_progress' },
+  },
+);
 testAttemptSchema.index({ scheduleId: 1, studentId: 1, status: 1 });
 
 export default models.TestAttempt || model('TestAttempt', testAttemptSchema);
