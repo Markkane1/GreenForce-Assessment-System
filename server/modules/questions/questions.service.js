@@ -59,8 +59,14 @@ const ensureTeacherCanAccessQuestion = async (questionId, userId, role) => {
 };
 
 const validateMcqOptions = (options) => {
-  if (!Array.isArray(options) || options.length < 2 || options.length > 6) {
-    const error = new Error('MCQ questions must include between 2 and 6 options.');
+  if (!Array.isArray(options) || options.length !== 4) {
+    const error = new Error('MCQ questions must include exactly 4 options.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (options.some((option) => !option.text?.trim())) {
+    const error = new Error('MCQ option text is required for all 4 options.');
     error.statusCode = 400;
     throw error;
   }
@@ -115,6 +121,72 @@ export const createQuestion = async (sectionId, data, userId, role) => {
 
   const [createdQuestion] = await attachOptions([question]);
   return createdQuestion;
+};
+
+export const importQuestions = async (sectionId, rows, userId, role) => {
+  const section = await ensureTeacherCanAccessSection(sectionId, userId, role);
+
+  if (!Array.isArray(rows) || rows.length === 0) {
+    const error = new Error('Import payload must include at least one question.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalizedRows = rows.map((row, index) => {
+    const content = row.content?.trim();
+    const options = Array.isArray(row.options)
+      ? row.options.map((option) => ({
+          text: option.text?.trim(),
+          isCorrect: Boolean(option.isCorrect),
+        }))
+      : [];
+
+    if (!content) {
+      const error = new Error(`Row ${index + 1}: question text is required.`);
+      error.statusCode = 400;
+      throw error;
+    }
+
+    validateMcqOptions(options);
+
+    return {
+      sectionId,
+      type: 'mcq',
+      content,
+      points: Number.isFinite(Number(row.points)) && Number(row.points) > 0 ? Number(row.points) : 1,
+      maxWordCount: null,
+      options,
+    };
+  });
+
+  const createdQuestions = await Question.insertMany(
+    normalizedRows.map((row) => ({
+      sectionId: row.sectionId,
+      type: row.type,
+      content: row.content,
+      points: row.points,
+      maxWordCount: null,
+    })),
+  );
+
+  await MCQOption.insertMany(
+    createdQuestions.flatMap((question, index) =>
+      normalizedRows[index].options.map((option) => ({
+        questionId: question._id,
+        text: option.text,
+        isCorrect: option.isCorrect,
+      })),
+    ),
+  );
+
+  const totalQuestionCount = await Question.countDocuments({ sectionId });
+  section.questionPoolSize = totalQuestionCount;
+  section.questionsToServe = totalQuestionCount;
+  await section.save();
+
+  return {
+    importedCount: createdQuestions.length,
+  };
 };
 
 export const getQuestionsBySection = async (sectionId, userId, role) => {

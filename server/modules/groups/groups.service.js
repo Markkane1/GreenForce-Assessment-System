@@ -45,12 +45,16 @@ export const createGroup = async (name, description, createdBy) => {
 };
 
 export const getAllGroups = async () =>
-  StudentGroup.find()
-    .populate({
-      path: 'createdBy',
-      select: '-password',
-    })
-    .sort({ createdAt: -1 });
+  Promise.all(
+    (
+      await StudentGroup.find()
+        .populate({
+          path: 'createdBy',
+          select: '-password',
+        })
+        .sort({ createdAt: -1 })
+    ).map(buildGroupWithMembers),
+  );
 
 export const getGroupById = async (id) => {
   const group = await ensureGroupExists(id);

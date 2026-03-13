@@ -1,11 +1,16 @@
 import { Navigate, Outlet, useLocation } from 'react-router-dom';
+import LoadingSpinner from './LoadingSpinner';
 import { useAuth } from '../../hooks/useAuth';
 
 const ProtectedRoute = ({ children }) => {
-  const { token } = useAuth();
+  const { user, isAuthReady } = useAuth();
   const location = useLocation();
 
-  if (!token) {
+  if (!isAuthReady) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace state={{ from: location }} />;
   }
 

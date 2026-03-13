@@ -4,7 +4,7 @@ import mongoose from 'mongoose';
 import path from 'path';
 import { fileURLToPath } from 'url';
 import { connectDB } from '../config/db.js';
-import { createUser as createUserService } from '../modules/users/users.service.js';
+import { createUser as createUserService } from '../modules/auth/auth.service.js';
 import GroupMember from '../models/GroupMember.js';
 import MCQOption from '../models/MCQOption.js';
 import Question from '../models/Question.js';
@@ -53,12 +53,7 @@ const upsertUser = async ({ name, email, password, role }) => {
     return existingUser;
   }
 
-  return createUserService({
-    name,
-    email,
-    password,
-    role,
-  });
+  return createUserService(name, email, password, role);
 };
 
 const clearExistingSampleTest = async (teacherId) => {

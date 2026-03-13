@@ -43,6 +43,14 @@ export default {
           '0%, 100%': { transform: 'rotate(-3deg)' },
           '50%': { transform: 'rotate(3deg)' },
         },
+        shake: {
+          '0%': { transform: 'translateX(0)' },
+          '20%': { transform: 'translateX(-8px)' },
+          '40%': { transform: 'translateX(8px)' },
+          '60%': { transform: 'translateX(-4px)' },
+          '80%': { transform: 'translateX(4px)' },
+          '100%': { transform: 'translateX(0)' },
+        },
         'pop-in': {
           '0%': { opacity: '0', transform: 'scale(0.9) translateY(10px)' },
           '100%': { opacity: '1', transform: 'scale(1) translateY(0)' },
@@ -50,6 +58,7 @@ export default {
       },
       animation: {
         wiggle: 'wiggle 0.8s ease-in-out infinite',
+        shake: 'shake 0.45s ease-in-out',
         'pop-in': 'pop-in 0.35s cubic-bezier(0.34, 1.56, 0.64, 1)',
       },
     },

@@ -4,6 +4,7 @@ import {
   deleteTest as deleteTestService,
   getAllTests as getAllTestsService,
   getTestById as getTestByIdService,
+  getTestWorkspace as getTestWorkspaceService,
   publishTest as publishTestService,
   updateTest as updateTestService,
 } from './tests.service.js';
@@ -28,6 +29,15 @@ export const getAllTests = asyncHandler(async (req, res) => {
 
 export const getTestById = asyncHandler(async (req, res) => {
   const test = await getTestByIdService(req.params.id);
+
+  res.status(200).json({
+    success: true,
+    test,
+  });
+});
+
+export const getTestWorkspace = asyncHandler(async (req, res) => {
+  const test = await getTestWorkspaceService(req.params.id);
 
   res.status(200).json({
     success: true,

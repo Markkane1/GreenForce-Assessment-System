@@ -739,20 +739,52 @@ export const getMyAttempts = async (studentId) => {
     .populate('scheduleId', 'startTime endTime')
     .sort({ submittedAt: -1, createdAt: -1 });
 
+  const fallbackTestIds = [
+    ...new Set(
+      attempts
+        .map((attempt) => attempt.testId?._id?.toString())
+        .filter(Boolean),
+    ),
+  ];
   const questionIds = [...new Set(
     attempts.flatMap((attempt) => (attempt.questionOrder || []).map((questionId) => questionId.toString())),
   )];
+  const fallbackSections = fallbackTestIds.length > 0
+    ? await Section.find({ testId: { $in: fallbackTestIds } }).select('_id testId').lean()
+    : [];
+  const fallbackSectionIds = fallbackSections.map((section) => section._id);
+  const fallbackSectionMap = fallbackSections.reduce((accumulator, section) => {
+    accumulator[section._id.toString()] = section.testId.toString();
+    return accumulator;
+  }, {});
 
   const questions = questionIds.length > 0
     ? await Question.find({ _id: { $in: questionIds } }).select('_id points').lean()
     : [];
+  const fallbackQuestions = fallbackSectionIds.length > 0
+    ? await Question.find({ sectionId: { $in: fallbackSectionIds } }).select('sectionId points').lean()
+    : [];
   const pointsByQuestionId = new Map(questions.map((question) => [question._id.toString(), question.points || 0]));
+  const fallbackPointsByTestId = fallbackQuestions.reduce((accumulator, question) => {
+    const testId = fallbackSectionMap[question.sectionId.toString()];
+
+    if (!testId) {
+      return accumulator;
+    }
+
+    accumulator[testId] = (accumulator[testId] || 0) + (question.points || 0);
+    return accumulator;
+  }, {});
 
   return attempts.map((attempt) => {
-    const totalPoints = (attempt.questionOrder || []).reduce(
+    const totalPointsFromAttempt = (attempt.questionOrder || []).reduce(
       (sum, questionId) => sum + (pointsByQuestionId.get(questionId.toString()) || 0),
       0,
     );
+    const totalPoints =
+      totalPointsFromAttempt > 0
+        ? totalPointsFromAttempt
+        : fallbackPointsByTestId[attempt.testId?._id?.toString()] || 0;
 
     return {
       attemptId: attempt._id,

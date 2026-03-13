@@ -112,6 +112,15 @@ export const createQuestion = async (sectionId, payload) => {
   }
 };
 
+export const importQuestions = async (sectionId, questions) => {
+  try {
+    const { data } = await api.post(`/sections/${sectionId}/questions/import`, { questions });
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Failed to import questions');
+  }
+};
+
 export const updateQuestion = async (id, payload) => {
   try {
     const { data } = await api.put(`/questions/${id}`, payload);
@@ -131,18 +140,12 @@ export const deleteQuestion = async (id) => {
 };
 
 export const getTestWorkspace = async (testId) => {
-  const [test, sections] = await Promise.all([getTestById(testId), getSectionsByTest(testId)]);
-  const sectionsWithQuestions = await Promise.all(
-    sections.map(async (section) => ({
-      ...section,
-      questions: await getQuestionsBySection(section._id),
-    })),
-  );
-
-  return {
-    ...test,
-    sections: sectionsWithQuestions,
-  };
+  try {
+    const { data } = await api.get(`/tests/${testId}/workspace`);
+    return data.test;
+  } catch (error) {
+    normalizeError(error, 'Failed to load test workspace');
+  }
 };
 
 export const getAllTests = getTests;

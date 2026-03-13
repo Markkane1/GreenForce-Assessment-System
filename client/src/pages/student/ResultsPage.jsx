@@ -111,7 +111,7 @@ const ResultsPage = () => {
           onClick={() => navigate('/student/dashboard')}
           className="inline-flex items-center rounded-full border-2 border-foreground bg-secondary px-5 py-2.5 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover"
         >
-          ? Back to Dashboard
+          Back to Dashboard
         </button>
       </div>
 

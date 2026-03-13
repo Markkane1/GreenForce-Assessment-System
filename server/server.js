@@ -18,6 +18,18 @@ const startServer = async () => {
   await connectDB();
 
   const server = http.createServer(app);
+
+  server.on('error', (error) => {
+    if (error.code === 'EADDRINUSE') {
+      logger.error(`Port ${PORT} is already in use. Stop the existing process or change PORT.`);
+      process.exit(1);
+      return;
+    }
+
+    logger.error('HTTP server failed', error);
+    process.exit(1);
+  });
+
   server.listen(PORT, () => {
     logger.info(`Server running on port ${PORT}`);
   });

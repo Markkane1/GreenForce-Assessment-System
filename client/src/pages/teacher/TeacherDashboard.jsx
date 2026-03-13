@@ -1,13 +1,14 @@
-import { CalendarClock, ClipboardCheck, PartyPopper, PlusCircle, Sparkles, Wand2 } from 'lucide-react';
+import { CalendarClock, PartyPopper, PlusCircle, Sparkles, Trash2, Wand2 } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
+import Modal from '../../components/common/Modal';
 import { useAuth } from '../../hooks/useAuth';
 import { getAttemptsForGrading } from '../../services/gradingService';
 import { getSchedules } from '../../services/scheduleService';
-import { getTests, getTestWorkspace } from '../../services/testService';
+import { deleteTest, getTests } from '../../services/testService';
 
 const statsConfig = [
   { key: 'myTests', label: 'My Tests', tone: 'bg-accent', icon: PartyPopper },
@@ -21,7 +22,9 @@ const TeacherDashboard = () => {
   const [stats, setStats] = useState({ myTests: 0, scheduledExams: 0, pendingGradings: 0 });
   const [recentTests, setRecentTests] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isDeleting, setIsDeleting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [selectedTest, setSelectedTest] = useState(null);
 
   useEffect(() => {
     const loadDashboard = async () => {
@@ -35,27 +38,12 @@ const TeacherDashboard = () => {
           getAttemptsForGrading({ status: 'pending_essay' }),
         ]);
 
-        const detailedTests = await Promise.all(
-          tests.slice(0, 5).map(async (test) => {
-            const workspace = await getTestWorkspace(test._id);
-            const questionCount = workspace.sections.reduce(
-              (total, section) => total + (section.questions?.length || 0),
-              0,
-            );
-
-            return {
-              ...test,
-              questionCount,
-            };
-          }),
-        );
-
         setStats({
           myTests: tests.length,
           scheduledExams: schedules.length,
           pendingGradings: pendingGradings.length,
         });
-        setRecentTests(detailedTests);
+        setRecentTests(tests.slice(0, 5));
       } catch (error) {
         setErrorMessage(error.message || 'Unable to load teacher dashboard.');
       } finally {
@@ -65,6 +53,29 @@ const TeacherDashboard = () => {
 
     loadDashboard();
   }, []);
+
+  const handleDeleteTest = async () => {
+    if (!selectedTest) {
+      return;
+    }
+
+    setIsDeleting(true);
+    setErrorMessage('');
+
+    try {
+      await deleteTest(selectedTest._id);
+      setRecentTests((current) => current.filter((test) => test._id !== selectedTest._id));
+      setStats((current) => ({
+        ...current,
+        myTests: Math.max(current.myTests - 1, 0),
+      }));
+      setSelectedTest(null);
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to delete test.');
+    } finally {
+      setIsDeleting(false);
+    }
+  };
 
   const statusBadge = useMemo(
     () => ({
@@ -175,6 +186,14 @@ const TeacherDashboard = () => {
                           >
                             Schedule
                           </button>
+                          <button
+                            type="button"
+                            onClick={() => setSelectedTest(test)}
+                            className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-accent px-4 py-2 text-sm font-bold text-accentFg shadow-pop-press"
+                          >
+                            <Trash2 size={16} strokeWidth={2.5} />
+                            Delete
+                          </button>
                         </div>
                       </td>
                     </tr>
@@ -190,6 +209,30 @@ const TeacherDashboard = () => {
           </div>
         ) : null}
       </section>
+      <Modal isOpen={Boolean(selectedTest)} onClose={() => setSelectedTest(null)} title="Delete Test?">
+        <div className="space-y-6">
+          <div className="rounded-[1.5rem] border-2 border-accent bg-accent/10 p-4 text-sm leading-7 text-foreground">
+            Deleting <strong>{selectedTest?.title}</strong> removes its sections and questions. This cannot be undone.
+          </div>
+          <div className="flex flex-col gap-3 sm:flex-row">
+            <button
+              type="button"
+              onClick={() => setSelectedTest(null)}
+              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop"
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              onClick={handleDeleteTest}
+              disabled={isDeleting}
+              className="flex-1 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop disabled:cursor-not-allowed disabled:opacity-70"
+            >
+              {isDeleting ? 'Deleting...' : 'Delete Test'}
+            </button>
+          </div>
+        </div>
+      </Modal>
     </DashboardLayout>
   );
 };

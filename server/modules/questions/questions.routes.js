@@ -4,6 +4,7 @@ import {
   createQuestion,
   deleteQuestion,
   getQuestionsBySection,
+  importQuestions,
   updateQuestion,
 } from './questions.controller.js';
 
@@ -13,6 +14,10 @@ router
   .route('/sections/:sectionId/questions')
   .get(protect, authorize('admin', 'teacher'), getQuestionsBySection)
   .post(protect, authorize('admin', 'teacher'), createQuestion);
+
+router
+  .route('/sections/:sectionId/questions/import')
+  .post(protect, authorize('admin', 'teacher'), importQuestions);
 
 router
   .route('/questions/:id')

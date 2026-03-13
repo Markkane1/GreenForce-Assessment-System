@@ -1,84 +1,73 @@
-import { jwtDecode } from 'jwt-decode';
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
 import { setLogoutFunction } from '../services/api';
+import * as authService from '../services/authService';
 
 export const AuthContext = createContext(null);
 
-const TOKEN_STORAGE_KEY = 'auth_token';
+export const AuthProvider = ({ children }) => {
+  const [token, setToken] = useState(null);
+  const [user, setUser] = useState(null);
+  const [isAuthReady, setIsAuthReady] = useState(false);
 
-const decodeToken = (token) => {
-  try {
-    const decodedPayload = jwtDecode(token);
-
-    if (decodedPayload.exp && decodedPayload.exp * 1000 < Date.now()) {
-      return null;
+  const logout = useCallback(async ({ syncServer = true, redirect = false } = {}) => {
+    if (syncServer) {
+      try {
+        await authService.logout();
+      } catch {
+        // local state reset should still proceed
+      }
     }
 
-    return {
-      id: decodedPayload.id || decodedPayload.sub || null,
-      role: decodedPayload.role || null,
-      exp: decodedPayload.exp || null,
-    };
-  } catch {
-    return null;
-  }
-};
-
-export const AuthProvider = ({ children }) => {
-  const [token, setToken] = useState(() => localStorage.getItem(TOKEN_STORAGE_KEY));
-  const [user, setUser] = useState(null);
-
-  const logout = useCallback(() => {
-    localStorage.removeItem(TOKEN_STORAGE_KEY);
     setToken(null);
     setUser(null);
+    setIsAuthReady(true);
+
+    if (redirect && typeof window !== 'undefined' && window.location.pathname !== '/login') {
+      window.location.assign('/login');
+    }
   }, []);
 
   useEffect(() => {
-    if (!token) {
-      setUser(null);
-      return;
-    }
+    let isMounted = true;
 
-    const decodedUser = decodeToken(token);
+    const restoreSession = async () => {
+      setIsAuthReady(false);
 
-    if (!decodedUser) {
-      logout();
-      return;
-    }
+      try {
+        const currentUser = await authService.getCurrentUser();
 
-    setUser((currentUser) => ({
-      ...decodedUser,
-      ...(currentUser || {}),
-    }));
-  }, [logout, token]);
+        if (!isMounted) {
+          return;
+        }
 
-  const login = useCallback((userData, nextToken) => {
-    localStorage.setItem(TOKEN_STORAGE_KEY, nextToken);
-    setToken(nextToken);
-    setUser(userData);
-  }, []);
+        setUser(currentUser);
+        setToken('cookie-session');
+      } catch {
+        if (!isMounted) {
+          return;
+        }
 
-  useEffect(() => {
-    const handleStorage = (event) => {
-      if (event.key !== TOKEN_STORAGE_KEY) {
-        return;
+        setUser(null);
+        setToken(null);
+      } finally {
+        if (isMounted) {
+          setIsAuthReady(true);
+        }
       }
-
-      if (!event.newValue) {
-        logout();
-        return;
-      }
-
-      setToken(event.newValue);
     };
 
-    window.addEventListener('storage', handleStorage);
+    restoreSession();
 
     return () => {
-      window.removeEventListener('storage', handleStorage);
+      isMounted = false;
     };
-  }, [logout]);
+  }, []);
+
+  const login = useCallback((userData) => {
+    setUser(userData);
+    setToken('cookie-session');
+    setIsAuthReady(true);
+  }, []);
 
   useEffect(() => {
     setLogoutFunction(logout);
@@ -92,12 +81,12 @@ export const AuthProvider = ({ children }) => {
     () => ({
       user,
       token,
+      isAuthReady,
       login,
       logout,
     }),
-    [login, logout, token, user],
+    [isAuthReady, login, logout, token, user],
   );
 
   return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>;
 };
-

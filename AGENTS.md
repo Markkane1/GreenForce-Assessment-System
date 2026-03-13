@@ -15,8 +15,8 @@ question pools, and sectioned tests.
 |--------------|---------------------------------------------------------|
 | Backend      | Node.js, Express.js, MongoDB, Mongoose                  |
 | Frontend     | React (Vite), React Router, Axios                       |
-| Styling      | TailwindCSS + Playful Geometric Design System           |
-| Fonts        | Outfit (headings), Plus Jakarta Sans (body) — Google Fonts |
+| Styling      | TailwindCSS + Official Standard Design System           |
+| Fonts        | Inter (UI), JetBrains Mono (code/monospace) — Google Fonts |
 | Icons        | Lucide React — always strokeWidth={2.5}                 |
 | Auth         | JWT (access + refresh tokens)                           |
 | State        | React Context + custom hooks                            |
@@ -34,7 +34,7 @@ question pools, and sectioned tests.
 - **Custom hooks** in `/client/src/hooks/` encapsulate stateful logic consumed by pages/components.
 - **No `console.log` in production paths** — use a logger utility.
 - **Environment variables** are accessed only through a central `config.js` (backend) or `env.js` (frontend).
-- **All frontend styling must follow the Playful Geometric Design System** defined below — no generic Tailwind defaults.
+- **All frontend styling must follow the Official Standard Design System** defined below — no generic Tailwind defaults.
 
 ---
 
@@ -56,7 +56,8 @@ root/
 │   │   ├── MCQOption.js
 │   │   ├── TestAttempt.js
 │   │   ├── Answer.js
-│   │   └── ProctorLog.js
+│   │   ├── ProctorLog.js
+│   │   └── InviteCode.js
 │   ├── middlewares/
 │   │   ├── authMiddleware.js        # protect + authorize
 │   │   └── errorMiddleware.js       # global error handler
@@ -105,6 +106,10 @@ root/
 │   │       ├── antiCheat.controller.js
 │   │       ├── antiCheat.service.js
 │   │       └── antiCheat.routes.js
+│   │   └── inviteCodes/
+│   │       ├── inviteCodes.controller.js
+│   │       ├── inviteCodes.service.js
+│   │       └── inviteCodes.routes.js
 │   ├── app.js                       # Express app setup
 │   └── server.js                    # HTTP server entry point
 │
@@ -125,7 +130,8 @@ root/
     │   │   ├── testService.js
     │   │   ├── scheduleService.js
     │   │   ├── examService.js
-    │   │   └── gradingService.js
+    │   │   ├── gradingService.js
+    │   │   └── inviteCodeService.js
     │   ├── hooks/
     │   │   ├── useAuth.js
     │   │   ├── useExamTimer.js
@@ -135,6 +141,8 @@ root/
     │   ├── context/
     │   │   └── AuthContext.jsx
     │   ├── components/
+    │   │   ├── admin/
+    │   │   │   └── InviteCodesPanel.jsx  # invite code management modal
     │   │   ├── common/
     │   │   │   ├── Navbar.jsx
     │   │   │   ├── Sidebar.jsx
@@ -159,7 +167,9 @@ root/
     │   └── pages/
     │       ├── auth/
     │       │   ├── LoginPage.jsx
-    │       │   └── SignupPage.jsx
+    │       │   ├── SignupPage.jsx        # two-step: invite code → account creation
+    │       │   ├── ForgotPasswordPage.jsx
+    │       │   └── ResetPasswordPage.jsx
     │       ├── admin/
     │       │   ├── AdminDashboard.jsx
     │       │   ├── UserManagement.jsx
@@ -197,19 +207,20 @@ Route protection:
 
 ## Database Models (Summary)
 
-| Model        | Key Fields                                                                              |
-|--------------|-----------------------------------------------------------------------------------------|
-| User         | name, email, password (hashed), role, resetPasswordToken, resetPasswordExpires |
-| StudentGroup | name, description, createdBy (ref: User)                                                |
-| GroupMember  | groupId, studentId                                                                      |
-| Test         | title, timeLimitMinutes, passingScore, maxAttempts, allowResume, randomize*, createdBy  |
-| TestSchedule | testId, startTime, endTime, assignedGroups[]                                            |
-| Section      | testId, title, order, questionPoolSize, questionsToServe                                |
-| Question     | sectionId, type (mcq/essay), content, points, maxWordCount                              |
-| MCQOption    | questionId, text, isCorrect                                                             |
-| TestAttempt  | testId, scheduleId, studentId, startedAt, submittedAt, status, violationsCount, score   |
-| Answer       | attemptId, questionId, selectedOptionId, essayText, score, feedback, gradingStatus      |
-| ProctorLog   | attemptId, eventType, timestamp, metadata                                               |
+| Model        | Key Fields                                                                                                    |
+|--------------|---------------------------------------------------------------------------------------------------------------|
+| User         | name, email, phone, password (hashed), role, resetPasswordToken, resetPasswordExpires                         |
+| StudentGroup | name, description, createdBy (ref: User)                                                                      |
+| GroupMember  | groupId, studentId                                                                                            |
+| InviteCode   | code (unique), groupId (ref: StudentGroup), createdBy (ref: User), isUsed, usedBy, usedAt, expiresAt          |
+| Test         | title, timeLimitMinutes, passingScore, maxAttempts, allowResume, randomize*, createdBy                        |
+| TestSchedule | testId, startTime, endTime, assignedGroups[]                                                                  |
+| Section      | testId, title, order, questionPoolSize, questionsToServe                                                      |
+| Question     | sectionId, type (mcq/essay), content, points, maxWordCount                                                    |
+| MCQOption    | questionId, text, isCorrect                                                                                   |
+| TestAttempt  | testId, scheduleId, studentId, startedAt, submittedAt, status, violationsCount, score                         |
+| Answer       | attemptId, questionId, selectedOptionId, essayText, score, feedback, gradingStatus                            |
+| ProctorLog   | attemptId, eventType, timestamp, metadata                                                                     |
 
 ---
 
@@ -217,14 +228,33 @@ Route protection:
 
 ### Auth
 ```
-POST   /api/auth/register
+POST   /api/auth/register-student       { name, email, phone, password, inviteCode } — public, students only
 POST   /api/auth/login
 POST   /api/auth/refresh
 POST   /api/auth/logout
-POST   /api/auth/forgot-password        { email } — generates reset token, logs it in dev
+POST   /api/auth/forgot-password        { email }
 POST   /api/auth/reset-password         { token, newPassword }
 PUT    /api/auth/change-password        { currentPassword, newPassword } — requires protect
 ```
+NOTE: POST /api/auth/register (open registration) is REMOVED. Students register via invite code only.
+Teachers and admins are created via admin UserManagement UI or the seed script — never via public API.
+
+### Invite Codes (admin only, except validate)
+```
+POST   /api/invite-codes/validate       { code } — PUBLIC, no auth — returns { valid, groupId, groupName }
+POST   /api/invite-codes/single         { groupId } — generate one code
+POST   /api/invite-codes/bulk           { groupId, count } — generate 1–500 codes
+GET    /api/invite-codes/:groupId       — list all codes for a group
+DELETE /api/invite-codes/:id            — delete unused code only
+```
+
+Code format: WORD1-WORD2-NN (e.g. TIGER-CLOUD-47)
+- Two human-readable words from a fixed 200-word list (animals, nature, positive objects)
+- Two digits (10–99), always 2 digits
+- All uppercase, hyphen-separated
+- Unique enforced at DB level (unique index on code field)
+- Single-use: consumed atomically on successful student registration
+- Consumed code is never deleted — isUsed: true + usedBy + usedAt are recorded for audit
 
 ### Users (admin)
 ```
@@ -342,26 +372,56 @@ Default threshold: **3 violations** (configurable via env `VIOLATION_THRESHOLD`)
 
 ---
 
-## Design System — Playful Geometric
+## Invite Code System
 
-**Every frontend agent must read and apply this section.**
+### Rules (enforced at every layer)
+
+1. **Students only** — public registration is closed. Only students register via invite code. Teachers and admins are created by admin via UserManagement or seed script.
+2. **Single use** — each code can create exactly one student account. The code is consumed atomically on successful registration using `findOneAndUpdate` to prevent race conditions.
+3. **Group assignment** — the invite code determines which `StudentGroup` the student is added to. A `GroupMember` record is created automatically on registration.
+4. **Code is never deleted after use** — `isUsed: true`, `usedBy`, `usedAt` are recorded for audit purposes.
+5. **Validate before register** — `POST /invite-codes/validate` is a public read-only check. It does not consume the code. Consumption happens only in `registerStudent`.
+6. **Phone is required** — the signup form collects phone number alongside name, email, and password.
+7. **Role is server-enforced** — the `role` field is hardcoded to `'student'` in `registerStudent`. It is never read from the request body.
+
+### Code Format
+- Pattern: `WORD1-WORD2-NN` e.g. `TIGER-CLOUD-47`
+- Words: two words from a fixed 200-word list (animals, nature, positive objects — all uppercase)
+- Digits: always 2 digits in range 10–99 (never single digit)
+- Uniqueness: checked at DB level via unique index + pre-insert collision retry (up to 5 attempts)
+
+### Bulk Generation
+- Admin selects a group → clicks "Generate in Bulk" → modal asks for count (1–500)
+- Server generates all codes and inserts with `insertMany` (single DB operation)
+- Admin can export all codes for a group as CSV (client-side generation, no server call)
+- CSV includes: Code, Status, Group, Used By name, Used By email, Used At, Created At
+
+---
+
+## Design System — Official Standard
+
+**Every frontend agent must read and apply this section in full.**
 Configure `tailwind.config.js` tokens before writing any component or page.
+Do not deviate from these tokens. Do not introduce new colors, shadows, or radii not listed here.
 
 ### Philosophy
 
-**"Stable Grid, Wild Decoration."**
-Content (text, forms, data) lives in clean, readable areas. The space around it is alive
-with shapes, color, and movement. Inspired by the Memphis Group (80s) — energetic but not chaotic.
+**"Authority through clarity."**
+This system is designed for government and military assessment environments.
+The interface must communicate trust, legibility, and control at all times.
+No decorative shapes, no playful shadows, no bouncing animations.
+Every element earns its place by serving a functional purpose.
 
-**The Vibe: Friendly. Tactile. Pop. Energetic.**
-It feels like a well-organized sticker book. Elements invite clicking. The UI smiles at you.
+**The Vibe: Structured. Precise. Trustworthy. Authoritative.**
+It feels like a well-designed government portal — clear hierarchy, no ambiguity, high contrast,
+calm under pressure. Users must be able to focus entirely on the task, not the interface.
 
-### Visual Signatures (apply throughout all pages)
-- **Hard Shadows** — `box-shadow: 4px 4px 0px 0px #1E293B`: no blur, solid offset. Sticker/cut-out feel.
-- **Primitive Shapes** — Circles, pills, triangles used as background decoration or icon containers. Never floating alone.
-- **Chunky Borders** — `border-2` (2px) everywhere by default.
-- **Varied Radii** — Mix `rounded-full` (pills) with `rounded-xl` (cards). Never uniform throughout a page.
-- **Pattern Fills** — Polka dot or grid SVG backgrounds behind hero/dashboard sections.
+### Visual Signatures
+- **Flat depth** — subtle `box-shadow` with blur for elevation. No hard offset shadows.
+- **Strict grid** — 4px base unit. All spacing in multiples of 4.
+- **Restrained color** — neutral base with a single authoritative accent. Status colors only for meaning.
+- **Typographic hierarchy** — size and weight do all the work. No decorative fills or patterns.
+- **Sharp but not harsh** — `rounded-md` (6px) as the default radius. Rounded-lg only for modals.
 
 ---
 
@@ -373,56 +433,86 @@ import defaultTheme from 'tailwindcss/defaultTheme'
 
 export default {
   content: ['./index.html', './src/**/*.{js,jsx}'],
+  darkMode: 'class', // toggled by adding 'dark' class to <html>
   theme: {
     extend: {
       colors: {
-        background:  '#FFFDF5',  // Warm cream — default page bg
-        foreground:  '#1E293B',  // Slate 800 — primary text (AAA contrast)
-        muted:       '#F1F5F9',  // Slate 100 — subtle backgrounds
-        mutedFg:     '#64748B',  // Slate 500 — secondary/helper text
-        accent:      '#8B5CF6',  // Vivid Violet — primary CTAs, brand color
-        accentFg:    '#FFFFFF',  // White — text on accent backgrounds
-        secondary:   '#F472B6',  // Hot Pink — decorative, featured cards
-        tertiary:    '#FBBF24',  // Amber/Yellow — optimism, badges
-        quaternary:  '#34D399',  // Emerald/Mint — success, freshness
-        card:        '#FFFFFF',  // White card backgrounds
-        border:      '#E2E8F0',  // Slate 200 — default borders
-        ring:        '#8B5CF6',  // Violet — focus rings
+        // ── Light mode tokens ──
+        background:   '#F5F5F4',  // Warm stone-100 — main page bg
+        surface:      '#FFFFFF',  // White — cards, panels, inputs
+        surfaceAlt:   '#FAFAF9',  // Stone-50 — sidebar, secondary panels
+        foreground:   '#1C1917',  // Stone-900 — primary text (AAA)
+        muted:        '#E7E5E4',  // Stone-200 — dividers, subtle fills
+        mutedFg:      '#78716C',  // Stone-500 — secondary/helper text
+        accent:       '#1D4ED8',  // Blue-700 — primary CTAs, links, active states
+        accentHover:  '#1E40AF',  // Blue-800 — hover on accent
+        accentFg:     '#FFFFFF',  // White — text on accent bg
+        accentSubtle: '#EFF6FF',  // Blue-50 — subtle accent bg (selected rows etc)
+        border:       '#D6D3D1',  // Stone-300 — default borders
+        borderStrong: '#A8A29E',  // Stone-400 — emphasized borders, table lines
+        // ── Status colors (use ONLY for their semantic meaning) ──
+        success:      '#15803D',  // Green-700 — pass, confirmed, active
+        successBg:    '#F0FDF4',  // Green-50 — success backgrounds
+        warning:      '#B45309',  // Amber-700 — caution, pending
+        warningBg:    '#FFFBEB',  // Amber-50 — warning backgrounds
+        danger:       '#B91C1C',  // Red-700 — fail, violation, error
+        dangerBg:     '#FEF2F2',  // Red-50 — danger backgrounds
+        info:         '#0369A1',  // Sky-700 — informational
+        infoBg:       '#F0F9FF',  // Sky-50 — info backgrounds
       },
       fontFamily: {
-        heading: ['"Outfit"', ...defaultTheme.fontFamily.sans],
-        body:    ['"Plus Jakarta Sans"', ...defaultTheme.fontFamily.sans],
+        heading: ['"Inter"', ...defaultTheme.fontFamily.sans],
+        body:    ['"Inter"', ...defaultTheme.fontFamily.sans],
+        mono:    ['"JetBrains Mono"', ...defaultTheme.fontFamily.mono],
+      },
+      fontSize: {
+        'xs':   ['0.75rem',  { lineHeight: '1rem',    letterSpacing: '0.01em' }],
+        'sm':   ['0.875rem', { lineHeight: '1.25rem', letterSpacing: '0.01em' }],
+        'base': ['1rem',     { lineHeight: '1.5rem',  letterSpacing: '0em'    }],
+        'lg':   ['1.125rem', { lineHeight: '1.75rem', letterSpacing: '-0.01em'}],
+        'xl':   ['1.25rem',  { lineHeight: '1.75rem', letterSpacing: '-0.01em'}],
+        '2xl':  ['1.5rem',   { lineHeight: '2rem',    letterSpacing: '-0.02em'}],
+        '3xl':  ['1.875rem', { lineHeight: '2.25rem', letterSpacing: '-0.02em'}],
+        '4xl':  ['2.25rem',  { lineHeight: '2.5rem',  letterSpacing: '-0.03em'}],
       },
       borderRadius: {
-        sm:   '8px',
-        md:   '16px',
-        lg:   '24px',
-        full: '9999px',
+        'sm':  '4px',
+        'md':  '6px',   // default — use for inputs, buttons, small cards
+        'lg':  '10px',  // use for modals, large panels
+        'xl':  '14px',  // use sparingly — only full-page cards
+        'full': '9999px',  // pills only — badges, tags
       },
       boxShadow: {
-        'pop':        '4px 4px 0px 0px #1E293B',
-        'pop-hover':  '6px 6px 0px 0px #1E293B',
-        'pop-press':  '2px 2px 0px 0px #1E293B',
-        'pop-pink':   '6px 6px 0px 0px #F472B6',
-        'pop-soft':   '6px 6px 0px 0px #E2E8F0',
-      },
-      transitionTimingFunction: {
-        bounce: 'cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'card':    '0 1px 3px 0 rgb(0 0 0 / 0.07), 0 1px 2px -1px rgb(0 0 0 / 0.07)',
+        'panel':   '0 4px 6px -1px rgb(0 0 0 / 0.08), 0 2px 4px -2px rgb(0 0 0 / 0.06)',
+        'modal':   '0 20px 25px -5px rgb(0 0 0 / 0.12), 0 8px 10px -6px rgb(0 0 0 / 0.08)',
+        'input':   'inset 0 1px 2px 0 rgb(0 0 0 / 0.05)',
+        'focus':   '0 0 0 3px rgb(29 78 216 / 0.25)',
       },
       keyframes: {
-        wiggle: {
-          '0%, 100%': { transform: 'rotate(0deg)' },
-          '25%':       { transform: 'rotate(3deg)' },
-          '75%':       { transform: 'rotate(-3deg)' },
+        'fade-in': {
+          '0%':   { opacity: '0', transform: 'translateY(4px)' },
+          '100%': { opacity: '1', transform: 'translateY(0)' },
         },
-        'pop-in': {
-          '0%':   { transform: 'scale(0)', opacity: '0' },
-          '100%': { transform: 'scale(1)', opacity: '1' },
+        'slide-in': {
+          '0%':   { opacity: '0', transform: 'translateX(-8px)' },
+          '100%': { opacity: '1', transform: 'translateX(0)' },
+        },
+        'shake': {
+          '0%, 100%': { transform: 'translateX(0)' },
+          '20%':      { transform: 'translateX(-6px)' },
+          '40%':      { transform: 'translateX(6px)' },
+          '60%':      { transform: 'translateX(-4px)' },
+          '80%':      { transform: 'translateX(4px)' },
         },
       },
       animation: {
-        wiggle:   'wiggle 0.4s ease-in-out',
-        'pop-in': 'pop-in 0.3s cubic-bezier(0.34, 1.56, 0.64, 1)',
+        'fade-in':  'fade-in 0.2s ease-out',
+        'slide-in': 'slide-in 0.2s ease-out',
+        'shake':    'shake 0.4s ease-in-out',
+      },
+      transitionTimingFunction: {
+        'standard': 'cubic-bezier(0.4, 0, 0.2, 1)',
       },
     },
   },
@@ -432,15 +522,9 @@ export default {
 
 ---
 
-### Google Fonts — Add to `index.html` `<head>`
+### Dark Mode Token Overrides
 
-```html
-<link rel="preconnect" href="https://fonts.googleapis.com">
-<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@700;800&family=Plus+Jakarta+Sans:wght@400;500&display=swap" rel="stylesheet">
-```
-
-### index.css — Base Styles
+Apply dark mode via CSS variables in `index.css`. The `dark` class is toggled on `<html>` by the theme switcher.
 
 ```css
 @tailwind base;
@@ -448,111 +532,279 @@ export default {
 @tailwind utilities;
 
 @layer base {
-  body {
-    @apply bg-background text-foreground font-body;
+  :root {
+    color-scheme: light;
   }
-  h1, h2, h3, h4 {
-    @apply font-heading;
+
+  .dark {
+    color-scheme: dark;
+  }
+
+  body {
+    @apply bg-background text-foreground font-body text-base antialiased;
+  }
+
+  .dark body,
+  .dark {
+    --tw-bg-opacity: 1;
+    background-color: #0C0A09;   /* Stone-950 — dark bg */
+    color: #F5F5F4;               /* Stone-100 — dark text */
+  }
+
+  h1, h2, h3, h4, h5, h6 {
+    @apply font-heading font-semibold tracking-tight;
   }
 }
+```
+
+Dark mode color equivalents (use in components via conditional class or CSS var):
+| Token        | Light          | Dark                    |
+|--------------|----------------|-------------------------|
+| background   | #F5F5F4        | #0C0A09 (stone-950)     |
+| surface      | #FFFFFF        | #1C1917 (stone-900)     |
+| surfaceAlt   | #FAFAF9        | #292524 (stone-800)     |
+| foreground   | #1C1917        | #F5F5F4 (stone-100)     |
+| muted        | #E7E5E4        | #44403C (stone-700)     |
+| mutedFg      | #78716C        | #A8A29E (stone-400)     |
+| border       | #D6D3D1        | #44403C (stone-700)     |
+| borderStrong | #A8A29E        | #78716C (stone-500)     |
+| accent       | #1D4ED8        | #3B82F6 (blue-500)      |
+| accentSubtle | #EFF6FF        | #1E3A5F (custom dark)   |
+
+Apply dark mode in components using Tailwind's `dark:` prefix:
+```jsx
+<div className="bg-surface dark:bg-stone-900 border border-border dark:border-stone-700">
+```
+
+---
+
+### Google Fonts — Add to `index.html` `<head>`
+
+```html
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
 ```
 
 ---
 
 ### Component Patterns
 
-#### Primary Button — "The Candy Button"
+#### Primary Button
 ```jsx
 <button className="
-  inline-flex items-center gap-2 px-6 py-3
-  bg-accent text-accentFg font-heading font-bold
-  rounded-full border-2 border-foreground shadow-pop
-  transition-all duration-300 ease-bounce
-  hover:-translate-x-0.5 hover:-translate-y-0.5 hover:shadow-pop-hover
-  active:translate-x-0.5 active:translate-y-0.5 active:shadow-pop-press
-  min-h-[48px]
-">
-  Label
-  <span className="bg-white rounded-full p-0.5">
-    <ArrowRight size={16} strokeWidth={2.5} className="text-accent" />
-  </span>
-</button>
-```
-
-#### Secondary Button
-```jsx
-<button className="
-  px-6 py-3 bg-transparent text-foreground
-  font-heading font-bold rounded-full
-  border-2 border-foreground
-  transition-all duration-300 ease-bounce
-  hover:bg-tertiary
-  min-h-[48px]
+  inline-flex items-center gap-2 px-4 py-2
+  bg-accent hover:bg-accentHover active:bg-accentHover
+  text-accentFg text-sm font-semibold
+  rounded-md border border-transparent
+  shadow-sm
+  transition-colors duration-150 ease-standard
+  focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2
+  disabled:opacity-50 disabled:cursor-not-allowed
+  min-h-[40px]
+  dark:focus:ring-offset-stone-900
 ">
   Label
 </button>
 ```
 
-#### "Sticker" Card
+#### Secondary Button (outlined)
+```jsx
+<button className="
+  inline-flex items-center gap-2 px-4 py-2
+  bg-surface hover:bg-muted active:bg-muted
+  text-foreground text-sm font-medium
+  rounded-md border border-border
+  shadow-sm
+  transition-colors duration-150 ease-standard
+  focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2
+  disabled:opacity-50 disabled:cursor-not-allowed
+  min-h-[40px]
+  dark:bg-stone-800 dark:border-stone-700 dark:text-stone-100 dark:hover:bg-stone-700
+">
+  Label
+</button>
+```
+
+#### Danger Button
+```jsx
+<button className="
+  inline-flex items-center gap-2 px-4 py-2
+  bg-danger hover:bg-red-800
+  text-white text-sm font-semibold
+  rounded-md border border-transparent
+  shadow-sm
+  transition-colors duration-150
+  focus:outline-none focus:ring-2 focus:ring-danger focus:ring-offset-2
+  min-h-[40px]
+">
+  Label
+</button>
+```
+
+#### Card
 ```jsx
 <div className="
-  relative bg-card rounded-xl border-2 border-foreground
-  shadow-pop-soft p-6 pt-10
-  transition-all duration-300 ease-bounce
-  hover:-rotate-1 hover:scale-[1.02] hover:shadow-pop
+  bg-surface dark:bg-stone-900
+  border border-border dark:border-stone-700
+  rounded-lg shadow-card
+  p-6
 ">
-  {/* Floating icon circle — half above top border */}
-  <div className="
-    absolute -top-5 left-6
-    w-10 h-10 rounded-full bg-accent
-    flex items-center justify-center
-    border-2 border-foreground shadow-pop-press
-  ">
-    <Icon size={18} strokeWidth={2.5} className="text-white" />
+  <h3 className="text-base font-semibold text-foreground dark:text-stone-100">Title</h3>
+  <p className="text-sm text-mutedFg dark:text-stone-400 mt-1">Description</p>
+</div>
+```
+
+#### Stat Card (Dashboard)
+```jsx
+<div className="
+  bg-surface dark:bg-stone-900
+  border border-border dark:border-stone-700
+  rounded-lg shadow-card p-5
+">
+  <div className="flex items-center justify-between mb-3">
+    <span className="text-xs font-semibold uppercase tracking-wider text-mutedFg dark:text-stone-400">
+      Label
+    </span>
+    <div className="w-8 h-8 rounded-md bg-accentSubtle dark:bg-blue-900/30 flex items-center justify-center">
+      <Icon size={16} strokeWidth={2} className="text-accent dark:text-blue-400" />
+    </div>
   </div>
-  <h3 className="font-heading font-bold text-lg text-foreground">Title</h3>
-  <p className="font-body text-mutedFg mt-1 text-sm">Description</p>
+  <p className="text-2xl font-bold text-foreground dark:text-stone-100">Value</p>
+  <p className="text-xs text-mutedFg dark:text-stone-400 mt-1">Context line</p>
 </div>
 ```
 
 #### Input Field
 ```jsx
-<div className="flex flex-col gap-1">
-  <label className="font-body font-medium text-xs uppercase tracking-wide text-foreground">
+<div className="flex flex-col gap-1.5">
+  <label className="text-sm font-medium text-foreground dark:text-stone-200">
     Field Label
+    <span className="text-danger ml-0.5">*</span>
   </label>
   <input className="
-    bg-card border-2 border-[#CBD5E1] rounded-md px-4 py-3
-    font-body text-foreground placeholder:text-mutedFg
-    shadow-[4px_4px_0px_transparent]
-    transition-all duration-200
-    focus:outline-none focus:border-accent focus:shadow-[4px_4px_0px_#8B5CF6]
+    w-full px-3 py-2
+    bg-surface dark:bg-stone-800
+    border border-border dark:border-stone-600
+    rounded-md shadow-input
+    text-sm text-foreground dark:text-stone-100
+    placeholder:text-mutedFg dark:placeholder:text-stone-500
+    transition-colors duration-150
+    focus:outline-none focus:border-accent focus:shadow-focus
+    dark:focus:border-blue-500
+    disabled:bg-muted disabled:cursor-not-allowed
   " />
+  <p className="text-xs text-mutedFg dark:text-stone-400">Helper text</p>
 </div>
 ```
 
-#### Modal Panel
+#### Modal
 ```jsx
-// Overlay
-<div className="fixed inset-0 bg-foreground/50 backdrop-blur-sm z-50 flex items-center justify-center">
-  // Panel
-  <div className="bg-card rounded-xl border-2 border-foreground shadow-pop p-8 w-full max-w-md">
-    <h2 className="font-heading font-bold text-2xl text-foreground mb-4">Title</h2>
-    {/* content */}
+<div className="fixed inset-0 bg-black/50 backdrop-blur-sm z-50 flex items-center justify-center p-4">
+  <div className="
+    bg-surface dark:bg-stone-900
+    border border-border dark:border-stone-700
+    rounded-lg shadow-modal
+    w-full max-w-md
+    animate-fade-in
+  ">
+    <div className="flex items-center justify-between px-6 py-4 border-b border-border dark:border-stone-700">
+      <h2 className="text-base font-semibold text-foreground dark:text-stone-100">Title</h2>
+      <button className="text-mutedFg hover:text-foreground dark:text-stone-400 dark:hover:text-stone-100">
+        <X size={18} strokeWidth={2} />
+      </button>
+    </div>
+    <div className="px-6 py-5">
+      {/* content */}
+    </div>
+    <div className="flex justify-end gap-3 px-6 py-4 border-t border-border dark:border-stone-700">
+      {/* action buttons */}
+    </div>
   </div>
 </div>
 ```
 
-#### Badge / Tag
+#### Badge / Status Chip
 ```jsx
-<span className="
-  inline-block px-3 py-1 rounded-full
-  bg-tertiary text-foreground
-  font-heading font-bold text-xs uppercase tracking-wide
-  border-2 border-foreground shadow-pop-press
-">
-  Label
+// Status variants — use ONLY for their semantic meaning:
+// success: pass, active, confirmed
+<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-successBg text-success dark:bg-green-900/30 dark:text-green-400">
+  <span className="w-1.5 h-1.5 rounded-full bg-success dark:bg-green-400" />
+  Passed
 </span>
+
+// warning: pending, in-review
+<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-warningBg text-warning dark:bg-amber-900/30 dark:text-amber-400">
+  Pending
+</span>
+
+// danger: fail, violation, expired
+<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-dangerBg text-danger dark:bg-red-900/30 dark:text-red-400">
+  Failed
+</span>
+
+// neutral: informational
+<span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-xs font-semibold bg-muted text-mutedFg dark:bg-stone-700 dark:text-stone-300">
+  Draft
+</span>
+```
+
+#### Table
+```jsx
+<div className="border border-border dark:border-stone-700 rounded-lg overflow-hidden shadow-card">
+  <table className="w-full text-sm">
+    <thead>
+      <tr className="bg-muted dark:bg-stone-800 border-b border-border dark:border-stone-700">
+        <th className="px-4 py-3 text-left text-xs font-semibold uppercase tracking-wider text-mutedFg dark:text-stone-400">
+          Column
+        </th>
+      </tr>
+    </thead>
+    <tbody className="divide-y divide-border dark:divide-stone-700">
+      <tr className="bg-surface dark:bg-stone-900 hover:bg-muted dark:hover:bg-stone-800 transition-colors">
+        <td className="px-4 py-3 text-foreground dark:text-stone-100">
+          Cell
+        </td>
+      </tr>
+    </tbody>
+  </table>
+</div>
+```
+
+#### Sidebar Navigation Item
+```jsx
+// Active
+<a className="flex items-center gap-3 px-3 py-2 rounded-md bg-accentSubtle dark:bg-blue-900/30 text-accent dark:text-blue-400 text-sm font-semibold">
+  <Icon size={16} strokeWidth={2} />
+  Label
+</a>
+
+// Inactive
+<a className="flex items-center gap-3 px-3 py-2 rounded-md text-mutedFg dark:text-stone-400 hover:bg-muted dark:hover:bg-stone-800 hover:text-foreground dark:hover:text-stone-100 text-sm font-medium transition-colors">
+  <Icon size={16} strokeWidth={2} />
+  Label
+</a>
+```
+
+#### Alert / Banner
+```jsx
+// Info alert
+<div className="flex gap-3 px-4 py-3 bg-infoBg dark:bg-sky-900/20 border border-info/30 dark:border-sky-700/40 rounded-md text-sm text-info dark:text-sky-400">
+  <Info size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+  <p>Message text here.</p>
+</div>
+
+// Warning alert
+<div className="flex gap-3 px-4 py-3 bg-warningBg dark:bg-amber-900/20 border border-warning/30 rounded-md text-sm text-warning dark:text-amber-400">
+  <AlertTriangle size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+  <p>Message text here.</p>
+</div>
+
+// Danger alert
+<div className="flex gap-3 px-4 py-3 bg-dangerBg dark:bg-red-900/20 border border-danger/30 rounded-md text-sm text-danger dark:text-red-400">
+  <AlertCircle size={16} strokeWidth={2} className="mt-0.5 shrink-0" />
+  <p>Message text here.</p>
+</div>
 ```
 
 ---
@@ -560,144 +812,229 @@ export default {
 ### Page-Level Design Rules
 
 **All Pages**
-- Page background: `bg-background`
-- Container: `max-w-6xl mx-auto px-6`
-- Section vertical padding: `py-16` minimum
-- Never use `#000000` — always use `text-foreground` (`#1E293B`)
+- Page background: `bg-background dark:bg-stone-950`
+- Content container: `max-w-7xl mx-auto px-6`
+- No decorative SVG shapes, dot grids, or background patterns — ever
+- No hard offset shadows — use `shadow-card` or `shadow-panel` only
+- Vertical rhythm: use `space-y-6` between sections, `space-y-4` within sections
+- Never use pure black `#000000` — use `text-foreground` or `dark:text-stone-100`
 
-**Confetti Color Rule**
-Use `accent` → `secondary` → `tertiary` → `quaternary` rotationally for decorative
-elements on the same page (icon circles, card accent borders, section dividers).
-Never all the same color on one page.
+**Layout Shell**
+- Sidebar: fixed left, `w-64`, `bg-surfaceAlt dark:bg-stone-900`, `border-r border-border dark:border-stone-700`
+- Main content: `ml-64 min-h-screen bg-background dark:bg-stone-950`
+- Top bar (where used): `h-14 bg-surface dark:bg-stone-900 border-b border-border dark:border-stone-700 flex items-center px-6`
+- No floating sidebars or overlapping panels — all structure is grid-based
+
+**Page Header Pattern**
+```jsx
+<div className="mb-6">
+  <h1 className="text-2xl font-bold text-foreground dark:text-stone-100">Page Title</h1>
+  <p className="text-sm text-mutedFg dark:text-stone-400 mt-1">Descriptive subtitle</p>
+</div>
+<div className="h-px bg-border dark:bg-stone-700 mb-6" /> {/* Divider */}
+```
 
 **Auth Pages (Login / Signup)**
-- Two-column layout: left panel (decorative) + right panel (form)
-- Left panel: `bg-accent` with floating SVG circles and triangles in `secondary`, `tertiary`, `quaternary`
-  plus a dot-grid SVG pattern in the background
-- Right panel: white, centered form card with `shadow-pop`
-- Submit button: primary Candy Button
-- On mobile: hide left panel, full-width form
+- Single-column centered layout — no decorative left panel
+- Card: `max-w-sm w-full bg-surface dark:bg-stone-900 border border-border dark:border-stone-700 rounded-lg shadow-panel p-8`
+- System logo / wordmark at top: text-based, `font-semibold text-lg text-foreground dark:text-stone-100`
+- Form title: `text-xl font-bold text-foreground dark:text-stone-100`
+- Submit button: full-width Primary Button
+- Links (forgot password, sign up): `text-sm text-accent dark:text-blue-400 hover:underline`
+- No background decoration whatsoever
+
+**LoginPage**
+- Logo area: "ASSESSMENT SYSTEM" in `text-sm font-semibold uppercase tracking-widest text-mutedFg dark:text-stone-400`
+- Beneath it: system name in `text-xl font-bold`
+- "Enter your credentials to continue" subtitle in mutedFg
+- "New user? Register with an access code" link at bottom
+
+**SignupPage — Two-Step Flow**
+- Step 1 — Access Code Entry:
+  - Heading: "Enter Access Code" `text-xl font-bold`
+  - Subtext: "Access codes are issued by your system administrator." `text-sm text-mutedFg`
+  - Input: large, monospace font (`font-mono text-lg tracking-widest text-center uppercase`)
+  - "Verify Code" full-width Primary Button
+  - On valid: green success Alert (`bg-successBg border-success/30`) with code and group name shown
+  - On invalid: danger Alert + `animate-shake` on input
+  - Progress indicator: "Step 1 of 2" in `text-xs text-mutedFg uppercase tracking-wider`
+
+- Step 2 — Account Creation:
+  - "Step 2 of 2" progress indicator
+  - Group assignment shown as info Alert: "You will be assigned to: [Group Name]"
+  - Fields: Full Name, Email Address, Phone Number (helper: "Include country code"), Password
+  - Password strength: text only (no bar) — "Weak / Fair / Strong" label in appropriate status color
+  - "Create Account" full-width Primary Button
+  - On success: success Alert then redirect to `/login` in 3s
 
 **Dashboards (Admin / Teacher / Student)**
-- Bold Outfit heading greeting with user name at top
-- Stat cards in a responsive grid using the Sticker Card pattern
-- Each card's floating icon circle uses a different confetti color
-- Sidebar: `bg-card border-r-2 border-border`
-  - Active nav item: `bg-accent text-accentFg rounded-lg`
-  - Inactive: `text-mutedFg hover:bg-muted rounded-lg`
+- Page title + subtitle header pattern (see Page Header Pattern above)
+- Stat cards in a `grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4` using Stat Card pattern
+- No greeting animations — just the page title
+- Section headings within dashboard: `text-sm font-semibold uppercase tracking-wider text-mutedFg dark:text-stone-400 mb-3`
+- Data tables use the Table pattern — no cards for tabular data
+
+**Sidebar**
+- Logo at top: `h-14 px-4 flex items-center border-b border-border dark:border-stone-700`
+  Text: system name `text-sm font-bold uppercase tracking-wider text-foreground dark:text-stone-100`
+- Nav sections separated by `text-xs font-semibold uppercase tracking-wider text-mutedFg px-3 mb-1 mt-4` labels
+- Active item: `bg-accentSubtle dark:bg-blue-900/30 text-accent dark:text-blue-400`
+- Bottom: user info row + logout button
 
 **TestBuilder (Teacher)**
-- Sections stacked vertically; each `SectionCard` uses `shadow-pop-soft`
-- Section header color rotates: `accent` → `secondary` → `tertiary` → `quaternary`
-- "Add Question" → secondary button style
-- "Save Draft" → secondary button; "Publish" → Candy Button with `bg-quaternary` override
-- Drag handle icon for section reordering
+- Sections as bordered panels (`border border-border dark:border-stone-700 rounded-lg`) stacked with `space-y-4`
+- No color rotation on section headers — all uniform `bg-muted dark:bg-stone-800`
+- Section header: `px-4 py-3 flex items-center justify-between border-b border-border dark:border-stone-700`
+- "Save Draft" secondary button; "Publish" Primary Button — both right-aligned
 
 **ExamPage (Student) — Fullscreen**
-- No navbar or sidebar visible in fullscreen mode
-- Top bar: `bg-card border-b-2 border-border` — section title left, timer right
-- `CountdownTimer`: `bg-accent text-accentFg` pill shape; switches to `bg-red-500` when < 5 min
-- Question Navigator buttons (left panel):
-  - Unanswered: `bg-muted border-2 border-border text-mutedFg`
-  - Answered: `bg-quaternary border-2 border-foreground shadow-pop-press text-foreground`
-  - Current: `bg-accent border-2 border-foreground shadow-pop-press text-accentFg`
-- Question content: `max-w-[800px] mx-auto bg-card rounded-xl border-2 border-border shadow-pop-soft p-8`
-- MCQ options: full-width pill buttons; selected = `bg-accent/10 border-2 border-accent`
-- Essay textarea: input field style with word count badge (`bg-muted rounded-full px-2 py-0.5 text-xs`)
+- No navbar or sidebar visible
+- Top bar: `bg-surface dark:bg-stone-900 border-b border-border dark:border-stone-700 h-14 flex items-center px-6 justify-between`
+- Timer: `font-mono text-sm font-semibold text-foreground dark:text-stone-100`
+  When < 5 min: `text-danger dark:text-red-400`
+  When < 1 min: `text-danger dark:text-red-400 animate-pulse`
+- Question Navigator: left panel `w-48 bg-surfaceAlt dark:bg-stone-900 border-r border-border dark:border-stone-700`
+  - Unanswered: `text-mutedFg dark:text-stone-400 hover:bg-muted dark:hover:bg-stone-800`
+  - Answered: `bg-successBg dark:bg-green-900/20 text-success dark:text-green-400`
+  - Current: `bg-accentSubtle dark:bg-blue-900/30 text-accent dark:text-blue-400 font-semibold`
+- Question content: `max-w-[760px] mx-auto bg-surface dark:bg-stone-900 border border-border dark:border-stone-700 rounded-lg shadow-card p-8`
+- MCQ options: full-width bordered rows, selected = `bg-accentSubtle dark:bg-blue-900/30 border-accent dark:border-blue-500`
+- Essay textarea: standard input style, `min-h-[200px]`
 
 **GradingPage (Teacher)**
-- Attempt list: table rows with a left color bar (`border-l-4`):
-  - Pending essays: `border-tertiary`
-  - Fully graded: `border-quaternary`
-- Essay grading card: student answer in `bg-muted rounded-md p-4 font-body`
-  with score input + feedback textarea below using input field styles
+- Table-based attempt list using Table pattern
+- Status badge in Status column using Badge pattern
+- Essay grading card: `bg-surface dark:bg-stone-900 border border-border dark:border-stone-700 rounded-lg p-5`
+  Student answer in `bg-muted dark:bg-stone-800 rounded-md p-4 text-sm font-mono`
 
 **ResultsPage (Student)**
-- Score displayed in a large Sticker Card with `shadow-pop-pink` if passed, `shadow-pop-soft` if failed
-- Pass/fail badge using Badge component (green `quaternary` for pass, pink `secondary` for fail)
-- Per-question breakdown: MCQ correct answers highlighted in `bg-quaternary/20`, wrong in `bg-secondary/20`
+- Score summary at top: large stat display inside a Card
+  Pass: `border-l-4 border-success` on the card
+  Fail: `border-l-4 border-danger` on the card
+- Pass/fail badge using Badge success/danger variants
+- Per-question breakdown: table using Table pattern
+  Correct row: `bg-successBg dark:bg-green-900/10`
+  Wrong row: `bg-dangerBg dark:bg-red-900/10`
 
 **MonitorPage (Teacher)**
-- Live table: student name, questions answered / total, violation count badge, elapsed time pill
-- Violation count badge: `bg-quaternary` for 0, `bg-tertiary` for 1–2, `bg-secondary` for 3+
-- Auto-refreshes every 15 seconds (polling); show last-updated timestamp
-- "View Proctor Logs" link per row opens a slide-over panel with ProctorLog entries
+- Table using Table pattern — no polling animation on rows
+- Violations column:
+  - 0: success badge ("Clean")
+  - 1–2: warning badge ("[N] Violations")
+  - 3+: danger badge ("[N] Violations")
+- "View Logs" → opens Modal with ProctorLog table inside
+- Last updated: `text-xs text-mutedFg dark:text-stone-400` top-right of table
+
+**InviteCodesPanel (Admin)**
+- Full-width Modal (max-w-4xl)
+- Modal header: panel title + close button (standard Modal pattern)
+- Generate section: two secondary buttons side by side ("Generate Single" + "Generate Bulk")
+  Generated code shown in a `font-mono bg-muted dark:bg-stone-800 px-3 py-2 rounded-md text-sm` code block with copy button
+- Codes table: Table pattern with filter tabs above (All / Available / Used) as secondary button group
+  Available: neutral badge; Used: success badge; filter active state = Primary Button style
 
 **UnauthorizedPage**
-- Centered layout, large lock icon in a `bg-secondary` circle with `shadow-pop`
-- Heading: "Access Denied" in `font-heading font-extrabold`
-- Subtext: explains user does not have permission for this page
-- Button: "Go to Dashboard" — Candy Button — redirects to `/{role}/dashboard`
+- Centered, `max-w-sm mx-auto text-center py-24`
+- Icon: `ShieldX` from Lucide, size 40, `text-danger dark:text-red-400`, no wrapping circle
+- Heading: "Access Denied" `text-2xl font-bold text-foreground dark:text-stone-100`
+- Subtext: `text-sm text-mutedFg dark:text-stone-400`
+- Role shown in neutral badge
+- "Return to Dashboard" Primary Button
 
 **NotFoundPage**
-- Centered layout, large "404" in `font-heading font-extrabold text-8xl text-accent`
-- Decorative floating shapes (circles, triangles) in confetti colors behind the number
-- Subtext: "This page doesn't exist"
-- Button: "Go Home" — Candy Button — redirects to `/login` or dashboard if authenticated
+- Centered, `max-w-sm mx-auto text-center py-24`
+- "404" in `text-6xl font-bold text-muted dark:text-stone-700` (subdued, not colorful)
+- Heading: "Page Not Found" `text-2xl font-bold text-foreground dark:text-stone-100`
+- Subtext: `text-sm text-mutedFg dark:text-stone-400`
+- "Go Home" Primary Button
+
+**Violation / Anti-Cheat Overlays**
+- All overlays: `fixed inset-0 bg-black/60 backdrop-blur-sm z-40 flex items-center justify-center`
+- Card: standard Modal card, `border-l-4 border-danger` for violations
+- No animations other than `animate-fade-in` on card entrance
+- "I Understand" button: secondary style (not danger — must feel calm, not alarming)
 
 ---
 
 ### Iconography Rules
 
-- Always `strokeWidth={2.5}` on every Lucide icon
-- Never place icons floating alone — always wrap in a shape:
-  - Circle: `<div className="w-10 h-10 rounded-full bg-accent border-2 border-foreground flex items-center justify-center">`
-  - Rounded square: same but `rounded-md`
-- Icon color inside circles: `text-accentFg` (white)
-- Standalone icons (e.g. inside input fields): `text-mutedFg`
-- Interactive icon buttons: add `hover:animate-wiggle` (respecting reduced motion)
+- Always `strokeWidth={2}` on every Lucide icon (not 2.5 — that reads as heavy)
+- Icons inline with text: `size={16}`, icons as standalone actions: `size={18}`, page-level icons: `size={20}`
+- Do NOT wrap icons in colored circles — place icons directly inline or in a `bg-muted dark:bg-stone-800` square `rounded-md` only when grouping is needed
+- Standalone icon buttons: `text-mutedFg hover:text-foreground dark:text-stone-400 dark:hover:text-stone-100 transition-colors`
+- All icon buttons must have `aria-label`
 
 ---
 
 ### Animations & Motion
 
-```jsx
-// Detect reduced motion preference at top of component
-const prefersReducedMotion = window.matchMedia('(prefers-reduced-motion: reduce)').matches
-
-// Apply conditionally
-className={prefersReducedMotion ? 'opacity-100' : 'animate-pop-in'}
-```
-
-- Cards and buttons: `transition-all duration-300 ease-bounce`
-- Entrance animations: `animate-pop-in` (scale 0→1 with bounce)
-- Icon hover: `hover:animate-wiggle`
-- Never autoplay wiggle/pop-in for users with reduced motion preference
+- Entrance: `animate-fade-in` (200ms ease-out) — use only on modals, alerts, and page transitions
+- Error shake: `animate-shake` — use only on invalid input fields
+- No bounce, no pop-in, no wiggle — ever
+- All transitions: `transition-colors duration-150` or `transition-all duration-150`
+- Respect `prefers-reduced-motion`: wrap entrance animations:
+  ```jsx
+  const reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches
+  className={reduced ? '' : 'animate-fade-in'}
+  ```
 
 ---
 
 ### Responsive Rules
 
-- Stack all grids on mobile: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3`
-- Hard shadows on mobile: reduce to 2px — use `shadow-pop-press` on mobile, `sm:shadow-pop` on larger
-- Decorative floating shapes: `hidden sm:block`
-- Minimum button height: `min-h-[48px]` for tap targets
-- ExamPage navigator: collapses to horizontal scrollable strip on mobile (`flex overflow-x-auto sm:flex-col`)
-- Auth page left panel: `hidden md:flex`
+- Stack all grids on mobile: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-4`
+- Sidebar collapses to off-canvas drawer on mobile (`w-64 fixed left-0 top-0 bottom-0 z-40 -translate-x-full sm:translate-x-0`)
+- Hamburger menu button shown on mobile only (`sm:hidden`)
+- Minimum button height: `min-h-[44px]` (mobile tap target)
+- ExamPage navigator: horizontal scrollable strip on mobile (`flex overflow-x-auto sm:flex-col sm:overflow-auto`)
+- Auth card: no card border/shadow on mobile — full-width form (`sm:rounded-lg sm:shadow-panel sm:border`)
 
 ---
 
 ### Accessibility Rules
 
-- Text contrast: `foreground` (#1E293B) on `background` (#FFFDF5) — AAA compliant. Never change this.
-- Never use color as the only indicator — always pair with a label or icon
-- Focus states: `focus:ring-2 focus:ring-ring focus:ring-offset-2` on all interactive elements
-- Icon-only buttons must have `aria-label`
-- Icons decorative to their parent button: `aria-hidden="true"`
-- Motion: guard with `prefers-reduced-motion` check before applying bounce/wiggle
+- Text contrast: `foreground` (#1C1917) on `background` (#F5F5F4) — AAA compliant
+- Dark mode: `stone-100` on `stone-950` — AAA compliant
+- Never use color as the only indicator — always pair status color with a label
+- Focus states: `focus:outline-none focus:ring-2 focus:ring-accent focus:ring-offset-2` on all interactive elements
+- Dark focus offset: `dark:focus:ring-offset-stone-900`
+- Icon-only buttons: must have `aria-label`
+- Form inputs: always associated with a `<label>` via `htmlFor` / `id`
+- Tables: `<thead>` with `scope="col"` on every `<th>`
+
+---
+
+### Theme Switcher
+
+Add a theme toggle button to the sidebar footer and the top bar on auth pages.
+
+```jsx
+// src/hooks/useTheme.js
+// Reads from localStorage 'theme' key: 'light' | 'dark' | 'system'
+// 'system' follows window.matchMedia('(prefers-color-scheme: dark)')
+// Writes 'dark' or '' class to document.documentElement
+```
+
+Toggle button renders:
+- Sun icon when dark mode active (click → light)
+- Moon icon when light mode active (click → dark)
+- Icon size 16, strokeWidth 2, `text-mutedFg hover:text-foreground`
+
 
 ---
 
 ## Frontend Routing (App.jsx)
 
 ```
-/login                    → LoginPage         (public)
-/signup                   → SignupPage        (public)
-/unauthorized             → UnauthorizedPage  (public)
+/login                    → LoginPage              (public)
+/signup                   → SignupPage             (public, students only — two-step invite flow)
+/forgot-password          → ForgotPasswordPage     (public)
+/reset-password           → ResetPasswordPage      (public, reads ?token= from query param)
+/unauthorized             → UnauthorizedPage       (public)
 /admin/*                  → RoleRoute admin
   /admin/dashboard        → AdminDashboard
   /admin/users            → UserManagement
-  /admin/groups           → GroupManagement
+  /admin/groups           → GroupManagement        (includes InviteCodesPanel per group)
 /teacher/*                → RoleRoute teacher
   /teacher/dashboard      → TeacherDashboard
   /teacher/tests/new      → TestBuilder
@@ -709,7 +1046,7 @@ className={prefersReducedMotion ? 'opacity-100' : 'animate-pop-in'}
   /student/dashboard      → StudentDashboard
   /student/exam/:id       → ExamPage
   /student/results/:id    → ResultsPage
-*                         → NotFoundPage      (catch-all)
+*                         → NotFoundPage           (catch-all — must be last)
 ```
 
 ---
@@ -782,9 +1119,9 @@ Each Codex agent prompt maps to one build step. Agents must:
 4. Never call the DB directly from a controller
 5. Always use `asyncHandler` wrapper for express route handlers
 6. Write complete, runnable files — no `// TODO` stubs unless explicitly noted
-7. Apply the Playful Geometric design system to every frontend file
+7. Apply the Official Standard Design System to every frontend file
 8. Configure `tailwind.config.js` tokens before building any UI component
 
 ---
 
-*Last updated: Playful Geometric Design System integrated*
+*Last updated: Official Standard Design System — Government/Military, system-aware dark/light mode*

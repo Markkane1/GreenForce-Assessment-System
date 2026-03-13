@@ -3,14 +3,15 @@ import asyncHandler from '../utils/asyncHandler.js';
 
 export const protect = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
+  const cookieToken = req.cookies?.auth_token;
 
-  if (!authHeader || !authHeader.startsWith('Bearer ')) {
+  if (!cookieToken && (!authHeader || !authHeader.startsWith('Bearer '))) {
     const error = new Error('No token provided');
     error.statusCode = 401;
     throw error;
   }
 
-  const token = authHeader.split(' ')[1];
+  const token = cookieToken || authHeader.split(' ')[1];
 
   if (!process.env.JWT_SECRET) {
     const error = new Error('JWT_SECRET is not configured.');

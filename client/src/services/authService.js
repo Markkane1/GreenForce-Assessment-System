@@ -16,13 +16,25 @@ export const login = async (email, password) => {
   }
 };
 
-export const register = async (name, email, password, role) => {
+export const validateInviteCode = async (code) => {
   try {
-    const { data } = await api.post('/auth/register', {
+    const { data } = await api.post('/invite-codes/validate', {
+      code: code.trim().toUpperCase(),
+    });
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Failed to validate invite code');
+  }
+};
+
+export const registerStudent = async (name, email, phone, password, inviteCode) => {
+  try {
+    const { data } = await api.post('/auth/register-student', {
       name: name.trim(),
       email: email.trim().toLowerCase(),
+      phone: phone.trim(),
       password,
-      role,
+      inviteCode: inviteCode.trim().toUpperCase(),
     });
     return data;
   } catch (error) {
@@ -62,5 +74,23 @@ export const changePassword = async (currentPassword, newPassword) => {
     return data;
   } catch (error) {
     normalizeError(error, 'Failed to change password');
+  }
+};
+
+export const getCurrentUser = async () => {
+  try {
+    const { data } = await api.get('/auth/me', { skipAuthRedirect: true });
+    return data.user;
+  } catch (error) {
+    normalizeError(error, 'Failed to load current user');
+  }
+};
+
+export const logout = async () => {
+  try {
+    const { data } = await api.post('/auth/logout', null, { skipAuthRedirect: true });
+    return data;
+  } catch (error) {
+    normalizeError(error, 'Failed to log out');
   }
 };

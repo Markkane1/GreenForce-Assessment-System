@@ -2,17 +2,48 @@ import {
   ChevronDown,
   ChevronUp,
   FilePlus2,
+  FileUp,
   Save,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
-import { useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import { useEffect, useMemo, useRef, useState } from 'react';
+import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
+import * as XLSX from 'xlsx';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import * as testService from '../../services/testService';
 
 const stripTones = ['border-accent', 'border-secondary', 'border-tertiary', 'border-quaternary'];
+const DEFAULT_MCQ_OPTION_COUNT = 4;
+
+const buildDefaultOptions = () =>
+  Array.from({ length: DEFAULT_MCQ_OPTION_COUNT }, (_, index) => ({
+    text: `Option ${index + 1}`,
+    isCorrect: index === 0,
+  }));
+
+const normalizeHeader = (value) =>
+  String(value ?? '')
+    .trim()
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, '');
+
+const getRowValue = (row, keys) => {
+  const normalizedEntries = Object.entries(row).reduce((accumulator, [key, value]) => {
+    accumulator[normalizeHeader(key)] = value;
+    return accumulator;
+  }, {});
+
+  for (const key of keys) {
+    const value = normalizedEntries[normalizeHeader(key)];
+    if (value !== undefined && String(value).trim() !== '') {
+      return value;
+    }
+  }
+
+  return '';
+};
 
 const createEmptyDraft = () => ({
   _id: null,
@@ -30,17 +61,63 @@ const createEmptyDraft = () => ({
 
 const createEmptyQuestionPayload = (type) => ({
   type,
-  content: '',
+  content: type === 'essay' ? 'Write your answer here...' : 'New multiple-choice question',
   points: 1,
   maxWordCount: type === 'essay' ? 300 : null,
-  options:
-    type === 'mcq'
-      ? [
-          { text: 'Option 1', isCorrect: true },
-          { text: 'Option 2', isCorrect: false },
-        ]
-      : [],
+  options: type === 'mcq' ? buildDefaultOptions() : [],
 });
+
+const validateSectionDraft = (section) => {
+  if (!section.title?.trim()) {
+    return 'Section title is required.';
+  }
+
+  if (!Number.isInteger(section.questionPoolSize) || section.questionPoolSize < 1) {
+    return 'Section question pool size must be at least 1.';
+  }
+
+  if (!Number.isInteger(section.questionsToServe) || section.questionsToServe < 1) {
+    return 'Section questions to serve must be at least 1.';
+  }
+
+  if (section.questionsToServe > section.questionPoolSize) {
+    return 'Section questions to serve cannot be greater than the question pool size.';
+  }
+
+  return '';
+};
+
+const validateQuestionDraft = (question) => {
+  if (!question.content?.trim()) {
+    return question.type === 'essay' ? 'Essay prompt is required.' : 'Question text is required.';
+  }
+
+  if (!Number.isFinite(question.points) || Number(question.points) < 1) {
+    return 'Question points must be at least 1.';
+  }
+
+  if (question.type === 'essay') {
+    if (!Number.isInteger(question.maxWordCount) || question.maxWordCount < 1) {
+      return 'Essay max word count must be at least 1.';
+    }
+
+    return '';
+  }
+
+  if (!Array.isArray(question.options) || question.options.length !== DEFAULT_MCQ_OPTION_COUNT) {
+    return 'MCQ questions must have exactly 4 options.';
+  }
+
+  if (question.options.some((option) => !option.text?.trim())) {
+    return 'Every MCQ option must include text.';
+  }
+
+  if (!question.options.some((option) => option.isCorrect)) {
+    return 'Please mark one MCQ option as correct.';
+  }
+
+  return '';
+};
 
 const Toggle = ({ label, checked, onChange }) => (
   <div className="flex items-center justify-between gap-3 rounded-full border-2 border-foreground bg-background px-4 py-3 shadow-pop-soft">
@@ -61,14 +138,18 @@ const Toggle = ({ label, checked, onChange }) => (
   </div>
 );
 
-const QuestionEditor = ({ question, onChange, onSave, onDelete, onAddOption, onRemoveOption, onOptionChange, isSaving }) => (
+const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, isSaving, isDirty }) => (
   <div className="rounded-[1.25rem] border-2 border-border bg-background p-4 shadow-pop-soft">
     <div className="flex items-center justify-between gap-3">
-      <Badge tone={question.type === 'mcq' ? 'secondary' : 'tertiary'}>{question.type}</Badge>
+      <div className="flex items-center gap-2">
+        <Badge tone={question.type === 'mcq' ? 'secondary' : 'tertiary'}>{question.type}</Badge>
+        {isDirty ? <Badge tone="accent">Unsaved</Badge> : null}
+      </div>
       <button
         type="button"
         onClick={onDelete}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
+        disabled={isSaving}
+        className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
       >
         <Trash2 size={16} strokeWidth={2.5} />
       </button>
@@ -98,7 +179,7 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onAddOption, onR
       {question.type === 'mcq' ? (
         <div className="space-y-3">
           {question.options.map((option, index) => (
-            <div key={`${question._id || 'new'}-${index}`} className="grid gap-3 md:grid-cols-[1fr,110px,48px]">
+            <div key={`${question._id || 'new'}-${index}`} className="grid gap-3 md:grid-cols-[1fr,110px]">
               <input
                 value={option.text}
                 onChange={(event) => onOptionChange(index, 'text', event.target.value)}
@@ -107,27 +188,15 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onAddOption, onR
               <button
                 type="button"
                 onClick={() => onOptionChange(index, 'isCorrect', true, true)}
+                disabled={isSaving}
                 className={`rounded-full border-2 px-4 py-3 text-sm font-bold ${
                   option.isCorrect ? 'border-foreground bg-accent text-accentFg shadow-pop' : 'border-border bg-muted text-foreground'
-                }`}
+                } disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 Correct?
               </button>
-              <button
-                type="button"
-                onClick={() => onRemoveOption(index)}
-                className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-secondary text-foreground shadow-pop-press"
-                disabled={question.options.length <= 2}
-              >
-                <Trash2 size={16} strokeWidth={2.5} />
-              </button>
             </div>
           ))}
-          {question.options.length < 6 ? (
-            <button type="button" onClick={onAddOption} className="text-sm font-bold text-accent underline decoration-2 underline-offset-4">
-              Add Option
-            </button>
-          ) : null}
         </div>
       ) : (
         <label className="block space-y-2">
@@ -157,15 +226,16 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onAddOption, onR
         type="button"
         onClick={onSave}
         disabled={isSaving}
-        className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+        className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
       >
-        {isSaving ? 'Saving...' : 'Save Question'}
+        {isSaving ? 'Saving...' : isDirty ? 'Save Question' : 'Saved'}
       </button>
     </div>
   </div>
 );
 
 const TestBuilder = () => {
+  const location = useLocation();
   const navigate = useNavigate();
   const { id: routeTestId } = useParams();
   const [searchParams] = useSearchParams();
@@ -175,6 +245,16 @@ const TestBuilder = () => {
   const [isSettingsOpen, setIsSettingsOpen] = useState(true);
   const [isSaving, setIsSaving] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
+  const [statusMessage, setStatusMessage] = useState('');
+  const [savingSectionId, setSavingSectionId] = useState(null);
+  const [savingQuestionId, setSavingQuestionId] = useState(null);
+  const [addingQuestionType, setAddingQuestionType] = useState(null);
+  const [actingSectionId, setActingSectionId] = useState(null);
+  const [dirtyQuestionIds, setDirtyQuestionIds] = useState([]);
+  const draftSaveTimerRef = useRef(null);
+  const sectionSaveTimersRef = useRef(new Map());
+  const fileInputRefs = useRef({});
+  const statusMessageTimerRef = useRef(null);
 
   const loadTests = async () => {
     const testList = await testService.getTests();
@@ -185,21 +265,168 @@ const TestBuilder = () => {
   const loadWorkspace = async (testId) => {
     const workspace = await testService.getTestWorkspace(testId);
     setCurrentTest(workspace);
+    setDirtyQuestionIds([]);
+  };
+
+  const clearDraftAutosave = () => {
+    if (draftSaveTimerRef.current) {
+      clearTimeout(draftSaveTimerRef.current);
+      draftSaveTimerRef.current = null;
+    }
+  };
+
+  const clearSectionAutosave = (sectionId) => {
+    const timerId = sectionSaveTimersRef.current.get(sectionId);
+    if (timerId) {
+      clearTimeout(timerId);
+      sectionSaveTimersRef.current.delete(sectionId);
+    }
+  };
+
+  const showStatusMessage = (message) => {
+    setStatusMessage(message);
+
+    if (statusMessageTimerRef.current) {
+      clearTimeout(statusMessageTimerRef.current);
+    }
+
+    statusMessageTimerRef.current = setTimeout(() => {
+      setStatusMessage('');
+      statusMessageTimerRef.current = null;
+    }, 3000);
+  };
+
+  const persistDraftSnapshot = async (draft) => {
+    const payload = {
+      title: draft.title?.trim() || 'Untitled Test',
+      description: draft.description,
+      timeLimitMinutes: draft.timeLimitMinutes,
+      passingScore: draft.passingScore,
+      maxAttempts: draft.maxAttempts,
+      allowResume: draft.allowResume,
+      randomizeQuestions: draft.randomizeQuestions,
+      randomizeOptions: draft.randomizeOptions,
+    };
+
+    const savedTest = draft._id
+      ? await testService.updateTest(draft._id, payload)
+      : await testService.createTest(payload);
+
+    if (!draft._id) {
+      setCurrentTest((current) => ({ ...current, _id: savedTest._id }));
+      navigate(`/teacher/tests/${savedTest._id}`, { replace: true });
+    }
+
+    await loadTests();
+    showStatusMessage('Changes auto-saved.');
+    return savedTest;
+  };
+
+  const queueDraftAutosave = (draft) => {
+    clearDraftAutosave();
+    draftSaveTimerRef.current = setTimeout(async () => {
+      try {
+        await persistDraftSnapshot(draft);
+      } catch (error) {
+        setErrorMessage(error.message || 'Unable to save test settings.');
+      }
+    }, 600);
+  };
+
+  const queueSectionAutosave = (section, testId) => {
+    if (!section?._id || !testId) {
+      return;
+    }
+
+    clearSectionAutosave(section._id);
+
+    const timerId = setTimeout(async () => {
+      try {
+        await saveSection(section, { silent: true, testId });
+      } catch {
+        // handled inside saveSection
+      }
+    }, 600);
+
+    sectionSaveTimersRef.current.set(section._id, timerId);
+  };
+
+  const parseImportedQuestions = async (file) => {
+    const buffer = await file.arrayBuffer();
+    const workbook = XLSX.read(buffer, { type: 'array' });
+    const [sheetName] = workbook.SheetNames;
+
+    if (!sheetName) {
+      throw new Error('The selected file does not contain any sheets.');
+    }
+
+    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
+
+    if (rows.length === 0) {
+      throw new Error('The selected file is empty.');
+    }
+
+    return rows.map((row, index) => {
+      const questionText = String(getRowValue(row, ['question', 'questionText', 'question text'])).trim();
+      const option1 = String(getRowValue(row, ['option1', 'option 1', 'a', 'optiona', 'choice1', 'choice 1'])).trim();
+      const option2 = String(getRowValue(row, ['option2', 'option 2', 'b', 'optionb', 'choice2', 'choice 2'])).trim();
+      const option3 = String(getRowValue(row, ['option3', 'option 3', 'c', 'optionc', 'choice3', 'choice 3'])).trim();
+      const option4 = String(getRowValue(row, ['option4', 'option 4', 'd', 'optiond', 'choice4', 'choice 4'])).trim();
+      const correctValue = String(
+        getRowValue(row, ['correctOption', 'correct option', 'correctAnswer', 'correct answer', 'answer', 'correct']) || ''
+      ).trim();
+      const points = Number(getRowValue(row, ['points', 'point', 'marks', 'score']) || 1);
+
+      if (!questionText) {
+        throw new Error(`Row ${index + 2}: question text is required.`);
+      }
+
+      const options = [option1, option2, option3, option4].map((text, optionIndex) => ({
+        text,
+        isCorrect: false,
+        optionIndex,
+      }));
+
+      if (options.some((option) => !option.text)) {
+        throw new Error(`Row ${index + 2}: exactly 4 option columns are required.`);
+      }
+
+      const numericCorrectIndex = Number(correctValue);
+      let correctIndex = Number.isInteger(numericCorrectIndex) && numericCorrectIndex >= 1 && numericCorrectIndex <= 4
+        ? numericCorrectIndex - 1
+        : options.findIndex((option) => option.text.toLowerCase() === correctValue.toLowerCase());
+
+      if (correctIndex < 0) {
+        throw new Error(`Row ${index + 2}: correct option must be 1-4 or exactly match one option text.`);
+      }
+
+      return {
+        content: questionText,
+        points: Number.isFinite(points) && points > 0 ? points : 1,
+        options: options.map((option, optionIndex) => ({
+          text: option.text,
+          isCorrect: optionIndex === correctIndex,
+        })),
+      };
+    });
   };
 
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
       setErrorMessage('');
+      setStatusMessage('');
 
       try {
         const testList = await loadTests();
         const requestedTestId = routeTestId || searchParams.get('testId');
-        const shouldCreateNew = !routeTestId && searchParams.get('new') === '1';
+        const shouldCreateNew = location.pathname === '/teacher/tests/new' || (!routeTestId && searchParams.get('new') === '1');
 
-        if (requestedTestId) {
+        if (shouldCreateNew) {
+          setCurrentTest(createEmptyDraft());
+        } else if (requestedTestId) {
           await loadWorkspace(requestedTestId);
-        } else if (!shouldCreateNew && testList.length > 0) {
+        } else if (testList.length > 0) {
           await loadWorkspace(testList[0]._id);
         } else {
           setCurrentTest(createEmptyDraft());
@@ -212,15 +439,30 @@ const TestBuilder = () => {
     };
 
     initialize();
-  }, [routeTestId, searchParams]);
+
+    return () => {
+      clearDraftAutosave();
+      sectionSaveTimersRef.current.forEach((timerId) => clearTimeout(timerId));
+      sectionSaveTimersRef.current.clear();
+      if (statusMessageTimerRef.current) {
+        clearTimeout(statusMessageTimerRef.current);
+      }
+    };
+  }, [location.pathname, routeTestId, searchParams]);
 
   const saveDraft = async () => {
     setIsSaving(true);
     setErrorMessage('');
+    setStatusMessage('');
+    clearDraftAutosave();
 
     try {
+      if (!currentTest.title?.trim()) {
+        throw new Error('Test title is required.');
+      }
+
       const payload = {
-        title: currentTest.title,
+        title: currentTest.title.trim(),
         description: currentTest.description,
         timeLimitMinutes: currentTest.timeLimitMinutes,
         passingScore: currentTest.passingScore,
@@ -236,6 +478,7 @@ const TestBuilder = () => {
 
       await loadTests();
       navigate(`/teacher/tests/${savedTest._id}`, { replace: true });
+      showStatusMessage('Draft saved.');
       return savedTest;
     } catch (error) {
       setErrorMessage(error.message || 'Unable to save draft.');
@@ -248,6 +491,7 @@ const TestBuilder = () => {
   const publishCurrentTest = async () => {
     setIsSaving(true);
     setErrorMessage('');
+    setStatusMessage('');
 
     try {
       const saved = currentTest._id ? null : await saveDraft();
@@ -255,6 +499,7 @@ const TestBuilder = () => {
       await testService.publishTest(testId);
       await loadWorkspace(testId);
       await loadTests();
+      showStatusMessage('Test published.');
     } catch (error) {
       setErrorMessage(error.message || 'Unable to publish test.');
     } finally {
@@ -272,11 +517,20 @@ const TestBuilder = () => {
   };
 
   const updateTestField = (field, value) => {
-    setCurrentTest((current) => ({ ...current, [field]: value }));
+    setCurrentTest((current) => {
+      const nextDraft = { ...current, [field]: value };
+      setErrorMessage('');
+      queueDraftAutosave(nextDraft);
+      return nextDraft;
+    });
   };
 
   const addSection = async () => {
+    setIsSaving(true);
+    setActingSectionId('new');
     try {
+      setErrorMessage('');
+      setStatusMessage('');
       const testId = await ensureSavedTest();
       await testService.createSection(testId, {
         title: `Section ${currentTest.sections.length + 1}`,
@@ -285,66 +539,128 @@ const TestBuilder = () => {
         questionsToServe: 5,
       });
       await loadWorkspace(testId);
-    } catch {
-      // error handled upstream
+      showStatusMessage('Section added.');
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to add section.');
+    } finally {
+      setActingSectionId(null);
+      setIsSaving(false);
     }
   };
 
   const updateSectionLocal = (sectionId, field, value) => {
-    setCurrentTest((current) => ({
-      ...current,
-      sections: current.sections.map((section) => (section._id === sectionId ? { ...section, [field]: value } : section)),
-    }));
+    setCurrentTest((current) => {
+      let updatedSection = null;
+      const nextState = {
+        ...current,
+        sections: current.sections.map((section) => {
+          if (section._id !== sectionId) {
+            return section;
+          }
+
+          const nextValue = Number.isNaN(value) ? section[field] : value;
+          updatedSection = {
+            ...section,
+            [field]: nextValue,
+            ...(field === 'questionPoolSize' ? { questionsToServe: nextValue } : {}),
+          };
+          return updatedSection;
+        }),
+      };
+
+      if (updatedSection) {
+        setErrorMessage('');
+        queueSectionAutosave(updatedSection, current._id);
+      }
+
+      return nextState;
+    });
   };
 
-  const saveSection = async (section) => {
+  const saveSection = async (section, options = {}) => {
+    const { silent = false, testId = currentTest._id } = options;
     setIsSaving(true);
+    setSavingSectionId(section._id);
     setErrorMessage('');
+    clearSectionAutosave(section._id);
+
+    if (!silent) {
+      setStatusMessage('');
+    }
 
     try {
+      const validationMessage = validateSectionDraft(section);
+
+      if (validationMessage) {
+        setErrorMessage(validationMessage);
+        return;
+      }
+
       await testService.updateSection(section._id, {
-        title: section.title,
+        title: section.title.trim(),
         order: section.order,
         questionPoolSize: section.questionPoolSize,
         questionsToServe: section.questionsToServe,
       });
-      await loadWorkspace(currentTest._id);
+      await loadWorkspace(testId);
+      showStatusMessage(silent ? 'Changes auto-saved.' : `Saved ${section.title.trim()}.`);
     } catch (error) {
       setErrorMessage(error.message || 'Unable to save section.');
     } finally {
+      setSavingSectionId(null);
       setIsSaving(false);
     }
   };
 
   const removeSection = async (sectionId) => {
+    if (!window.confirm('Delete this section and all of its questions?')) {
+      return;
+    }
+
     setIsSaving(true);
+    setActingSectionId(sectionId);
     setErrorMessage('');
+    setStatusMessage('');
+    clearSectionAutosave(sectionId);
 
     try {
       await testService.deleteSection(sectionId);
+      setCurrentTest((current) => ({
+        ...current,
+        sections: current.sections.filter((section) => section._id !== sectionId),
+      }));
       await loadWorkspace(currentTest._id);
+      showStatusMessage('Section deleted.');
     } catch (error) {
       setErrorMessage(error.message || 'Unable to delete section.');
     } finally {
+      setActingSectionId(null);
       setIsSaving(false);
     }
   };
 
   const addQuestion = async (sectionId, type) => {
     setIsSaving(true);
+    setActingSectionId(sectionId);
+    setAddingQuestionType(type);
     setErrorMessage('');
+    setStatusMessage('');
 
     try {
       await testService.createQuestion(sectionId, createEmptyQuestionPayload(type));
       await loadWorkspace(currentTest._id);
+      showStatusMessage(type === 'essay' ? 'Essay question added.' : 'MCQ question added.');
     } catch (error) {
       setErrorMessage(error.message || 'Unable to add question.');
     } finally {
+      setActingSectionId(null);
+      setAddingQuestionType(null);
       setIsSaving(false);
     }
   };
 
   const updateQuestionLocal = (sectionId, questionId, updater) => {
+    setDirtyQuestionIds((current) => (current.includes(questionId) ? current : [...current, questionId]));
     setCurrentTest((current) => ({
       ...current,
       sections: current.sections.map((section) =>
@@ -360,36 +676,92 @@ const TestBuilder = () => {
     }));
   };
 
-  const saveQuestion = async (question) => {
+  const importQuestionsForSection = async (sectionId, file) => {
     setIsSaving(true);
+    setActingSectionId(sectionId);
     setErrorMessage('');
+    setStatusMessage('');
 
     try {
+      const questions = await parseImportedQuestions(file);
+      await testService.importQuestions(sectionId, questions);
+      await loadWorkspace(currentTest._id);
+      showStatusMessage(`Imported ${questions.length} question${questions.length === 1 ? '' : 's'}.`);
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to import questions.');
+    } finally {
+      setActingSectionId(null);
+      setIsSaving(false);
+      if (fileInputRefs.current[sectionId]) {
+        fileInputRefs.current[sectionId].value = '';
+      }
+    }
+  };
+
+  const saveQuestion = async (question) => {
+    setIsSaving(true);
+    setSavingQuestionId(question._id);
+    setErrorMessage('');
+    setStatusMessage('');
+
+    try {
+      const validationMessage = validateQuestionDraft(question);
+
+      if (validationMessage) {
+        setErrorMessage(validationMessage);
+        return;
+      }
+
       await testService.updateQuestion(question._id, {
         type: question.type,
-        content: question.content,
+        content: question.content.trim(),
         points: question.points,
         maxWordCount: question.type === 'essay' ? question.maxWordCount : null,
-        options: question.type === 'mcq' ? question.options : undefined,
-      });
-      await loadWorkspace(currentTest._id);
+        options:
+          question.type === 'mcq'
+            ? question.options.map((option) => ({
+                ...option,
+                text: option.text.trim(),
+              }))
+            : undefined,
+        });
+        await loadWorkspace(currentTest._id);
+        setDirtyQuestionIds((current) => current.filter((id) => id !== question._id));
+        showStatusMessage('Question saved.');
     } catch (error) {
       setErrorMessage(error.message || 'Unable to save question.');
     } finally {
+      setSavingQuestionId(null);
       setIsSaving(false);
     }
   };
 
   const removeQuestion = async (questionId) => {
+    if (!window.confirm('Delete this question?')) {
+      return;
+    }
+
     setIsSaving(true);
+    setSavingQuestionId(questionId);
     setErrorMessage('');
+    setStatusMessage('');
 
     try {
       await testService.deleteQuestion(questionId);
+      setCurrentTest((current) => ({
+        ...current,
+        sections: current.sections.map((section) => ({
+          ...section,
+          questions: (section.questions || []).filter((question) => question._id !== questionId),
+        })),
+      }));
       await loadWorkspace(currentTest._id);
+      setDirtyQuestionIds((current) => current.filter((id) => id !== questionId));
+      showStatusMessage('Question deleted.');
     } catch (error) {
       setErrorMessage(error.message || 'Unable to delete question.');
     } finally {
+      setSavingQuestionId(null);
       setIsSaving(false);
     }
   };
@@ -441,6 +813,12 @@ const TestBuilder = () => {
           </div>
         ) : null}
 
+        {statusMessage ? (
+          <div className="mt-5 rounded-full border-2 border-quaternary bg-quaternary/20 px-4 py-2 text-sm font-medium text-foreground">
+            {statusMessage}
+          </div>
+        ) : null}
+
         {draftTests.length > 0 ? (
           <div className="mt-5 flex flex-wrap gap-2">
             {draftTests.map((test) => (
@@ -452,7 +830,7 @@ const TestBuilder = () => {
                   currentTest._id === test._id ? 'border-foreground bg-accent text-accentFg shadow-pop-press' : 'border-border bg-muted text-foreground'
                 }`}
               >
-                {test.title}
+                {test.title || 'Untitled Test'} · {String(test._id).slice(-4)}
               </button>
             ))}
           </div>
@@ -511,10 +889,10 @@ const TestBuilder = () => {
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Serve</span>
                     <input type="number" min="1" value={section.questionsToServe} onChange={(event) => updateSectionLocal(section._id, 'questionsToServe', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
                   </label>
-                  <button type="button" onClick={() => saveSection(section)} className="rounded-full border-2 border-foreground bg-secondary px-4 py-3 text-sm font-bold text-foreground shadow-pop-press">
-                    Save Section
+                  <button type="button" onClick={() => saveSection(section)} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-4 py-3 text-sm font-bold text-foreground shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                    {savingSectionId === section._id ? 'Saving...' : 'Save Section'}
                   </button>
-                  <button type="button" onClick={() => removeSection(section._id)} className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press">
+                  <button type="button" onClick={() => removeSection(section._id)} disabled={isSaving} className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
                     <Trash2 size={16} strokeWidth={2.5} />
                   </button>
                 </div>
@@ -524,22 +902,11 @@ const TestBuilder = () => {
                     <QuestionEditor
                       key={question._id}
                       question={question}
-                      isSaving={isSaving}
+                      isSaving={savingQuestionId === question._id}
+                      isDirty={dirtyQuestionIds.includes(question._id)}
                       onChange={(field, value) => updateQuestionLocal(section._id, question._id, (current) => ({ ...current, [field]: value }))}
                       onSave={() => saveQuestion(question)}
                       onDelete={() => removeQuestion(question._id)}
-                      onAddOption={() =>
-                        updateQuestionLocal(section._id, question._id, (current) => ({
-                          ...current,
-                          options: [...current.options, { text: `Option ${current.options.length + 1}`, isCorrect: false }],
-                        }))
-                      }
-                      onRemoveOption={(optionIndex) =>
-                        updateQuestionLocal(section._id, question._id, (current) => ({
-                          ...current,
-                          options: current.options.filter((_, index) => index !== optionIndex),
-                        }))
-                      }
                       onOptionChange={(optionIndex, field, value, exclusive = false) =>
                         updateQuestionLocal(section._id, question._id, (current) => ({
                           ...current,
@@ -557,20 +924,46 @@ const TestBuilder = () => {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button type="button" onClick={() => addQuestion(section._id, 'mcq')} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press">
-                    Add MCQ
+                  <button type="button" onClick={() => addQuestion(section._id, 'mcq')} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                    {actingSectionId === section._id && addingQuestionType === 'mcq' ? 'Adding MCQ...' : 'Add MCQ'}
                   </button>
-                  <button type="button" onClick={() => addQuestion(section._id, 'essay')} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press">
-                    Add Essay
+                  <button type="button" onClick={() => addQuestion(section._id, 'essay')} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                    {actingSectionId === section._id && addingQuestionType === 'essay' ? 'Adding Essay...' : 'Add Essay'}
                   </button>
+                  <button
+                    type="button"
+                    onClick={() => fileInputRefs.current[section._id]?.click()}
+                    disabled={isSaving}
+                    className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-tertiary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
+                  >
+                    <FileUp size={18} strokeWidth={2.5} />
+                    {actingSectionId === section._id ? 'Importing...' : 'Import CSV/XLSX'}
+                  </button>
+                  <input
+                    ref={(element) => {
+                      fileInputRefs.current[section._id] = element;
+                    }}
+                    type="file"
+                    accept=".csv,.xlsx,.xls"
+                    className="hidden"
+                    onChange={(event) => {
+                      const [file] = event.target.files || [];
+                      if (file) {
+                        importQuestionsForSection(section._id, file);
+                      }
+                    }}
+                  />
+                  <p className="w-full text-xs text-mutedFg">
+                    Import columns: <span className="font-semibold">question, option1, option2, option3, option4, correctOption, points</span>
+                  </p>
                 </div>
               </div>
             </article>
           ))}
 
-          <button type="button" onClick={addSection} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 font-bold text-mutedFg transition-all duration-200 ease-bounce hover:border-accent hover:bg-accent/5 hover:text-accent">
+          <button type="button" onClick={addSection} disabled={isSaving} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 font-bold text-mutedFg transition-all duration-200 ease-bounce hover:border-accent hover:bg-accent/5 hover:text-accent disabled:cursor-not-allowed disabled:opacity-70">
             <FilePlus2 size={18} strokeWidth={2.5} />
-            Add Section
+            {actingSectionId === 'new' ? 'Adding Section...' : 'Add Section'}
           </button>
         </section>
       </section>

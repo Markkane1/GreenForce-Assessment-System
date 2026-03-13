@@ -3,6 +3,7 @@ import {
   createQuestion as createQuestionService,
   deleteQuestion as deleteQuestionService,
   getQuestionsBySection as getQuestionsBySectionService,
+  importQuestions as importQuestionsService,
   updateQuestion as updateQuestionService,
 } from './questions.service.js';
 
@@ -21,6 +22,15 @@ export const getQuestionsBySection = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     questions,
+  });
+});
+
+export const importQuestions = asyncHandler(async (req, res) => {
+  const result = await importQuestionsService(req.params.sectionId, req.body.questions, req.user.id, req.user.role);
+
+  res.status(201).json({
+    success: true,
+    ...result,
   });
 });
 

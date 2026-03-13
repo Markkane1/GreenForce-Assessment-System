@@ -1,4 +1,4 @@
-import { LayoutDashboard, LogOut, ScrollText, ShieldCheck, Users, UsersRound } from 'lucide-react';
+import { KeyRound, LayoutDashboard, LogOut, ScrollText, ShieldCheck, Users, UsersRound } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
 import Badge from './Badge';
@@ -31,8 +31,8 @@ const Sidebar = () => {
   const { user, logout } = useAuth();
   const links = navigationByRole[user?.role] || [];
 
-  const handleLogout = () => {
-    logout();
+  const handleLogout = async () => {
+    await logout();
     navigate('/login', { replace: true });
   };
 
@@ -83,8 +83,16 @@ const Sidebar = () => {
         </div>
         <button
           type="button"
+          onClick={() => navigate('/change-password')}
+          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-foreground bg-card px-4 py-3 text-sm font-bold text-foreground shadow-pop-soft transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+        >
+          <KeyRound size={16} strokeWidth={2.5} />
+          Change Password
+        </button>
+        <button
+          type="button"
           onClick={handleLogout}
-          className="mt-4 flex w-full items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-4 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="mt-3 flex w-full items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-4 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
         >
           <LogOut size={16} strokeWidth={2.5} />
           Logout

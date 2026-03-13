@@ -1,3 +1,4 @@
+import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
@@ -9,6 +10,7 @@ import authRoutes from './modules/auth/auth.routes.js';
 import examEngineRoutes from './modules/examEngine/examEngine.routes.js';
 import gradingRoutes from './modules/grading/grading.routes.js';
 import groupsRoutes from './modules/groups/groups.routes.js';
+import inviteCodesRoutes from './modules/inviteCodes/inviteCodes.routes.js';
 import questionDirectRoutes from './modules/questions/questions.direct.routes.js';
 import questionsRoutes from './modules/questions/questions.routes.js';
 import schedulesRoutes from './modules/schedules/schedules.routes.js';
@@ -18,6 +20,7 @@ import testsRoutes from './modules/tests/tests.routes.js';
 import usersRoutes from './modules/users/users.routes.js';
 
 const app = express();
+const isProduction = process.env.NODE_ENV === 'production';
 
 const buildAllowedOrigins = () => {
   const configuredOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -41,6 +44,8 @@ const rateLimitHandler = (req, res) => {
   });
 };
 
+const shouldSkipRateLimit = (req) => !isProduction || req.method === 'OPTIONS';
+
 const corsOptions = {
   origin: buildAllowedOrigins(),
   credentials: true,
@@ -53,7 +58,7 @@ const globalLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS',
+  skip: shouldSkipRateLimit,
   handler: rateLimitHandler,
 });
 
@@ -62,7 +67,7 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS',
+  skip: shouldSkipRateLimit,
   handler: rateLimitHandler,
 });
 
@@ -71,7 +76,7 @@ const saveAnswerLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: (req) => req.method === 'OPTIONS',
+  skip: shouldSkipRateLimit,
   handler: rateLimitHandler,
 });
 
@@ -79,6 +84,7 @@ app.disable('x-powered-by');
 app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(globalLimiter);
+app.use(cookieParser());
 app.use('/api/exam/save-answer', express.json({ limit: '50kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(mongoSanitize());
@@ -103,6 +109,7 @@ app.use(
 app.use('/api/auth', authLimiter, authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/groups', groupsRoutes);
+app.use('/api/invite-codes', inviteCodesRoutes);
 app.use('/api/tests', testsRoutes);
 app.use('/api', sectionsRoutes);
 app.use('/api', questionsRoutes);

@@ -65,7 +65,7 @@ const getRedirectPath = (role) => {
 const LoginPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
-  const { login, user } = useAuth();
+  const { isAuthReady, login, user } = useAuth();
   const [formData, setFormData] = useState({ email: '', password: '' });
   const [showPassword, setShowPassword] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
@@ -85,7 +85,7 @@ const LoginPage = () => {
 
     try {
       const response = await authService.login(formData.email, formData.password);
-      login(response.user, response.token);
+      login(response.user);
       navigate(getRedirectPath(response.user.role), { replace: true });
     } catch (error) {
       setErrorMessage(error.message || 'Unable to sign in. Please try again.');
@@ -93,6 +93,10 @@ const LoginPage = () => {
       setIsSubmitting(false);
     }
   };
+
+  if (!isAuthReady) {
+    return null;
+  }
 
   if (user?.role) {
     return <Navigate to={getRedirectPath(user.role)} replace />;
@@ -190,9 +194,9 @@ const LoginPage = () => {
             </form>
 
             <p className="mt-6 text-sm text-mutedFg">
-              Don&apos;t have an account?{' '}
+              New student?{' '}
               <Link className="font-bold text-accent underline decoration-2 underline-offset-4" to="/signup">
-                Sign up
+                Sign up with an invite code
               </Link>
             </p>
           </div>

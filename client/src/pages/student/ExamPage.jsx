@@ -239,10 +239,6 @@ const ExamPage = () => {
     : null;
   const isNearThreshold = violationAlert?.violationsCount === VIOLATION_THRESHOLD - 1;
   const submissionContent = submissionReason ? submissionContentMap[submissionReason] : null;
-  const savedStatusLabel = lastSaved
-    ? `Saved ${lastSaved.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
-    : 'Saved';
-  const showNetworkLossBanner = failCount >= 2;
 
   const persistQuestion = useCallback(
     async (questionIndex) => {
@@ -374,6 +370,10 @@ const ExamPage = () => {
     ),
     onError: (error) => setErrorMessage(error.message || 'Unable to save your answer.'),
   });
+  const savedStatusLabel = lastSaved
+    ? `Saved ${lastSaved.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
+    : 'Saved';
+  const showNetworkLossBanner = failCount >= 2;
 
   useAntiCheat({
     attemptId: examPhase === 'active' ? attempt?._id : null,
@@ -399,6 +399,26 @@ const ExamPage = () => {
       setErrorMessage('');
 
       try {
+        const storedAttemptId = sessionStorage.getItem(getActiveAttemptKey(scheduleId));
+
+        if (storedAttemptId) {
+          try {
+            const storedAttempt = await examService.getAttemptStatus(storedAttemptId);
+
+            if (['submitted', 'force_submitted', 'expired'].includes(storedAttempt.status)) {
+              sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
+              sessionStorage.setItem(LAST_RESULT_KEY, storedAttempt._id);
+              navigate(`/student/results/${storedAttempt._id}`, {
+                replace: true,
+                state: { alreadySubmitted: true },
+              });
+              return;
+            }
+          } catch {
+            sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
+          }
+        }
+
         const preview = await examService.getSchedulePreview(scheduleId);
         setSchedulePreview(preview);
       } catch (error) {
@@ -409,7 +429,7 @@ const ExamPage = () => {
     };
 
     loadSchedulePreview();
-  }, [scheduleId]);
+  }, [navigate, scheduleId]);
 
   useEffect(() => {
     if (examPhase === 'active' && isFullscreen) {
@@ -591,7 +611,7 @@ const ExamPage = () => {
       setSubmissionReason(null);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
       setTimerSeconds(response.resumed ? response.remainingSeconds : response.attempt.remainingTimeSeconds);
-      setResumeBanner(response.resumed ? `Resuming your exam — ${formatMmSs(response.remainingSeconds)} remaining` : '');
+      setResumeBanner(response.resumed ? `Resuming your exam â€” ${formatMmSs(response.remainingSeconds)} remaining` : '');
       setHasBeenFullscreen(false);
       setFullscreenViolationCount(response.attempt.violationsCount || 0);
       setViolationAlert(null);
@@ -744,7 +764,7 @@ const ExamPage = () => {
     const hasAttemptsLeft = attemptsTaken < maxAttempts;
 
     return (
-      <div className="relative flex min-h-screen items-center justify-center overflow-hidden bg-background px-6 py-10">
+      <div className="relative min-h-screen overflow-y-auto bg-background px-6 py-10">
         <svg className="absolute inset-0 h-full w-full opacity-20" aria-hidden="true">
           <defs>
             <pattern id="exam-preview-dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -754,7 +774,7 @@ const ExamPage = () => {
           <rect width="100%" height="100%" fill="url(#exam-preview-dot-grid)" />
         </svg>
 
-        <div className="relative z-10 w-full max-w-lg rounded-xl border-2 border-foreground bg-card p-8 shadow-pop animate-pop-in">
+        <div className="relative z-10 mx-auto w-full max-w-lg rounded-xl border-2 border-foreground bg-card p-8 shadow-pop animate-pop-in">
           <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground bg-accent shadow-pop-press">
             <BookOpen size={32} strokeWidth={2.5} className="text-white" />
           </div>
@@ -814,7 +834,7 @@ const ExamPage = () => {
                 'This exam must be taken in fullscreen mode',
                 'Leaving fullscreen will be logged as a violation',
                 'Switching tabs or windows will be logged as a violation',
-                `You have ${schedulePreview?.testId?.timeLimitMinutes || 0} minutes once you start — the timer cannot be paused`,
+                `You have ${schedulePreview?.testId?.timeLimitMinutes || 0} minutes once you start â€” the timer cannot be paused`,
                 schedulePreview?.testId?.allowResume
                   ? 'If you lose connection, you can resume this exam'
                   : 'This exam cannot be paused or resumed once started',
@@ -1234,7 +1254,7 @@ const ExamPage = () => {
         <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-4 border-t-2 border-foreground bg-secondary px-6 py-3">
           <div className="flex items-center gap-3 text-white">
             <WifiOff size={18} strokeWidth={2.5} />
-            <span className="font-medium">Connection lost — your answers may not be saving</span>
+            <span className="font-medium">Connection lost â€” your answers may not be saving</span>
           </div>
           <button
             type="button"
@@ -1250,4 +1270,8 @@ const ExamPage = () => {
 };
 
 export default ExamPage;
+
+
+
+
 

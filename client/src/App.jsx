@@ -10,6 +10,7 @@ import LoginPage from './pages/auth/LoginPage';
 import ForgotPasswordPage from './pages/auth/ForgotPasswordPage';
 import ResetPasswordPage from './pages/auth/ResetPasswordPage';
 import SignupPage from './pages/auth/SignupPage';
+import ChangePasswordPage from './pages/account/ChangePasswordPage';
 import ExamPage from './pages/student/ExamPage';
 import ResultsPage from './pages/student/ResultsPage';
 import StudentDashboard from './pages/student/StudentDashboard';
@@ -20,11 +21,16 @@ import TeacherDashboard from './pages/teacher/TeacherDashboard';
 import TestBuilder from './pages/teacher/TestBuilder';
 import NotFoundPage from './pages/utility/NotFoundPage';
 import UnauthorizedPage from './pages/utility/UnauthorizedPage';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
 const HomeRedirect = () => {
-  const { token, user } = useAuth();
+  const { user, isAuthReady } = useAuth();
 
-  if (!token) {
+  if (!isAuthReady) {
+    return <LoadingSpinner />;
+  }
+
+  if (!user) {
     return <Navigate to="/login" replace />;
   }
 
@@ -53,6 +59,7 @@ const AppRoutes = () => (
         <Route path="/admin" element={<Navigate to="/admin/dashboard" replace />} />
         <Route path="/teacher" element={<Navigate to="/teacher/dashboard" replace />} />
         <Route path="/student" element={<Navigate to="/student/dashboard" replace />} />
+        <Route path="/change-password" element={<ChangePasswordPage />} />
 
         <Route
           path="/admin/dashboard"
@@ -164,7 +171,7 @@ const AppRoutes = () => (
 
 const App = () => (
   <AuthProvider>
-    <BrowserRouter>
+    <BrowserRouter future={{ v7_startTransition: true, v7_relativeSplatPath: true }}>
       <AppRoutes />
     </BrowserRouter>
   </AuthProvider>

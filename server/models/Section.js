@@ -42,6 +42,17 @@ const sectionSchema = new Schema(
 );
 
 sectionSchema.path('questionsToServe').validate(function validateQuestionsToServe(value) {
+  if (this instanceof mongoose.Query) {
+    const update = this.getUpdate() || {};
+    const nextQuestionPoolSize = update.questionPoolSize ?? update.$set?.questionPoolSize;
+
+    if (typeof nextQuestionPoolSize === 'number') {
+      return typeof value === 'number' && value <= nextQuestionPoolSize;
+    }
+
+    return true;
+  }
+
   return typeof value === 'number' && value <= this.questionPoolSize;
 }, 'questionsToServe cannot exceed questionPoolSize.');
 

@@ -36,6 +36,47 @@ const deleteQuestionsAndOptions = async (sectionIds) => {
   }
 };
 
+const buildQuestionCountMap = async (testIds) => {
+  if (!testIds.length) {
+    return new Map();
+  }
+
+  const sections = await Section.find({ testId: { $in: testIds } }).select('_id testId').lean();
+  const sectionIds = sections.map((section) => section._id);
+
+  if (sectionIds.length === 0) {
+    return new Map();
+  }
+
+  const testIdBySectionId = new Map(
+    sections.map((section) => [section._id.toString(), section.testId.toString()]),
+  );
+  const counts = await Question.aggregate([
+    {
+      $match: {
+        sectionId: { $in: sectionIds },
+      },
+    },
+    {
+      $group: {
+        _id: '$sectionId',
+        questionCount: { $sum: 1 },
+      },
+    },
+  ]);
+
+  return counts.reduce((accumulator, entry) => {
+    const testId = testIdBySectionId.get(entry._id.toString());
+
+    if (!testId) {
+      return accumulator;
+    }
+
+    accumulator.set(testId, (accumulator.get(testId) || 0) + entry.questionCount);
+    return accumulator;
+  }, new Map());
+};
+
 export const createTest = async (data, teacherId) =>
   Test.create({
     ...data,
@@ -44,13 +85,18 @@ export const createTest = async (data, teacherId) =>
 
 export const getAllTests = async (userId, role) => {
   const query = role === 'teacher' ? { createdBy: userId } : {};
-
-  return Test.find(query)
+  const tests = await Test.find(query)
     .populate({
       path: 'createdBy',
       select: '-password',
     })
     .sort({ createdAt: -1 });
+  const questionCountMap = await buildQuestionCountMap(tests.map((test) => test._id));
+
+  return tests.map((test) => ({
+    ...test.toObject(),
+    questionCount: questionCountMap.get(test._id.toString()) || 0,
+  }));
 };
 
 export const getTestById = async (id) => {
@@ -78,6 +124,45 @@ export const getTestById = async (id) => {
     sections: sections.map((section) => ({
       ...section,
       questionCount: countMap.get(section._id.toString()) || 0,
+    })),
+  };
+};
+
+export const getTestWorkspace = async (id) => {
+  const test = await ensureTestExists(id);
+  const sections = await Section.find({ testId: id }).sort({ order: 1 }).lean();
+  const sectionIds = sections.map((section) => section._id);
+  const questions = sectionIds.length > 0
+    ? await Question.find({ sectionId: { $in: sectionIds } }).sort({ createdAt: 1 }).lean()
+    : [];
+  const questionIds = questions.map((question) => question._id);
+  const options = questionIds.length > 0
+    ? await MCQOption.find({ questionId: { $in: questionIds } }).sort({ createdAt: 1 }).lean()
+    : [];
+
+  const optionsByQuestionId = options.reduce((accumulator, option) => {
+    const key = option.questionId.toString();
+    accumulator[key] = accumulator[key] || [];
+    accumulator[key].push(option);
+    return accumulator;
+  }, {});
+
+  const questionsBySectionId = questions.reduce((accumulator, question) => {
+    const key = question.sectionId.toString();
+    accumulator[key] = accumulator[key] || [];
+    accumulator[key].push({
+      ...question,
+      options: question.type === 'mcq' ? optionsByQuestionId[question._id.toString()] || [] : [],
+    });
+    return accumulator;
+  }, {});
+
+  return {
+    ...test.toObject(),
+    sections: sections.map((section) => ({
+      ...section,
+      questions: questionsBySectionId[section._id.toString()] || [],
+      questionCount: (questionsBySectionId[section._id.toString()] || []).length,
     })),
   };
 };

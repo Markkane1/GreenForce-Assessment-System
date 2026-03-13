@@ -1,5 +1,6 @@
-import { Pencil, Plus, Trash2, Users, X } from 'lucide-react';
+import { Key, Pencil, Plus, Trash2, Users, X } from 'lucide-react';
 import { useEffect, useMemo, useState } from 'react';
+import InviteCodesPanel from '../../components/admin/InviteCodesPanel';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -19,21 +20,17 @@ const GroupManagement = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [isDetailOpen, setIsDetailOpen] = useState(false);
+  const [isInviteCodesOpen, setIsInviteCodesOpen] = useState(false);
   const [formData, setFormData] = useState(defaultGroupForm);
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
-
-  const hydrateGroups = async () => {
-    const baseGroups = await groupService.getGroups();
-    return Promise.all(baseGroups.map((group) => groupService.getGroupById(group._id)));
-  };
 
   const loadData = async () => {
     setIsLoading(true);
     setErrorMessage('');
 
     try {
-      const [groupData, studentData] = await Promise.all([hydrateGroups(), getUsers({ role: 'student' })]);
+      const [groupData, studentData] = await Promise.all([groupService.getGroups(), getUsers({ role: 'student' })]);
       setGroups(groupData);
       setStudents(studentData);
     } catch (error) {
@@ -68,6 +65,11 @@ const GroupManagement = () => {
     setSelectedGroup(group);
     setSearchTerm('');
     setIsDetailOpen(true);
+  };
+
+  const openInviteCodesModal = (group) => {
+    setSelectedGroup(group);
+    setIsInviteCodesOpen(true);
   };
 
   const handleFormChange = (event) => {
@@ -244,6 +246,17 @@ const GroupManagement = () => {
                 <div className="mt-5">
                   <Badge tone="tertiary">{group.members?.length || 0} Members</Badge>
                 </div>
+                <button
+                  type="button"
+                  onClick={(event) => {
+                    event.stopPropagation();
+                    openInviteCodesModal(group);
+                  }}
+                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-3 py-1 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+                >
+                  <Key size={16} strokeWidth={2.5} />
+                  Manage Invite Codes
+                </button>
               </div>
             ))}
           </div>
@@ -368,6 +381,12 @@ const GroupManagement = () => {
           </div>
         </div>
       </Modal>
+
+      <InviteCodesPanel
+        isOpen={isInviteCodesOpen}
+        onClose={() => setIsInviteCodesOpen(false)}
+        group={selectedGroup}
+      />
     </DashboardLayout>
   );
 };
