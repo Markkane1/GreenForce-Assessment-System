@@ -1,1 +1,7 @@
 node_modules
+AGENTS.md
+docs/
+.qa-screens/
+.qa-tools/
+.qa-*.log
+*.pid
