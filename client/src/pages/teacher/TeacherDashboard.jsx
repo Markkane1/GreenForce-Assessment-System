@@ -118,7 +118,7 @@ const TeacherDashboard = () => {
       <section className="mt-8 flex flex-col gap-4 md:flex-row">
         <button
           type="button"
-          onClick={() => navigate('/teacher/tests/new')}
+          onClick={() => navigate('/teacher/tests/new?fresh=1')}
           className="editorial-button-secondary flex-1"
         >
           <PlusCircle size={18} />

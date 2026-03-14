@@ -49,21 +49,33 @@ const getPasswordScore = (value) => {
 const EditorialSignupShell = ({ step, children }) => (
   <div className="min-h-screen md:grid md:grid-cols-[1.05fr_0.95fr]">
     <section className="editorial-auth-panel relative hidden min-h-screen overflow-hidden px-12 py-14 text-white md:flex md:flex-col md:justify-between">
-      <div className="relative z-10 max-w-xl">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,168,75,0.18),_transparent_46%)]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-xl text-center">
         <div className="editorial-rule-label">
-          <span>{step === 1 ? 'Invite Access' : 'Student Registration'}</span>
+          <span>EPA Punjab's Testing System</span>
         </div>
         <h1 className="font-editorial text-6xl font-semibold leading-[1.05] tracking-[-0.02em] text-[#FAFAF8]">
-          {step === 1 ? 'Begin with an institution code.' : 'Finish your account with context.'}
+          Green Force Assessment System
         </h1>
-        <p className="mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
+        <p className="mx-auto mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
           {step === 1
-            ? 'Student registration is intentionally gated. Verify your invite code first, then continue with your account details.'
-            : 'Your invite identifies the group you belong to. Complete the account details once, and the group assignment is handled for you.'}
+            ? 'Student registration is invite-gated. Validate your code first, then continue with your account details for the correct group.'
+            : 'Your invite defines the group context. Complete your details once and the system will place you into the assigned cohort.'}
         </p>
       </div>
 
-      <div className="relative z-10 space-y-4">
+      <div className="relative z-10 flex flex-1 items-center justify-center">
+        <img
+          src="/epa-auth-logo.svg"
+          alt="EPA logo"
+          className="w-72 max-w-[68%] opacity-[0.88]"
+        />
+      </div>
+
+      <div className="relative z-10 space-y-4 self-center">
         <div className="rounded-2xl border border-white/12 bg-white/4 p-6 backdrop-blur-sm">
           <div className="editorial-auth-kicker text-[#D4A84B]">Process</div>
           <p className="mt-4 font-editorial text-2xl text-[#FAFAF8]">

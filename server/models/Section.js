@@ -28,12 +28,12 @@ const sectionSchema = new Schema(
     questionPoolSize: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0,
     },
     questionsToServe: {
       type: Number,
       required: true,
-      min: 1,
+      min: 0,
     },
   },
   {
@@ -47,13 +47,13 @@ sectionSchema.path('questionsToServe').validate(function validateQuestionsToServ
     const nextQuestionPoolSize = update.questionPoolSize ?? update.$set?.questionPoolSize;
 
     if (typeof nextQuestionPoolSize === 'number') {
-      return typeof value === 'number' && value <= nextQuestionPoolSize;
+      return typeof value === 'number' && value >= 0 && value <= nextQuestionPoolSize;
     }
 
     return true;
   }
 
-  return typeof value === 'number' && value <= this.questionPoolSize;
+  return typeof value === 'number' && value >= 0 && value <= this.questionPoolSize;
 }, 'questionsToServe cannot exceed questionPoolSize.');
 
 sectionSchema.index({ testId: 1, order: 1 }, { unique: true });

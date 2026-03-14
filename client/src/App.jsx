@@ -21,6 +21,7 @@ const GradingPage = lazy(() => import('./pages/teacher/GradingPage'));
 const ExamScheduler = lazy(() => import('./pages/teacher/ExamScheduler'));
 const MonitorPage = lazy(() => import('./pages/teacher/MonitorPage'));
 const TeacherDashboard = lazy(() => import('./pages/teacher/TeacherDashboard'));
+const TestsPage = lazy(() => import('./pages/teacher/TestsPage'));
 const TestBuilder = lazy(() => import('./pages/teacher/TestBuilder'));
 const NotFoundPage = lazy(() => import('./pages/utility/NotFoundPage'));
 const UnauthorizedPage = lazy(() => import('./pages/utility/UnauthorizedPage'));
@@ -104,6 +105,14 @@ const AppRoutes = () => (
             }
           />
           <Route
+            path="/teacher/tests"
+            element={
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
+                <TestsPage />
+              </RoleRoute>
+            }
+          />
+          <Route
             path="/teacher/tests/new"
             element={
               <RoleRoute allowedRoles={['teacher', 'admin']}>
@@ -119,7 +128,6 @@ const AppRoutes = () => (
               </RoleRoute>
             }
           />
-          <Route path="/teacher/tests" element={<Navigate to="/teacher/tests/new" replace />} />
           <Route
             path="/teacher/schedule"
             element={

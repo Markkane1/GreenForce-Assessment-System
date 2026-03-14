@@ -206,7 +206,7 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
 
   if (!isPasswordValid) {
     const error = new Error('Current password is incorrect.');
-    error.statusCode = 401;
+    error.statusCode = 400;
     throw error;
   }
 

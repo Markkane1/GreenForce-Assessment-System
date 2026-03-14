@@ -19,19 +19,31 @@ const getRedirectPath = (role) => {
 const EditorialShell = ({ eyebrow, title, copy, children }) => (
   <div className="min-h-screen md:grid md:grid-cols-[1.05fr_0.95fr]">
     <section className="editorial-auth-panel relative hidden min-h-screen overflow-hidden px-12 py-14 text-white md:flex md:flex-col md:justify-between">
-      <div className="relative z-10 max-w-xl">
+      <div className="pointer-events-none absolute inset-0">
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,168,75,0.18),_transparent_46%)]" />
+      </div>
+
+      <div className="relative z-10 mx-auto max-w-xl text-center">
         <div className="editorial-rule-label">
           <span>{eyebrow}</span>
         </div>
         <h1 className="font-editorial text-6xl font-semibold leading-[1.05] tracking-[-0.02em] text-[#FAFAF8]">
           {title}
         </h1>
-        <p className="mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
+        <p className="mx-auto mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
           {copy}
         </p>
       </div>
 
-      <div className="relative z-10 grid max-w-lg gap-4">
+      <div className="relative z-10 flex flex-1 items-center justify-center">
+        <img
+          src="/epa-auth-logo.svg"
+          alt="EPA logo"
+          className="w-72 max-w-[68%] opacity-[0.88]"
+        />
+      </div>
+
+      <div className="relative z-10 grid max-w-lg gap-4 self-center">
         <div className="rounded-2xl border border-white/12 bg-white/4 p-6 backdrop-blur-sm">
           <div className="editorial-auth-kicker text-[#D4A84B]">Exam integrity</div>
           <p className="mt-4 font-editorial text-2xl text-[#FAFAF8]">Focused, secure, and intentionally quiet.</p>
@@ -101,9 +113,9 @@ const LoginPage = () => {
 
   return (
     <EditorialShell
-      eyebrow="Online Testing Suite"
-      title="Return to the exam workspace."
-      copy="Access schedules, grading, and exam activity through an interface built to stay out of the way and let the work read clearly."
+      eyebrow="EPA Punjab's Testing System"
+      title="Green Force Assessment System"
+      copy="Access schedules, grading, and exam activity through a quieter editorial interface designed for exam delivery and review."
     >
       <div className="editorial-auth-card p-8 sm:p-10">
         <div className="editorial-rule-label">

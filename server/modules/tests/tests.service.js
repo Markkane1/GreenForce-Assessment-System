@@ -1,7 +1,11 @@
+import Answer from '../../models/Answer.js';
 import MCQOption from '../../models/MCQOption.js';
+import ProctorLog from '../../models/ProctorLog.js';
 import Question from '../../models/Question.js';
 import Section from '../../models/Section.js';
 import Test from '../../models/Test.js';
+import TestAttempt from '../../models/TestAttempt.js';
+import TestSchedule from '../../models/TestSchedule.js';
 
 const DEFAULT_ANTI_CHEAT = {
   disableContextMenu: true,
@@ -234,8 +238,26 @@ export const deleteTest = async (id, userId, role) => {
   const test = await ensureTestExists(id);
   ensureOwnership(test, userId, role);
 
+  const schedules = await TestSchedule.find({ testId: id }).select('_id').lean();
+  const scheduleIds = schedules.map((schedule) => schedule._id);
+  const attempts = scheduleIds.length > 0
+    ? await TestAttempt.find({ scheduleId: { $in: scheduleIds } }).select('_id').lean()
+    : [];
+  const attemptIds = attempts.map((attempt) => attempt._id);
   const sections = await Section.find({ testId: id }).select('_id');
   const sectionIds = sections.map((section) => section._id);
+
+  if (attemptIds.length > 0) {
+    await Promise.all([
+      Answer.deleteMany({ attemptId: { $in: attemptIds } }),
+      ProctorLog.deleteMany({ attemptId: { $in: attemptIds } }),
+      TestAttempt.deleteMany({ _id: { $in: attemptIds } }),
+    ]);
+  }
+
+  if (scheduleIds.length > 0) {
+    await TestSchedule.deleteMany({ _id: { $in: scheduleIds } });
+  }
 
   if (sectionIds.length > 0) {
     await deleteQuestionsAndOptions(sectionIds);

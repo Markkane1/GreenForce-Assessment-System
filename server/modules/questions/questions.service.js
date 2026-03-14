@@ -94,6 +94,17 @@ const attachOptions = async (questions) => {
   }));
 };
 
+const syncSectionQuestionCounts = async (sectionId) => {
+  const totalQuestionCount = await Question.countDocuments({ sectionId });
+
+  await Section.findByIdAndUpdate(sectionId, {
+    questionPoolSize: totalQuestionCount,
+    questionsToServe: totalQuestionCount,
+  });
+
+  return totalQuestionCount;
+};
+
 export const createQuestion = async (sectionId, data, userId, role) => {
   await ensureTeacherCanAccessSection(sectionId, userId, role);
 
@@ -118,6 +129,8 @@ export const createQuestion = async (sectionId, data, userId, role) => {
       })),
     );
   }
+
+  await syncSectionQuestionCounts(sectionId);
 
   const [createdQuestion] = await attachOptions([question]);
   return createdQuestion;
@@ -179,10 +192,7 @@ export const importQuestions = async (sectionId, rows, userId, role) => {
     ),
   );
 
-  const totalQuestionCount = await Question.countDocuments({ sectionId });
-  section.questionPoolSize = totalQuestionCount;
-  section.questionsToServe = totalQuestionCount;
-  await section.save();
+  await syncSectionQuestionCounts(sectionId);
 
   return {
     importedCount: createdQuestions.length,
@@ -251,6 +261,7 @@ export const deleteQuestion = async (id, userId, role) => {
 
   await MCQOption.deleteMany({ questionId: question._id });
   await Question.findByIdAndDelete(id);
+  await syncSectionQuestionCounts(question.sectionId);
 
   return {
     success: true,

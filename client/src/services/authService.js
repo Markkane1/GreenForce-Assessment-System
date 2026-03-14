@@ -67,10 +67,14 @@ export const resetPassword = async (token, newPassword) => {
 
 export const changePassword = async (currentPassword, newPassword) => {
   try {
-    const { data } = await api.put('/auth/change-password', {
-      currentPassword,
-      newPassword,
-    });
+    const { data } = await api.put(
+      '/auth/change-password',
+      {
+        currentPassword,
+        newPassword,
+      },
+      { skipAuthRedirect: true },
+    );
     return data;
   } catch (error) {
     normalizeError(error, 'Failed to change password');

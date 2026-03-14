@@ -111,6 +111,7 @@ app.use(globalLimiter);
 app.use(cookieParser());
 app.use(csrfProtection);
 app.use('/api/exam/save-answer', express.json({ limit: '50kb' }));
+app.use('/api/sections/:sectionId/questions/import', express.json({ limit: '250kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(mongoSanitize());
 app.use(

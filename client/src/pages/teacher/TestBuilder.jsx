@@ -136,6 +136,28 @@ const parseCsvText = (text) => {
   return rows;
 };
 
+const normalizeParsedCsvRows = (rows) =>
+  rows.map((row) => {
+    if (row.length !== 1) {
+      return row;
+    }
+
+    const [singleCell] = row;
+    const trimmedCell = String(singleCell ?? '').trim();
+
+    if (!trimmedCell.includes(',')) {
+      return row;
+    }
+
+    const reparsedRows = parseCsvText(trimmedCell);
+
+    if (reparsedRows.length === 1 && reparsedRows[0].length > 1) {
+      return reparsedRows[0];
+    }
+
+    return row;
+  });
+
 const tabularRowsToObjects = (rows) => {
   if (!rows.length) {
     return [];
@@ -176,6 +198,24 @@ const normalizeTestDraft = (draft) => ({
   },
 });
 
+const hasDefaultAntiCheatSettings = (antiCheat = {}) =>
+  Object.entries(DEFAULT_ANTI_CHEAT_SETTINGS).every(
+    ([key, value]) => antiCheat?.[key] === value,
+  );
+
+const isEmptyAutoDraft = (test) =>
+  !test?.isPublished
+  && (test?.title || '').trim() === 'Untitled Test'
+  && !(test?.description || '').trim()
+  && Number(test?.timeLimitMinutes) === 60
+  && Number(test?.passingScore) === 50
+  && Number(test?.maxAttempts) === 1
+  && test?.allowResume === false
+  && test?.randomizeQuestions === false
+  && test?.randomizeOptions === false
+  && hasDefaultAntiCheatSettings(test?.antiCheat)
+  && Number(test?.questionCount || 0) === 0;
+
 const createEmptyQuestionPayload = (type) => ({
   type,
   content: type === 'essay' ? 'Write your answer here...' : 'New multiple-choice question',
@@ -189,12 +229,12 @@ const validateSectionDraft = (section) => {
     return 'Section title is required.';
   }
 
-  if (!Number.isInteger(section.questionPoolSize) || section.questionPoolSize < 1) {
-    return 'Section question pool size must be at least 1.';
+  if (!Number.isInteger(section.questionPoolSize) || section.questionPoolSize < 0) {
+    return 'Section question pool size cannot be negative.';
   }
 
-  if (!Number.isInteger(section.questionsToServe) || section.questionsToServe < 1) {
-    return 'Section questions to serve must be at least 1.';
+  if (!Number.isInteger(section.questionsToServe) || section.questionsToServe < 0) {
+    return 'Section questions to serve cannot be negative.';
   }
 
   if (section.questionsToServe > section.questionPoolSize) {
@@ -255,11 +295,22 @@ const Toggle = ({ label, checked, onChange }) => (
   </div>
 );
 
-const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, isSaving, isDirty }) => (
+const QuestionEditor = ({
+  question,
+  questionNumber,
+  totalQuestions,
+  onChange,
+  onSave,
+  onDelete,
+  onOptionChange,
+  isSaving,
+  isDirty,
+}) => (
   <div className="rounded-[1.25rem] border border-border bg-background p-5 shadow-editorialSm">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <Badge tone={question.type === 'mcq' ? 'secondary' : 'tertiary'}>{question.type}</Badge>
+        <Badge tone="accent">{`${question.type.toUpperCase()} ${questionNumber} of ${totalQuestions}`}</Badge>
         {isDirty ? <Badge tone="accent">Unsaved</Badge> : null}
       </div>
       <button
@@ -477,7 +528,7 @@ const TestBuilder = () => {
     let rows = [];
 
     if (fileName.endsWith('.csv')) {
-      rows = tabularRowsToObjects(parseCsvText(await file.text()));
+      rows = tabularRowsToObjects(normalizeParsedCsvRows(parseCsvText(await file.text())));
     } else if (fileName.endsWith('.xlsx')) {
       const readExcelFileModule = await loadReadExcelFile();
       const readXlsxFile = readExcelFileModule.default || readExcelFileModule;
@@ -539,6 +590,7 @@ const TestBuilder = () => {
 
   const searchParamTestId = searchParams.get('testId');
   const searchParamNew = searchParams.get('new');
+  const searchParamFresh = searchParams.get('fresh');
 
   useEffect(() => {
     const initialize = async () => {
@@ -550,9 +602,15 @@ const TestBuilder = () => {
         const testList = await loadTests();
         const requestedTestId = routeTestId || searchParamTestId;
         const shouldCreateNew = location.pathname === '/teacher/tests/new' || (!routeTestId && searchParamNew === '1');
+        const shouldStartFresh = searchParamFresh === '1';
 
         if (shouldCreateNew) {
-          setCurrentTest(createEmptyDraft());
+          const reusableDraft = !shouldStartFresh ? testList.find((test) => isEmptyAutoDraft(test)) : null;
+          if (reusableDraft?._id) {
+            await loadWorkspace(reusableDraft._id);
+          } else {
+            setCurrentTest(createEmptyDraft());
+          }
         } else if (requestedTestId) {
           await loadWorkspace(requestedTestId);
         } else if (testList.length > 0) {
@@ -577,7 +635,7 @@ const TestBuilder = () => {
         clearTimeout(statusMessageTimerRef.current);
       }
     };
-  }, [loadTests, loadWorkspace, location.pathname, routeTestId, searchParamNew, searchParamTestId]);
+  }, [loadTests, loadWorkspace, location.pathname, routeTestId, searchParamFresh, searchParamNew, searchParamTestId]);
 
   const saveDraft = async () => {
     setIsSaving(true);
@@ -630,9 +688,8 @@ const TestBuilder = () => {
       const saved = currentTest._id ? null : await saveDraft();
       const testId = saved?._id || currentTest._id;
       await testService.publishTest(testId);
-      await loadWorkspace(testId);
       await loadTests();
-      showStatusMessage('Test published.');
+      navigate('/teacher/tests', { replace: true });
     } catch (error) {
       setErrorMessage(error.message || 'Unable to publish test.');
     } finally {
@@ -684,8 +741,8 @@ const TestBuilder = () => {
       await testService.createSection(testId, {
         title: `Section ${currentTest.sections.length + 1}`,
         order: currentTest.sections.length + 1,
-        questionPoolSize: 5,
-        questionsToServe: 5,
+        questionPoolSize: 0,
+        questionsToServe: 0,
       });
       await loadWorkspace(testId);
       showStatusMessage('Section added.');
@@ -693,6 +750,38 @@ const TestBuilder = () => {
       setErrorMessage(error.message || 'Unable to add section.');
     } finally {
       setActingSectionId(null);
+      setIsSaving(false);
+    }
+  };
+
+  const discardCurrentTest = async () => {
+    const isSavedDraft = Boolean(currentTest._id);
+    const confirmationMessage = isSavedDraft
+      ? 'Discard this test completely? This will delete the test, its sections, and its questions.'
+      : 'Discard this unsaved test and start over?';
+
+    if (!window.confirm(confirmationMessage)) {
+      return;
+    }
+
+    setIsSaving(true);
+    setErrorMessage('');
+    setStatusMessage('');
+
+    try {
+      clearDraftAutosave();
+
+      if (isSavedDraft) {
+        await testService.deleteTest(currentTest._id);
+        await loadTests();
+        navigate('/teacher/tests', { replace: true });
+      } else {
+        setCurrentTest(createEmptyDraft());
+        navigate('/teacher/tests/new?fresh=1', { replace: true });
+      }
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to discard test.');
+    } finally {
       setIsSaving(false);
     }
   };
@@ -915,7 +1004,14 @@ const TestBuilder = () => {
     }
   };
 
-  const draftTests = useMemo(() => tests.filter((test) => !test.isPublished), [tests]);
+  const draftTests = useMemo(
+    () =>
+      tests.filter(
+        (test) =>
+          !test.isPublished && (!isEmptyAutoDraft(test) || test._id === currentTest._id),
+      ),
+    [currentTest._id, tests],
+  );
 
   if (isLoading) {
     return (
@@ -936,6 +1032,14 @@ const TestBuilder = () => {
             placeholder="Untitled Test"
           />
           <div className="flex flex-wrap gap-3">
+            <button
+              type="button"
+              onClick={discardCurrentTest}
+              disabled={isSaving}
+              className="editorial-button-secondary"
+            >
+              Discard Test
+            </button>
             <button
               type="button"
               onClick={saveDraft}
@@ -1073,11 +1177,11 @@ const TestBuilder = () => {
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Pool Size</span>
-                    <input type="number" min="1" value={section.questionPoolSize} onChange={(event) => updateSectionLocal(section._id, 'questionPoolSize', Number(event.target.value))} className="editorial-input-surface" />
+                    <input type="number" min="0" value={section.questionPoolSize} onChange={(event) => updateSectionLocal(section._id, 'questionPoolSize', Number(event.target.value))} className="editorial-input-surface" />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Serve</span>
-                    <input type="number" min="1" value={section.questionsToServe} onChange={(event) => updateSectionLocal(section._id, 'questionsToServe', Number(event.target.value))} className="editorial-input-surface" />
+                    <input type="number" min="0" value={section.questionsToServe} onChange={(event) => updateSectionLocal(section._id, 'questionsToServe', Number(event.target.value))} className="editorial-input-surface" />
                   </label>
                   <button type="button" onClick={() => saveSection(section)} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
                     {savingSectionId === section._id ? 'Saving...' : 'Save Section'}
@@ -1088,10 +1192,12 @@ const TestBuilder = () => {
                 </div>
 
                 <div className="mt-5 space-y-4">
-                  {section.questions?.map((question) => (
+                  {section.questions?.map((question, questionIndex) => (
                     <QuestionEditor
                       key={question._id}
                       question={question}
+                      questionNumber={questionIndex + 1}
+                      totalQuestions={section.questions?.length || 0}
                       isSaving={savingQuestionId === question._id}
                       isDirty={dirtyQuestionIds.includes(question._id)}
                       onChange={(field, value) => updateQuestionLocal(section._id, question._id, (current) => ({ ...current, [field]: value }))}
@@ -1114,10 +1220,20 @@ const TestBuilder = () => {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button type="button" onClick={() => addQuestion(section._id, 'mcq')} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
+                  <button
+                    type="button"
+                    onClick={() => addQuestion(section._id, 'mcq')}
+                    disabled={isSaving}
+                    className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70"
+                  >
                     {actingSectionId === section._id && addingQuestionType === 'mcq' ? 'Adding MCQ...' : 'Add MCQ'}
                   </button>
-                  <button type="button" onClick={() => addQuestion(section._id, 'essay')} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
+                  <button
+                    type="button"
+                    onClick={() => addQuestion(section._id, 'essay')}
+                    disabled={isSaving}
+                    className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70"
+                  >
                     {actingSectionId === section._id && addingQuestionType === 'essay' ? 'Adding Essay...' : 'Add Essay'}
                   </button>
                   <button
@@ -1162,4 +1278,3 @@ const TestBuilder = () => {
 };
 
 export default TestBuilder;
-

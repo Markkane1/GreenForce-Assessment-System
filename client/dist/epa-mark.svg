@@ -1,0 +1,23 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 96 96" role="img" aria-label="EPA mark">
+  <rect width="96" height="96" rx="20" fill="#0B0B0B" />
+  <g fill="#71B95A" stroke="#5AA04A" stroke-linejoin="round">
+    <path
+      d="M10 18h28c5 0 9 4 9 9v4c0 5-4 9-9 9H24v8h13c5 0 8 4 8 8s-3 8-8 8H24v6c0 5-4 9-9 9s-9-4-9-9V18Z"
+      stroke-width="2.5"
+    />
+    <path
+      d="M47 18h20c11 0 19 8 19 18 0 9-6 16-14 18l6 7c4 3 4 9 0 12-3 4-9 4-12 0L52 58c-3-2-3-7-2-10 2-3 5-5 8-5h8c4 0 7-3 7-6 0-4-3-6-7-6h-6v39c0 5-4 9-9 9s-9-4-9-9V18Z"
+      stroke-width="2.5"
+    />
+    <path
+      d="M61 28c5-4 9-4 14-2-3 6-8 10-14 12 0-3 0-6 0-10Z"
+      fill="#153A20"
+      stroke="#153A20"
+      stroke-width="1.8"
+    />
+    <path
+      d="M74 18h5c4 0 7 2 8 6l16 45c2 5-1 10-6 12-5 2-10-1-11-6l-2-6H66l-3 7c-2 5-7 7-12 5-5-2-7-7-5-12l16-44c1-4 5-7 10-7Zm3 19-5 18h11l-6-18Z"
+      stroke-width="2.5"
+    />
+  </g>
+</svg>

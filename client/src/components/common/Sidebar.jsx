@@ -9,13 +9,13 @@ const navigationByRole = {
     { label: 'Users', to: '/admin/users', icon: Users },
     { label: 'Groups', to: '/admin/groups', icon: UsersRound },
     { label: 'Teaching', to: '/teacher/dashboard', icon: LayoutDashboard },
-    { label: 'Tests', to: '/teacher/tests/new', icon: ScrollText },
+    { label: 'Tests', to: '/teacher/tests', icon: ScrollText },
     { label: 'Schedule', to: '/teacher/schedule', icon: UsersRound },
     { label: 'Grading', to: '/teacher/grade', icon: ShieldCheck },
   ],
   teacher: [
     { label: 'Dashboard', to: '/teacher/dashboard', icon: LayoutDashboard },
-    { label: 'Tests', to: '/teacher/tests/new', icon: ScrollText },
+    { label: 'Tests', to: '/teacher/tests', icon: ScrollText },
     { label: 'Schedule', to: '/teacher/schedule', icon: UsersRound },
     { label: 'Grading', to: '/teacher/grade', icon: ShieldCheck },
   ],
@@ -41,21 +41,27 @@ const Sidebar = () => {
   };
 
   return (
-    <aside className="fixed inset-y-0 left-0 z-40 flex w-72 flex-col border-r border-border bg-card/95 px-6 py-8 backdrop-blur-sm">
+    <aside className="fixed inset-y-0 left-0 z-40 flex h-screen w-72 flex-col overflow-y-auto border-r border-border bg-card/95 px-6 py-8 backdrop-blur-sm">
       <div className="border-b border-border pb-6">
         <div className="editorial-section-label mb-5">
           <span>Navigation</span>
         </div>
         <div className="flex items-center gap-3">
-        <span className="inline-flex h-8 w-8 rounded-full border border-accent bg-accent/10" />
-        <div>
-          <p className="font-heading text-3xl font-semibold text-foreground">ExamPop</p>
-          <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">Testing Suite</p>
-        </div>
+          <img
+            src="/epa-mark.svg"
+            alt="EPA logo"
+            className="h-11 w-11 shrink-0 rounded-2xl shadow-editorialSm"
+          />
+          <div className="min-w-0">
+            <p className="font-heading text-[1.55rem] font-semibold leading-none text-foreground">EPA Punjab</p>
+            <p className="mt-1 max-w-[10.5rem] font-editorialMono text-[10px] font-medium uppercase leading-4 tracking-[0.15em] text-accent">
+              Testing System
+            </p>
+          </div>
         </div>
       </div>
 
-      <nav className="mt-8 flex flex-1 flex-col gap-2">
+      <nav className="mt-8 flex flex-1 flex-col gap-2 pb-6">
         {links.map((item) => {
           const Icon = item.icon;
 
@@ -78,13 +84,15 @@ const Sidebar = () => {
         })}
       </nav>
 
-      <div className="rounded-2xl border border-border bg-muted/80 p-4 shadow-editorialMd">
+      <div className="mt-auto rounded-2xl border border-border bg-muted/80 p-4 shadow-editorialMd">
         <div className="flex items-center gap-3">
           <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-card font-heading text-sm font-semibold text-foreground">
             {getInitials(user?.name)}
           </div>
-          <div className="min-w-0">
-            <p className="truncate font-heading text-lg font-semibold text-foreground">{user?.name || 'Exam User'}</p>
+          <div className="min-w-0 flex-1">
+            <p className="line-clamp-2 break-words font-heading text-lg font-semibold leading-6 text-foreground">
+              {user?.name || 'Exam User'}
+            </p>
             <Badge tone="secondary" className="mt-1">
               {user?.role || 'guest'}
             </Badge>
