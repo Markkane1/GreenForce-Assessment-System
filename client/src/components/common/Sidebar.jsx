@@ -19,7 +19,10 @@ const navigationByRole = {
     { label: 'Schedule', to: '/teacher/schedule', icon: UsersRound },
     { label: 'Grading', to: '/teacher/grade', icon: ShieldCheck },
   ],
-  student: [{ label: 'Dashboard', to: '/student/dashboard', icon: LayoutDashboard }],
+  student: [
+    { label: 'Dashboard', to: '/student/dashboard', icon: LayoutDashboard },
+    { label: 'My Results', to: '/student/results', icon: ScrollText },
+  ],
 };
 
 const getInitials = (name = '') =>

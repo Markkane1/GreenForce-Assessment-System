@@ -1024,19 +1024,19 @@ const TestBuilder = () => {
   return (
     <DashboardLayout title="Test Builder">
       <section className="editorial-panel p-6">
-        <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
+        <div className="flex flex-col gap-4 xl:flex-row xl:items-start xl:justify-between">
           <input
             value={currentTest.title}
             onChange={(event) => updateTestField('title', event.target.value)}
             className="w-full bg-transparent font-heading text-4xl font-semibold text-foreground outline-none placeholder:text-mutedFg"
             placeholder="Untitled Test"
           />
-          <div className="flex flex-wrap gap-3">
+          <div className="grid w-full gap-3 sm:grid-cols-3 xl:w-auto xl:min-w-[420px]">
             <button
               type="button"
               onClick={discardCurrentTest}
               disabled={isSaving}
-              className="editorial-button-secondary"
+              className="editorial-button-secondary w-full justify-center"
             >
               Discard Test
             </button>
@@ -1044,7 +1044,7 @@ const TestBuilder = () => {
               type="button"
               onClick={saveDraft}
               disabled={isSaving}
-              className="editorial-button-secondary"
+              className="editorial-button-secondary w-full justify-center"
             >
               <Save size={18} strokeWidth={2.5} />
               Save Draft
@@ -1053,7 +1053,7 @@ const TestBuilder = () => {
               type="button"
               onClick={publishCurrentTest}
               disabled={isSaving}
-              className="editorial-button-primary"
+              className="editorial-button-primary w-full justify-center"
             >
               Publish
             </button>

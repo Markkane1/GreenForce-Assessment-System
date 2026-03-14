@@ -103,6 +103,7 @@ const UserManagement = () => {
         await userService.updateUser(selectedUser._id, {
           name: formData.name,
           email: formData.email,
+          ...(formData.password ? { password: formData.password } : {}),
           role: formData.role,
         });
       } else {

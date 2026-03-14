@@ -13,6 +13,24 @@ export const getAttemptsForGrading = async (filters = {}) => {
   }
 };
 
+export const getConcludedSchedules = async () => {
+  try {
+    const { data } = await api.get('/grading/schedules');
+    return data.schedules;
+  } catch (error) {
+    normalizeError(error, 'Failed to load concluded schedules');
+  }
+};
+
+export const getScheduleReport = async (scheduleId) => {
+  try {
+    const { data } = await api.get(`/grading/schedules/${scheduleId}/report`);
+    return data.report;
+  } catch (error) {
+    normalizeError(error, 'Failed to load schedule report');
+  }
+};
+
 export const getAttemptDetail = async (id) => {
   try {
     const { data } = await api.get(`/grading/attempts/${id}`);

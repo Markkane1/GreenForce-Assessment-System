@@ -16,6 +16,7 @@ const SignupPage = lazy(() => import('./pages/auth/SignupPage'));
 const ChangePasswordPage = lazy(() => import('./pages/account/ChangePasswordPage'));
 const ExamPage = lazy(() => import('./pages/student/ExamPage'));
 const ResultsPage = lazy(() => import('./pages/student/ResultsPage'));
+const MyResultsPage = lazy(() => import('./pages/student/MyResultsPage'));
 const StudentDashboard = lazy(() => import('./pages/student/StudentDashboard'));
 const GradingPage = lazy(() => import('./pages/teacher/GradingPage'));
 const ExamScheduler = lazy(() => import('./pages/teacher/ExamScheduler'));
@@ -168,6 +169,14 @@ const AppRoutes = () => (
             element={
               <RoleRoute allowedRoles={['student']}>
                 <ExamPage />
+              </RoleRoute>
+            }
+          />
+          <Route
+            path="/student/results"
+            element={
+              <RoleRoute allowedRoles={['student']}>
+                <MyResultsPage />
               </RoleRoute>
             }
           />

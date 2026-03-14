@@ -280,7 +280,7 @@ export const publishTest = async (id, userId, role) => {
 
   if (sections.length === 0) {
     const error = new Error('Test must contain at least one section before publishing.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -304,7 +304,7 @@ export const publishTest = async (id, userId, role) => {
 
   if (emptySection) {
     const error = new Error(`Section "${emptySection.title}" must contain at least one question before publishing.`);
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 

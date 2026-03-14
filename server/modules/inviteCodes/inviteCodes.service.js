@@ -88,7 +88,7 @@ export const generateBulkCodes = async (groupId, adminId, count) => {
 
   if (!Number.isInteger(count) || count < 1 || count > 500) {
     const error = new Error('Count must be an integer between 1 and 500.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -174,7 +174,7 @@ export const validateAndConsumeCode = async (rawCode, studentUserId) => {
 
   if (expiredCode) {
     const error = new Error('Invite code has expired');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -198,7 +198,7 @@ export const validateAndConsumeCode = async (rawCode, studentUserId) => {
 
   if (!inviteCode) {
     const error = new Error('Invalid or already used invite code');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -228,7 +228,7 @@ export const deleteCode = async (codeId, adminId) => {
 
   if (inviteCode.isUsed) {
     const error = new Error('Cannot delete a used invite code');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 

@@ -89,7 +89,7 @@ export const updateSection = async (id, data, userId, role) => {
 
   if (mergedQuestionsToServe > mergedQuestionPoolSize) {
     const error = new Error('questionsToServe cannot exceed questionPoolSize.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -97,7 +97,7 @@ export const updateSection = async (id, data, userId, role) => {
 
   if (mergedQuestionPoolSize < existingQuestionCount) {
     const error = new Error(`questionPoolSize cannot be less than the existing ${existingQuestionCount} question(s).`);
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 

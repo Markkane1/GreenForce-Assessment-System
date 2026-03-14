@@ -121,7 +121,7 @@ export const addMember = async (groupId, studentId) => {
 
   if (existingMember) {
     const error = new Error('Student is already a member of this group.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 

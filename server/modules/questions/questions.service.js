@@ -61,19 +61,19 @@ const ensureTeacherCanAccessQuestion = async (questionId, userId, role) => {
 const validateMcqOptions = (options) => {
   if (!Array.isArray(options) || options.length !== 4) {
     const error = new Error('MCQ questions must include exactly 4 options.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (options.some((option) => !option.text?.trim())) {
     const error = new Error('MCQ option text is required for all 4 options.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (!options.some((option) => option.isCorrect)) {
     const error = new Error('MCQ questions must include at least one correct option.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 };
@@ -141,7 +141,7 @@ export const importQuestions = async (sectionId, rows, userId, role) => {
 
   if (!Array.isArray(rows) || rows.length === 0) {
     const error = new Error('Import payload must include at least one question.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -156,7 +156,7 @@ export const importQuestions = async (sectionId, rows, userId, role) => {
 
     if (!content) {
       const error = new Error(`Row ${index + 1}: question text is required.`);
-      error.statusCode = 400;
+      error.statusCode = 422;
       throw error;
     }
 
@@ -215,7 +215,7 @@ export const updateQuestion = async (id, data, userId, role) => {
       validateMcqOptions(data.options);
     } else if (data.type === 'mcq') {
       const error = new Error('MCQ questions require options when changing type to mcq.');
-      error.statusCode = 400;
+      error.statusCode = 422;
       throw error;
     }
   }

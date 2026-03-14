@@ -174,7 +174,7 @@ const buildResumePayload = async (attempt, remainingSeconds) => {
 const ensureAttemptActive = async (attempt) => {
   if (attempt.status !== 'in_progress') {
     const error = new Error('Exam attempt is not active.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -187,7 +187,7 @@ const ensureAttemptActive = async (attempt) => {
     await attempt.save();
 
     const error = new Error('Exam time has expired.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 };
@@ -262,7 +262,7 @@ export const startExam = async (studentId, scheduleId) => {
 
   if (now < new Date(schedule.startTime) || now > new Date(schedule.endTime)) {
     const error = new Error('Exam is not currently active');
-    error.statusCode = 403;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -302,14 +302,14 @@ export const startExam = async (studentId, scheduleId) => {
 
       if (remainingSeconds === 0) {
         await submitExam(existingAttempt._id.toString(), studentId);
-        throw Object.assign(new Error('Exam time has expired'), { statusCode: 403 });
+        throw Object.assign(new Error('Exam time has expired'), { statusCode: 409 });
       }
 
       return buildResumePayload(existingAttempt, remainingSeconds);
     }
 
     const error = new Error('An exam attempt is already in progress and resume is not allowed');
-    error.statusCode = 403;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -341,7 +341,7 @@ export const startExam = async (studentId, scheduleId) => {
 
   if (attemptsCount >= test.maxAttempts) {
     const error = new Error('Maximum exam attempts exceeded.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -349,7 +349,7 @@ export const startExam = async (studentId, scheduleId) => {
 
   if (sections.length === 0) {
     const error = new Error('This test has no sections configured.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -362,7 +362,7 @@ export const startExam = async (studentId, scheduleId) => {
 
     if (sectionQuestions.length < section.questionsToServe) {
       const error = new Error(`Section "${section.title}" does not have enough questions configured.`);
-      error.statusCode = 400;
+      error.statusCode = 409;
       throw error;
     }
 
@@ -419,7 +419,7 @@ export const startExam = async (studentId, scheduleId) => {
 
     if (!test.allowResume) {
       const resumeError = new Error('An exam attempt is already in progress and resume is not allowed');
-      resumeError.statusCode = 403;
+      resumeError.statusCode = 409;
       throw resumeError;
     }
 
@@ -429,7 +429,7 @@ export const startExam = async (studentId, scheduleId) => {
 
     if (remainingSeconds === 0) {
       await submitExam(concurrentAttempt._id.toString(), studentId);
-      throw Object.assign(new Error('Exam time has expired'), { statusCode: 403 });
+      throw Object.assign(new Error('Exam time has expired'), { statusCode: 409 });
     }
 
     return buildResumePayload(concurrentAttempt, remainingSeconds);
@@ -453,7 +453,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
 
   if (attempt.status !== 'in_progress') {
     const error = new Error('Exam attempt is not active.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -465,7 +465,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
     await attempt.save();
 
     const error = new Error('Exam window has closed');
-    error.statusCode = 403;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -475,7 +475,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
 
   if (!questionOrder.includes(questionId.toString())) {
     const error = new Error('Question does not belong to this exam attempt.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -497,7 +497,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
 
     if (!selectedOptionId) {
       const error = new Error('selectedOptionId is required for MCQ answers.');
-      error.statusCode = 400;
+      error.statusCode = 422;
       throw error;
     }
 
@@ -508,7 +508,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
 
     if (!option) {
       const error = new Error('Selected option is invalid for this question.');
-      error.statusCode = 400;
+      error.statusCode = 422;
       throw error;
     }
 
@@ -520,7 +520,7 @@ export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
 
     if (question.maxWordCount && getWordCount(essayText) > question.maxWordCount) {
       const error = new Error(`Essay answers cannot exceed ${question.maxWordCount} words.`);
-      error.statusCode = 400;
+      error.statusCode = 422;
       throw error;
     }
 
@@ -571,7 +571,7 @@ export const submitExam = async (attemptId, studentId) => {
 
   if (attempt.status !== 'in_progress') {
     const error = new Error('Exam already submitted');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -621,7 +621,7 @@ export const getAttemptResults = async (attemptId, studentId) => {
 
   if (attempt.status === 'in_progress') {
     const error = new Error('Results are not available until the exam is submitted.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -764,6 +764,11 @@ export const getMyAttempts = async (studentId) => {
   const fallbackQuestions = fallbackSectionIds.length > 0
     ? await Question.find({ sectionId: { $in: fallbackSectionIds } }).select('sectionId points').lean()
     : [];
+  const answers = attempts.length > 0
+    ? await Answer.find({ attemptId: { $in: attempts.map((attempt) => attempt._id) } })
+      .select('attemptId selectedOptionId essayText')
+      .lean()
+    : [];
   const pointsByQuestionId = new Map(questions.map((question) => [question._id.toString(), question.points || 0]));
   const fallbackPointsByTestId = fallbackQuestions.reduce((accumulator, question) => {
     const testId = fallbackSectionMap[question.sectionId.toString()];
@@ -773,6 +778,15 @@ export const getMyAttempts = async (studentId) => {
     }
 
     accumulator[testId] = (accumulator[testId] || 0) + (question.points || 0);
+    return accumulator;
+  }, {});
+  const attemptedCountByAttemptId = answers.reduce((accumulator, answer) => {
+    if (!isAnswerAttempted(answer)) {
+      return accumulator;
+    }
+
+    const key = answer.attemptId.toString();
+    accumulator[key] = (accumulator[key] || 0) + 1;
     return accumulator;
   }, {});
 
@@ -792,6 +806,7 @@ export const getMyAttempts = async (studentId) => {
       submittedAt: attempt.submittedAt,
       score: attempt.score ?? 0,
       totalPoints,
+      questionsAttempted: attemptedCountByAttemptId[attempt._id.toString()] || 0,
       passed:
         typeof attempt.passed === 'boolean'
           ? attempt.passed

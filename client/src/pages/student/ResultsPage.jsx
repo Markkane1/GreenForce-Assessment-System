@@ -108,10 +108,10 @@ const ResultsPage = () => {
       <div className="mb-6">
         <button
           type="button"
-          onClick={() => navigate('/student/dashboard')}
+          onClick={() => navigate('/student/results')}
           className="editorial-button-secondary"
         >
-          Back to Dashboard
+          Back to My Results
         </button>
       </div>
 
@@ -129,10 +129,10 @@ const ResultsPage = () => {
           <p className="mt-4 text-mutedFg">{errorMessage}</p>
           <button
             type="button"
-            onClick={() => navigate('/student/dashboard')}
+            onClick={() => navigate('/student/results')}
             className="mt-6 rounded-full border-2 border-foreground bg-secondary px-5 py-3 font-bold text-foreground shadow-pop"
           >
-            Back to Dashboard
+            Back to My Results
           </button>
         </div>
       ) : null}
@@ -280,4 +280,3 @@ const ResultsPage = () => {
 };
 
 export default ResultsPage;
-

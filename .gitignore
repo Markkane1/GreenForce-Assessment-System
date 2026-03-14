@@ -1,4 +1,6 @@
 node_modules
+client/dist/
+server/dist/
 AGENTS.md
 docs/
 .qa-screens/

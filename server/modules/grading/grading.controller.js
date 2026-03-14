@@ -4,8 +4,34 @@ import {
   finalizeAttempt as finalizeAttemptService,
   getAttemptDetail as getAttemptDetailService,
   getAttemptsForGrading as getAttemptsForGradingService,
+  getConcludedSchedules as getConcludedSchedulesService,
+  getScheduleReport as getScheduleReportService,
   gradeEssay as gradeEssayService,
 } from './grading.service.js';
+
+export const getConcludedSchedules = asyncHandler(async (req, res) => {
+  const schedules = await getConcludedSchedulesService(req.user.id, req.user.role);
+
+  res.status(200).json({
+    success: true,
+    schedules,
+  });
+});
+
+export const getScheduleReport = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid schedule id is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const report = await getScheduleReportService(req.params.id, req.user.id, req.user.role);
+
+  res.status(200).json({
+    success: true,
+    report,
+  });
+});
 
 export const getAttemptsForGrading = asyncHandler(async (req, res) => {
   const attempts = await getAttemptsForGradingService(req.user.id, req.query, req.user.role);

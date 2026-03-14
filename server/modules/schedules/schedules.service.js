@@ -29,13 +29,13 @@ const ensureValidDateRange = (startTime, endTime) => {
 
   if (Number.isNaN(start.getTime()) || Number.isNaN(end.getTime())) {
     const error = new Error('Valid startTime and endTime are required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (end <= start) {
     const error = new Error('endTime must be later than startTime.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -45,7 +45,7 @@ const ensureValidDateRange = (startTime, endTime) => {
 const validateAssignedGroups = async (assignedGroups) => {
   if (!Array.isArray(assignedGroups) || assignedGroups.length === 0) {
     const error = new Error('At least one assigned group is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -54,7 +54,7 @@ const validateAssignedGroups = async (assignedGroups) => {
 
   if (groups.length !== uniqueGroupIds.length) {
     const error = new Error('One or more assigned groups are invalid.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -93,7 +93,7 @@ const ensureNoDuplicateSchedule = async ({
 
   if (duplicate) {
     const error = new Error('A schedule for this test and student-group selection already overlaps the chosen time window.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 };
@@ -164,7 +164,7 @@ export const createSchedule = async (testId, startTime, endTime, assignedGroups,
 
   if (!test.isPublished) {
     const error = new Error('Only published tests can be scheduled.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 

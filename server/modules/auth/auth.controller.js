@@ -65,31 +65,31 @@ export const registerStudentHandler = asyncHandler(async (req, res) => {
 
   if (!name?.trim()) {
     const error = new Error('Name is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (!EMAIL_REGEX.test(email || '')) {
     const error = new Error('A valid email address is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (phone !== undefined && phone !== null && typeof phone !== 'string') {
     const error = new Error('Phone must be a string.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof password !== 'string' || password.length < 8) {
     const error = new Error('Password must be at least 8 characters long.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof inviteCode !== 'string' || inviteCode.trim().length === 0) {
     const error = new Error('Invite code is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -108,13 +108,13 @@ export const login = asyncHandler(async (req, res) => {
 
   if (!EMAIL_REGEX.test(email || '')) {
     const error = new Error('A valid email address is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof password !== 'string' || password.length === 0) {
     const error = new Error('Password is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -133,7 +133,7 @@ export const forgotPasswordHandler = asyncHandler(async (req, res) => {
 
   if (!EMAIL_REGEX.test(email || '')) {
     const error = new Error('A valid email address is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -150,13 +150,13 @@ export const resetPasswordHandler = asyncHandler(async (req, res) => {
 
   if (typeof token !== 'string' || token.trim().length === 0) {
     const error = new Error('Reset token is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     const error = new Error('Password must be at least 8 characters long.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -173,13 +173,13 @@ export const changePasswordHandler = asyncHandler(async (req, res) => {
 
   if (typeof currentPassword !== 'string' || currentPassword.length === 0) {
     const error = new Error('Current password is required.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     const error = new Error('Password must be at least 8 characters long.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 

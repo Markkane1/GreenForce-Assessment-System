@@ -39,7 +39,7 @@ export const createUser = async (data) => {
 
   if (existingUser) {
     const error = new Error('User with this email already exists.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -85,11 +85,11 @@ export const getUserById = async (id) => {
 
 export const updateUser = async (id, data) => {
   const updates = {};
+  const user = await User.findById(id);
 
-  // Password changes are intentionally excluded from this admin profile endpoint.
-  if (data.password !== undefined) {
-    const error = new Error('Password updates are not supported on this endpoint. Use the auth workflow instead.');
-    error.statusCode = 400;
+  if (!user) {
+    const error = new Error('User not found.');
+    error.statusCode = 404;
     throw error;
   }
 
@@ -104,7 +104,19 @@ export const updateUser = async (id, data) => {
       throw error;
     }
 
-    updates.email = data.email.toLowerCase();
+    const normalizedEmail = data.email.toLowerCase();
+    const existingUser = await User.findOne({
+      email: normalizedEmail,
+      _id: { $ne: id },
+    }).select('_id');
+
+    if (existingUser) {
+      const error = new Error('User with this email already exists.');
+      error.statusCode = 409;
+      throw error;
+    }
+
+    updates.email = normalizedEmail;
   }
 
   if (data.role !== undefined) {
@@ -117,18 +129,20 @@ export const updateUser = async (id, data) => {
     updates.role = data.role;
   }
 
-  const user = await User.findByIdAndUpdate(id, updates, {
-    new: true,
-    runValidators: true,
-  }).select('-password');
+  if (data.password !== undefined) {
+    if (typeof data.password !== 'string' || data.password.length < 8) {
+      const error = new Error('Password must be at least 8 characters long.');
+      error.statusCode = 422;
+      throw error;
+    }
 
-  if (!user) {
-    const error = new Error('User not found.');
-    error.statusCode = 404;
-    throw error;
+    updates.password = await bcrypt.hash(data.password, 12);
   }
 
-  return user;
+  Object.assign(user, updates);
+  await user.save();
+
+  return buildSafeUser(user);
 };
 
 export const deleteUser = async (id) => {

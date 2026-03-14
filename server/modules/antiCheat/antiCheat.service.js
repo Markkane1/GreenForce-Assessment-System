@@ -36,7 +36,7 @@ const ensureAttemptOwnership = (attempt, studentId) => {
 export const logViolation = async (attemptId, studentId, eventType, metadata = {}, ip = '') => {
   if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
     const error = new Error('Invalid violation event type.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -90,7 +90,7 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
     }
 
     const error = new Error('Exam attempt is not active.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 

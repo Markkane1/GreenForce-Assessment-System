@@ -19,7 +19,7 @@ export const createUser = async (name, email, password, role, phone = null) => {
 
   if (existingUser) {
     const error = new Error('User with this email already exists.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -45,13 +45,13 @@ export const registerStudent = async (name, email, phone, password, rawInviteCod
 
   if (!inviteCode) {
     const error = new Error('Invalid or already used invite code');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (inviteCode.expiresAt && inviteCode.expiresAt.getTime() < Date.now()) {
     const error = new Error('Invite code has expired');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -59,7 +59,7 @@ export const registerStudent = async (name, email, phone, password, rawInviteCod
 
   if (existingUser) {
     const error = new Error('User with this email already exists.');
-    error.statusCode = 400;
+    error.statusCode = 409;
     throw error;
   }
 
@@ -169,7 +169,7 @@ export const forgotPassword = async (email) => {
 export const resetPassword = async (rawToken, newPassword) => {
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     const error = new Error('Password must be at least 8 characters long.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -181,7 +181,7 @@ export const resetPassword = async (rawToken, newPassword) => {
 
   if (!user) {
     const error = new Error('Invalid or expired reset token.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
@@ -206,13 +206,13 @@ export const changePassword = async (userId, currentPassword, newPassword) => {
 
   if (!isPasswordValid) {
     const error = new Error('Current password is incorrect.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
   if (typeof newPassword !== 'string' || newPassword.length < 8) {
     const error = new Error('Password must be at least 8 characters long.');
-    error.statusCode = 400;
+    error.statusCode = 422;
     throw error;
   }
 
