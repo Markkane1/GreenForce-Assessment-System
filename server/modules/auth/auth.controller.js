@@ -69,6 +69,7 @@ export const registerStudentHandler = asyncHandler(async (req, res) => {
   }
 
   const result = await registerStudent(name, email, phone, password, inviteCode);
+  setAuthCookie(res, result.token);
 
   res.status(201).json({
     success: true,
@@ -97,6 +98,7 @@ export const login = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     user: result.user,
+    token: result.token,
   });
 });
 

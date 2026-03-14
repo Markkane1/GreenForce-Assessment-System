@@ -105,19 +105,14 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
       setConfirmDeleteId('');
       setToastMessage('');
       setBulkCount('10');
+      setErrorMessage('');
     }
-  }, [isOpen, group?._id]);
+  }, [group?._id, isOpen]);
 
   useEffect(() => () => {
-    if (deleteTimerRef.current) {
-      clearTimeout(deleteTimerRef.current);
-    }
-    if (toastTimerRef.current) {
-      clearTimeout(toastTimerRef.current);
-    }
-    if (copyTimerRef.current) {
-      clearTimeout(copyTimerRef.current);
-    }
+    window.clearTimeout(deleteTimerRef.current);
+    window.clearTimeout(toastTimerRef.current);
+    window.clearTimeout(copyTimerRef.current);
   }, []);
 
   const filteredCodes = useMemo(() => {
@@ -139,15 +134,11 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
     try {
       await copyToClipboard(code);
       setCopiedCode(code);
-
-      if (copyTimerRef.current) {
-        clearTimeout(copyTimerRef.current);
-      }
-
-      copyTimerRef.current = setTimeout(() => {
+      window.clearTimeout(copyTimerRef.current);
+      copyTimerRef.current = window.setTimeout(() => {
         setCopiedCode('');
       }, 2000);
-    } catch (error) {
+    } catch {
       setErrorMessage('Unable to copy invite code.');
     }
   };
@@ -185,12 +176,8 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
       setIsBulkModalOpen(false);
       await loadCodes({ silent: true });
       setToastMessage(`${count} codes generated successfully`);
-
-      if (toastTimerRef.current) {
-        clearTimeout(toastTimerRef.current);
-      }
-
-      toastTimerRef.current = setTimeout(() => {
+      window.clearTimeout(toastTimerRef.current);
+      toastTimerRef.current = window.setTimeout(() => {
         setToastMessage('');
       }, 3000);
     } catch (error) {
@@ -203,15 +190,10 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
   const handleDeleteClick = async (inviteCode) => {
     if (confirmDeleteId !== inviteCode._id) {
       setConfirmDeleteId(inviteCode._id);
-
-      if (deleteTimerRef.current) {
-        clearTimeout(deleteTimerRef.current);
-      }
-
-      deleteTimerRef.current = setTimeout(() => {
+      window.clearTimeout(deleteTimerRef.current);
+      deleteTimerRef.current = window.setTimeout(() => {
         setConfirmDeleteId('');
       }, 3000);
-
       return;
     }
 
@@ -242,11 +224,11 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
       .map((row) => row.map(escapeCsvValue).join(','))
       .join('\n');
 
-    anchor.download = `invite-codes-${sanitizeFileName(group?.name)}-${Date.now()}.csv`;
+    const blob = new Blob([csv], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
     const anchor = document.createElement('a');
     anchor.href = url;
-    anchor.download = `invite-codes-${(group?.name || 'group').replace(/\s+/g, '-').toLowerCase()}-${Date.now()}.csv`;
+    anchor.download = `invite-codes-${sanitizeFileName(group?.name)}-${Date.now()}.csv`;
     document.body.appendChild(anchor);
     anchor.click();
     document.body.removeChild(anchor);
@@ -267,7 +249,7 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
         contentClassName="space-y-8"
         showCloseButton={false}
       >
-                Invite Codes - {group?.name}
+        <div className="relative">
           <button
             type="button"
             onClick={onClose}
@@ -324,7 +306,11 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
                   onClick={() => handleCopy(generatedCode)}
                   className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
                 >
-                  {copiedCode === generatedCode ? <Check size={16} strokeWidth={2.5} /> : <Copy size={16} strokeWidth={2.5} />}
+                  {copiedCode === generatedCode ? (
+                    <Check size={16} strokeWidth={2.5} />
+                  ) : (
+                    <Copy size={16} strokeWidth={2.5} />
+                  )}
                 </button>
               </div>
             ) : null}
@@ -419,7 +405,7 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
                           </button>
                         </div>
                       </td>
-                          <span className="text-mutedFg">-</span>
+                      <td className="border-y-2 border-border px-3 py-3">
                         <span
                           className={`inline-flex rounded-full border px-3 py-1 text-xs font-heading ${
                             inviteCode.isUsed
@@ -437,7 +423,7 @@ const InviteCodesPanel = ({ isOpen, onClose, group }) => {
                             <p className="text-mutedFg">{inviteCode.usedBy.email}</p>
                           </div>
                         ) : (
-                          <span className="text-mutedFg">—</span>
+                          <span className="text-mutedFg">-</span>
                         )}
                       </td>
                       <td className="border-y-2 border-border px-3 py-3 text-sm text-mutedFg">

@@ -34,7 +34,7 @@ const QuestionNavigator = ({ questions, currentQuestionId, answers, onSelectQues
     <div className="space-y-6">
       {Object.entries(groupedQuestions).map(([sectionKey, section]) => (
         <div key={sectionKey}>
-          <div className="mb-3 inline-flex rounded-full border border-border bg-muted px-2 py-0.5 text-xs font-heading font-bold text-mutedFg">
+          <div className="mb-3 inline-flex rounded-full border border-border bg-muted px-3 py-1 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">
             {section.title}
           </div>
           <div className="grid grid-cols-5 gap-2">
@@ -47,12 +47,12 @@ const QuestionNavigator = ({ questions, currentQuestionId, answers, onSelectQues
                   key={question._id}
                   type="button"
                   onClick={() => onSelectQuestion(index)}
-                  className={`min-h-10 min-w-10 rounded-md font-heading text-sm font-bold transition-all duration-200 ease-bounce ${
+                  className={`min-h-10 min-w-10 rounded-md border font-heading text-sm font-semibold transition-all duration-200 ease-out ${
                     isCurrent
-                      ? 'border-2 border-foreground bg-accent text-accentFg shadow-pop-press'
+                      ? 'border-accent bg-accent text-accentFg shadow-editorialMd'
                       : answered
-                        ? 'border-2 border-foreground bg-quaternary text-foreground shadow-pop-press'
-                        : 'border-2 border-border bg-muted text-mutedFg'
+                        ? 'border-quaternary bg-quaternary/15 text-foreground shadow-editorialSm'
+                        : 'border-border bg-muted text-mutedFg'
                   }`}
                 >
                   {index + 1}

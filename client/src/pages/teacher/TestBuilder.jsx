@@ -1,4 +1,4 @@
-import {
+﻿import {
   ChevronDown,
   ChevronUp,
   FilePlus2,
@@ -778,12 +778,12 @@ const TestBuilder = () => {
 
   return (
     <DashboardLayout title="Test Builder">
-      <section className="rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="editorial-panel p-6">
         <div className="flex flex-col gap-4 xl:flex-row xl:items-center xl:justify-between">
           <input
             value={currentTest.title}
             onChange={(event) => updateTestField('title', event.target.value)}
-            className="w-full bg-transparent font-heading text-4xl font-extrabold text-foreground outline-none placeholder:text-mutedFg"
+            className="w-full bg-transparent font-heading text-4xl font-semibold text-foreground outline-none placeholder:text-mutedFg"
             placeholder="Untitled Test"
           />
           <div className="flex flex-wrap gap-3">
@@ -791,7 +791,7 @@ const TestBuilder = () => {
               type="button"
               onClick={saveDraft}
               disabled={isSaving}
-              className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-secondary"
             >
               <Save size={18} strokeWidth={2.5} />
               Save Draft
@@ -800,7 +800,7 @@ const TestBuilder = () => {
               type="button"
               onClick={publishCurrentTest}
               disabled={isSaving}
-              className="rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-primary"
             >
               Publish
             </button>
@@ -814,9 +814,9 @@ const TestBuilder = () => {
         ) : null}
 
         {statusMessage ? (
-          <div className="mt-5 rounded-full border-2 border-quaternary bg-quaternary/20 px-4 py-2 text-sm font-medium text-foreground">
-            {statusMessage}
-          </div>
+            <div className="mt-5 rounded-full border border-quaternary bg-quaternary/20 px-4 py-2 text-sm font-medium text-foreground">
+              {statusMessage}
+            </div>
         ) : null}
 
         {draftTests.length > 0 ? (
@@ -972,3 +972,4 @@ const TestBuilder = () => {
 };
 
 export default TestBuilder;
+

@@ -144,15 +144,18 @@ const UserManagement = () => {
 
   return (
     <DashboardLayout title="User Management">
-      <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <section className="editorial-page-header">
         <div>
-          <h2 className="font-heading text-4xl font-extrabold text-foreground">Team Directory</h2>
-          <p className="mt-2 text-mutedFg">Create, edit, and organize every admin, teacher, and student account.</p>
+          <div className="editorial-section-label">
+            <span>Users</span>
+          </div>
+          <h2 className="editorial-page-title">Team Directory</h2>
+          <p className="editorial-page-copy">Create, edit, and organize every admin, teacher, and student account.</p>
         </div>
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="editorial-button-primary"
         >
           <Plus size={18} />
           Add User
@@ -165,16 +168,16 @@ const UserManagement = () => {
         </div>
       ) : null}
 
-      <section className="mt-8 rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="mt-8 editorial-panel p-6">
         {isLoading ? <LoadingSpinner /> : null}
         {!isLoading && sortedUsers.length === 0 ? <EmptyState /> : null}
         {!isLoading && sortedUsers.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
+            <table className="editorial-table">
               <thead>
                 <tr>
                   {['Name', 'Email', 'Role', 'Created', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-mutedFg">
+                    <th key={heading}>
                       {heading}
                     </th>
                   ))}

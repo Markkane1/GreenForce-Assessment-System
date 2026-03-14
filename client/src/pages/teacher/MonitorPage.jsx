@@ -143,7 +143,7 @@ const MonitorPage = () => {
         </div>
       ) : null}
 
-      <section className="mt-8 rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="mt-8 editorial-panel p-6">
         {isLoading ? <LoadingSpinner /> : null}
 
         {!isLoading && attempts.length === 0 ? (
@@ -159,11 +159,11 @@ const MonitorPage = () => {
 
         {!isLoading && attempts.length > 0 ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
+            <table className="editorial-table">
               <thead>
                 <tr>
                   {['Student', 'Progress', 'Time Elapsed', 'Violations', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-mutedFg">
+                    <th key={heading}>
                       {heading}
                     </th>
                   ))}

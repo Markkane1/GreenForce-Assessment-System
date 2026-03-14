@@ -3,7 +3,7 @@ import { getLogs as getLogsService, logViolation as logViolationService } from '
 
 export const logViolation = asyncHandler(async (req, res) => {
   const { attemptId, eventType, metadata } = req.body;
-  const result = await logViolationService(attemptId, req.user.id, eventType, metadata);
+  const result = await logViolationService(attemptId, req.user.id, eventType, metadata, req.ip);
 
   res.status(200).json({
     success: true,

@@ -3,6 +3,7 @@ import TestAttempt from '../../models/TestAttempt.js';
 import { autoGradeMCQ } from '../examEngine/examEngine.service.js';
 
 const ALLOWED_EVENT_TYPES = ['fullscreen_exit', 'tab_switch', 'copy_attempt', 'window_blur'];
+const SERVER_COOLDOWN_MS = 1500;
 
 const getViolationThreshold = () => {
   const threshold = Number(process.env.VIOLATION_THRESHOLD ?? 3);
@@ -24,7 +25,15 @@ const getAttemptWithTest = async (attemptId) => {
   return attempt;
 };
 
-export const logViolation = async (attemptId, studentId, eventType, metadata = {}) => {
+const ensureAttemptOwnership = (attempt, studentId) => {
+  if (attempt.studentId.toString() !== studentId.toString()) {
+    const error = new Error('You are not authorized to log violations for this attempt.');
+    error.statusCode = 403;
+    throw error;
+  }
+};
+
+export const logViolation = async (attemptId, studentId, eventType, metadata = {}, ip = '') => {
   if (!ALLOWED_EVENT_TYPES.includes(eventType)) {
     const error = new Error('Invalid violation event type.');
     error.statusCode = 400;
@@ -32,27 +41,27 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
   }
 
   const attempt = await getAttemptWithTest(attemptId);
-
-  if (attempt.studentId.toString() !== studentId.toString()) {
-    const error = new Error('You are not authorized to log violations for this attempt.');
-    error.statusCode = 403;
-    throw error;
-  }
+  ensureAttemptOwnership(attempt, studentId);
 
   if (attempt.status !== 'in_progress') {
-    const error = new Error('Exam attempt is not active.');
-    error.statusCode = 400;
-    throw error;
+    return {
+      forceSubmitted: true,
+      violationsCount: attempt.violationsCount,
+    };
   }
 
-  const incrementedAttempt = await TestAttempt.findOneAndUpdate(
+  const now = new Date();
+  const cooldownCutoff = new Date(now.getTime() - SERVER_COOLDOWN_MS);
+  const updatedAttempt = await TestAttempt.findOneAndUpdate(
     {
       _id: attemptId,
       studentId,
       status: 'in_progress',
+      $or: [{ lastViolationAt: null }, { lastViolationAt: { $lt: cooldownCutoff } }],
     },
     {
       $inc: { violationsCount: 1 },
+      $set: { lastViolationAt: now },
     },
     {
       new: true,
@@ -62,13 +71,22 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
     select: 'createdBy',
   });
 
-  if (!incrementedAttempt) {
+  if (!updatedAttempt) {
     const latestAttempt = await getAttemptWithTest(attemptId);
+    ensureAttemptOwnership(latestAttempt, studentId);
 
-    if (latestAttempt.studentId.toString() !== studentId.toString()) {
-      const error = new Error('You are not authorized to log violations for this attempt.');
-      error.statusCode = 403;
-      throw error;
+    if (latestAttempt.status !== 'in_progress') {
+      return {
+        forceSubmitted: true,
+        violationsCount: latestAttempt.violationsCount,
+      };
+    }
+
+    if (latestAttempt.lastViolationAt && latestAttempt.lastViolationAt.getTime() >= cooldownCutoff.getTime()) {
+      return {
+        forceSubmitted: false,
+        violationsCount: latestAttempt.violationsCount,
+      };
     }
 
     const error = new Error('Exam attempt is not active.');
@@ -79,23 +97,30 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
   await ProctorLog.create({
     attemptId,
     eventType,
-    metadata,
-    timestamp: new Date(),
+    metadata: {
+      ...metadata,
+      serverTimestamp: now,
+      ip,
+    },
+    timestamp: now,
   });
 
   const threshold = getViolationThreshold();
 
-  if (incrementedAttempt.violationsCount >= threshold) {
-    const score = await autoGradeMCQ(attempt._id);
+  if (updatedAttempt.violationsCount >= threshold) {
+    const score = await autoGradeMCQ(updatedAttempt._id);
     const forceSubmittedAttempt = await TestAttempt.findOneAndUpdate(
       {
         _id: attemptId,
+        studentId,
         status: 'in_progress',
       },
       {
-        status: 'force_submitted',
-        submittedAt: new Date(),
-        score,
+        $set: {
+          status: 'force_submitted',
+          submittedAt: now,
+          score,
+        },
       },
       {
         new: true,
@@ -104,10 +129,9 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
 
     if (!forceSubmittedAttempt) {
       const latestAttempt = await TestAttempt.findById(attemptId).select('violationsCount status');
-
       return {
         forceSubmitted: latestAttempt?.status === 'force_submitted',
-        violationsCount: latestAttempt?.violationsCount ?? incrementedAttempt.violationsCount,
+        violationsCount: latestAttempt?.violationsCount ?? updatedAttempt.violationsCount,
       };
     }
 
@@ -119,7 +143,7 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
 
   return {
     forceSubmitted: false,
-    violationsCount: incrementedAttempt.violationsCount,
+    violationsCount: updatedAttempt.violationsCount,
   };
 };
 

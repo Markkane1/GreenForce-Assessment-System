@@ -26,13 +26,24 @@ const errorMiddleware = (err, req, res, next) => {
     ? 'Something went wrong'
     : message;
 
-  logger.error('Request failed', {
+  const isExpectedAuthProbe =
+    req.originalUrl === '/api/auth/me'
+    && statusCode === 401
+    && ['No token provided', 'Invalid token', 'Token expired'].includes(message);
+
+  const logPayload = {
     method: req.method,
     path: req.originalUrl,
     statusCode,
     message,
-    stack: err.stack,
-  });
+    ...(isExpectedAuthProbe ? {} : { stack: err.stack }),
+  };
+
+  if (isExpectedAuthProbe) {
+    logger.warn('Auth probe failed', logPayload);
+  } else {
+    logger.error('Request failed', logPayload);
+  }
 
   const response = {
     success: false,

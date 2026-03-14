@@ -13,15 +13,20 @@ const Navbar = ({ title }) => {
   const { user } = useAuth();
 
   return (
-    <header className="sticky top-0 z-30 flex h-16 items-center justify-between border-b-2 border-border bg-card px-8">
-      <h1 className="font-heading text-2xl font-bold text-foreground">{title}</h1>
-      <div className="flex items-center gap-3 rounded-full border-2 border-border bg-muted px-3 py-2 shadow-pop-soft">
-        <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-tertiary text-sm font-extrabold text-foreground">
+    <header className="sticky top-0 z-30 flex h-20 items-center justify-between border-b border-border bg-card/95 px-8 backdrop-blur-sm">
+      <div>
+        <div className="editorial-section-label mb-2 max-w-sm">
+          <span>Workspace</span>
+        </div>
+        <h1 className="font-heading text-3xl font-semibold text-foreground">{title}</h1>
+      </div>
+      <div className="flex items-center gap-3 rounded-full border border-border bg-muted/80 px-3 py-2 shadow-editorialSm">
+        <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-card font-heading text-sm font-semibold text-foreground">
           {getInitials(user?.name)}
         </div>
         <div className="hidden text-left md:block">
-          <p className="font-bold text-foreground">{user?.name || 'Exam User'}</p>
-          <p className="text-xs uppercase tracking-[0.18em] text-mutedFg">{user?.role || 'guest'}</p>
+          <p className="font-heading text-base font-semibold text-foreground">{user?.name || 'Exam User'}</p>
+          <p className="font-editorialMono text-xs uppercase tracking-[0.15em] text-mutedFg">{user?.role || 'guest'}</p>
         </div>
         <ChevronDown size={16} className="text-mutedFg" />
       </div>

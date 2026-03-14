@@ -87,13 +87,16 @@ const TeacherDashboard = () => {
 
   return (
     <DashboardLayout title="Teacher Dashboard">
-      <section>
-        <h2 className="font-heading text-4xl font-extrabold text-foreground">
-          Hello, {user?.name || 'Teacher'} {String.fromCodePoint(0x1f44b)}
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-mutedFg">
-          Manage your tests, upcoming schedules, and grading queue from one playful command center.
-        </p>
+      <section className="editorial-page-header">
+        <div>
+          <div className="editorial-section-label">
+            <span>Teaching</span>
+          </div>
+          <h2 className="editorial-page-title">Overview for {user?.name || 'Teacher'}</h2>
+          <p className="editorial-page-copy">
+            Manage authored tests, live schedules, and grading activity from a single editorial workspace.
+          </p>
+        </div>
       </section>
 
       <section className="mt-8 grid gap-8 lg:grid-cols-3">
@@ -101,12 +104,12 @@ const TeacherDashboard = () => {
           const Icon = card.icon;
 
           return (
-            <div key={card.key} className="relative mt-5 rounded-[1.75rem] border-2 border-foreground bg-card p-6 shadow-pop">
-              <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground ${card.tone} shadow-pop-press`}>
+            <div key={card.key} className="relative mt-5 rounded-2xl border border-border bg-card p-6 shadow-editorialMd">
+              <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border ${card.tone} shadow-editorialSm`}>
                 <Icon size={22} className="text-foreground" />
               </div>
-              <p className="mt-8 text-sm font-bold uppercase tracking-[0.22em] text-mutedFg">{card.label}</p>
-              {isLoading ? <LoadingSpinner /> : <p className="mt-4 font-heading text-3xl font-extrabold text-foreground">{stats[card.key]}</p>}
+              <p className="mt-8 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{card.label}</p>
+              {isLoading ? <LoadingSpinner /> : <p className="mt-4 font-heading text-4xl font-semibold text-foreground">{stats[card.key]}</p>}
             </div>
           );
         })}
@@ -116,7 +119,7 @@ const TeacherDashboard = () => {
         <button
           type="button"
           onClick={() => navigate('/teacher/tests/new')}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="editorial-button-secondary flex-1"
         >
           <PlusCircle size={18} />
           Create New Test
@@ -124,17 +127,17 @@ const TeacherDashboard = () => {
         <button
           type="button"
           onClick={() => navigate('/teacher/schedule?create=1')}
-          className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="editorial-button-secondary flex-1"
         >
           <CalendarClock size={18} />
           Schedule an Exam
         </button>
       </section>
 
-      <section className="mt-8 rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="mt-8 editorial-panel p-6">
         <div className="flex items-center justify-between gap-4">
           <div>
-            <h3 className="font-heading text-2xl font-extrabold text-foreground">Recent Tests</h3>
+            <h3 className="font-heading text-3xl font-semibold text-foreground">Recent Tests</h3>
             <p className="mt-1 text-sm text-mutedFg">Your latest drafts and published assessments.</p>
           </div>
         </div>
@@ -147,11 +150,11 @@ const TeacherDashboard = () => {
 
         {!isLoading && recentTests.length > 0 ? (
           <div className="mt-6 overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
+            <table className="editorial-table">
               <thead>
                 <tr>
                   {['Title', 'Status', 'Question Count', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-mutedFg">
+                    <th key={heading}>
                       {heading}
                     </th>
                   ))}
@@ -163,33 +166,33 @@ const TeacherDashboard = () => {
 
                   return (
                     <tr key={test._id}>
-                      <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4 font-bold text-foreground">
+                      <td className="rounded-l-2xl border border-border bg-background px-4 py-4 font-semibold text-foreground">
                         {test.title}
                       </td>
-                      <td className="border-y-2 border-border bg-background px-4 py-4">
+                      <td className="border-y border-border bg-background px-4 py-4">
                         <Badge tone={status.tone}>{status.label}</Badge>
                       </td>
-                      <td className="border-y-2 border-border bg-background px-4 py-4 text-mutedFg">{test.questionCount}</td>
-                      <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
+                      <td className="border-y border-border bg-background px-4 py-4 text-mutedFg">{test.questionCount}</td>
+                      <td className="rounded-r-2xl border border-border bg-background px-4 py-4">
                         <div className="flex items-center gap-2">
                           <button
                             type="button"
                             onClick={() => navigate(`/teacher/tests/${test._id}`)}
-                            className="rounded-full border-2 border-foreground bg-secondary px-4 py-2 text-sm font-bold text-foreground shadow-pop-press"
+                            className="editorial-button-secondary"
                           >
                             Edit
                           </button>
                           <button
                             type="button"
                             onClick={() => navigate('/teacher/schedule?create=1')}
-                            className="rounded-full border-2 border-foreground bg-quaternary px-4 py-2 text-sm font-bold text-foreground shadow-pop-press"
+                            className="inline-flex items-center justify-center rounded-md border border-quaternary bg-quaternary/15 px-4 py-2 font-body text-sm font-semibold text-foreground transition-all duration-200 ease-out hover:bg-quaternary/25"
                           >
                             Schedule
                           </button>
                           <button
                             type="button"
                             onClick={() => setSelectedTest(test)}
-                            className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-accent px-4 py-2 text-sm font-bold text-accentFg shadow-pop-press"
+                            className="editorial-button-primary"
                           >
                             <Trash2 size={16} strokeWidth={2.5} />
                             Delete
@@ -204,7 +207,7 @@ const TeacherDashboard = () => {
           </div>
         ) : null}
         {!isLoading && recentTests.length === 0 ? (
-          <div className="mt-6 rounded-[1.5rem] border-2 border-dashed border-border bg-background p-8 text-center text-mutedFg">
+          <div className="mt-6 rounded-2xl border border-dashed border-border bg-background p-8 text-center text-mutedFg">
             No tests yet. Create your first one to get started.
           </div>
         ) : null}

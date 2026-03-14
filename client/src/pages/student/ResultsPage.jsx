@@ -109,7 +109,7 @@ const ResultsPage = () => {
         <button
           type="button"
           onClick={() => navigate('/student/dashboard')}
-          className="inline-flex items-center rounded-full border-2 border-foreground bg-secondary px-5 py-2.5 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover"
+          className="editorial-button-secondary"
         >
           Back to Dashboard
         </button>
@@ -139,7 +139,7 @@ const ResultsPage = () => {
 
       {!isLoading && results ? (
         <div className="space-y-8">
-          <section className={`rounded-[2rem] border-2 border-foreground bg-card p-8 ${heroTone.card}`}>
+          <section className={`rounded-2xl border border-border bg-card p-8 ${heroTone.card}`}>
             <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
               <div>
                 <Badge tone={heroTone.badgeTone}>{heroTone.badgeText}</Badge>
@@ -151,9 +151,9 @@ const ResultsPage = () => {
                 </p>
               </div>
               <div className="text-right">
-                <p className="font-heading text-6xl font-extrabold text-accent">{results.attempt.score || 0}</p>
+                <p className="font-heading text-6xl font-semibold text-accent">{results.attempt.score || 0}</p>
                 <p className="mt-2 text-mutedFg">out of {results.summary.totalPoints} points</p>
-                <div className="mt-4 inline-flex rounded-full border-2 border-foreground bg-muted px-4 py-2 text-sm font-bold text-foreground shadow-pop-soft">
+                <div className="mt-4 inline-flex rounded-full border border-border bg-muted px-4 py-2 font-body text-sm font-semibold text-foreground shadow-editorialSm">
                   Time taken: {formatDuration(results.summary.timeTakenSeconds)}
                 </div>
               </div>
@@ -184,18 +184,18 @@ const ResultsPage = () => {
               const Icon = item.icon;
 
               return (
-                <div key={item.label} className="relative mt-5 rounded-[1.75rem] border-2 border-foreground bg-card p-6 shadow-pop">
-                  <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground ${item.tone} shadow-pop-press`}>
+                <div key={item.label} className="relative mt-5 rounded-2xl border border-border bg-card p-6 shadow-editorialMd">
+                  <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border ${item.tone} shadow-editorialSm`}>
                     <Icon size={22} className="text-foreground" />
                   </div>
-                  <p className="mt-8 text-sm font-bold uppercase tracking-[0.22em] text-mutedFg">{item.label}</p>
-                  <p className="mt-4 font-heading text-3xl font-extrabold text-foreground">{item.value}</p>
+                  <p className="mt-8 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{item.label}</p>
+                  <p className="mt-4 font-heading text-4xl font-semibold text-foreground">{item.value}</p>
                 </div>
               );
             })}
           </section>
 
-          <section className="rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+          <section className="editorial-panel p-6">
             <div className="flex items-center gap-3">
               <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-accent shadow-pop-press">
                 <BookText size={20} className="text-accentFg" />
@@ -211,7 +211,7 @@ const ResultsPage = () => {
                 const isOpen = openSections[section._id];
 
                 return (
-                  <div key={section._id} className="rounded-[1.5rem] border-2 border-border bg-background">
+                  <div key={section._id} className="rounded-2xl border border-border bg-background">
                     <button
                       type="button"
                       onClick={() =>
@@ -234,7 +234,7 @@ const ResultsPage = () => {
                         {section.questions.map((question) => (
                           <div
                             key={question._id}
-                            className={`rounded-[1.25rem] border-2 bg-card p-5 ${
+                            className={`rounded-2xl border bg-card p-5 ${
                               question.type === 'mcq'
                                 ? question.isCorrect
                                   ? 'border-quaternary bg-quaternary/20'

@@ -68,14 +68,14 @@ const ChangePasswordPage = () => {
 
   return (
     <DashboardLayout title="Change Password">
-      <section className="mx-auto max-w-2xl rounded-[2rem] border-2 border-foreground bg-card p-8 shadow-pop">
+      <section className="editorial-panel mx-auto max-w-2xl p-8">
         <div className="flex items-start gap-4">
-          <div className="flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground bg-accent shadow-pop-press">
+          <div className="flex h-16 w-16 items-center justify-center rounded-full border border-border bg-accent text-white shadow-editorialSm">
             <KeyRound size={28} strokeWidth={2.5} className="text-accentFg" />
           </div>
           <div>
-            <h2 className="font-heading text-4xl font-extrabold text-foreground">Change Password</h2>
-            <p className="mt-2 max-w-xl text-mutedFg">
+            <h2 className="font-heading text-4xl font-semibold text-foreground">Change Password</h2>
+            <p className="mt-2 max-w-xl font-body leading-8 text-mutedFg">
               Update your account password. The current password is required before the change is applied.
             </p>
           </div>
@@ -95,7 +95,7 @@ const ChangePasswordPage = () => {
 
         <form className="mt-8 space-y-5" onSubmit={handleSubmit}>
           <label className="block space-y-2">
-            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Current Password</span>
+            <span className="editorial-input-label">Current Password</span>
             <input
               name="currentPassword"
               type="password"
@@ -103,12 +103,12 @@ const ChangePasswordPage = () => {
               value={formData.currentPassword}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+              className="editorial-input-surface"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">New Password</span>
+            <span className="editorial-input-label">New Password</span>
             <input
               name="newPassword"
               type="password"
@@ -116,12 +116,12 @@ const ChangePasswordPage = () => {
               value={formData.newPassword}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+              className="editorial-input-surface"
             />
           </label>
 
           <label className="block space-y-2">
-            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Confirm New Password</span>
+            <span className="editorial-input-label">Confirm New Password</span>
             <input
               name="confirmPassword"
               type="password"
@@ -129,7 +129,7 @@ const ChangePasswordPage = () => {
               value={formData.confirmPassword}
               onChange={handleChange}
               required
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+              className="editorial-input-surface"
             />
           </label>
 
@@ -137,14 +137,14 @@ const ChangePasswordPage = () => {
             <button
               type="button"
               onClick={() => navigate(getDashboardPath(user?.role))}
-              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop"
+              className="editorial-button-secondary flex-1"
             >
               Back
             </button>
             <button
               type="submit"
               disabled={isSubmitting}
-              className="inline-flex flex-1 items-center justify-center gap-2 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop disabled:cursor-not-allowed disabled:opacity-70"
+              className="editorial-button-primary flex-1 disabled:cursor-not-allowed disabled:opacity-70"
             >
               <ShieldCheck size={18} strokeWidth={2.5} />
               {isSubmitting ? 'Updating...' : 'Update Password'}

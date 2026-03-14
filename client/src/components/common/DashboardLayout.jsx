@@ -2,11 +2,11 @@ import Navbar from './Navbar';
 import Sidebar from './Sidebar';
 
 const DashboardLayout = ({ title, children }) => (
-  <div className="min-h-screen bg-background">
+  <div className="editorial-app-shell min-h-screen">
     <Sidebar />
-    <div className="pl-64">
+    <div className="relative pl-72">
       <Navbar title={title} />
-      <main className="p-8">{children}</main>
+      <main className="relative p-8 lg:p-10">{children}</main>
     </div>
   </div>
 );

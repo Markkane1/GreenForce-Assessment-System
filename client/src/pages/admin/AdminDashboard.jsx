@@ -56,16 +56,19 @@ const AdminDashboard = () => {
 
   return (
     <DashboardLayout title="Admin Dashboard">
-      <section>
-        <h2 className="font-heading text-4xl font-extrabold text-foreground">
-          Hello, {greetingName} {String.fromCodePoint(0x1f44b)}
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-mutedFg">
-          Here&apos;s a playful snapshot of what&apos;s happening across your exam platform today.
-        </p>
+      <section className="editorial-page-header">
+        <div>
+          <div className="editorial-section-label">
+            <span>Administration</span>
+          </div>
+          <h2 className="editorial-page-title">Overview for {greetingName}</h2>
+          <p className="editorial-page-copy">
+            Review current platform activity, account volume, and the active assessment load.
+          </p>
+        </div>
       </section>
 
-      <section className="relative mt-10 overflow-hidden rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="relative mt-10 overflow-hidden editorial-panel p-6">
         <DotGrid />
         <div className="relative z-10">
           {isLoading ? <LoadingSpinner /> : null}
@@ -80,12 +83,12 @@ const AdminDashboard = () => {
                 const Icon = card.icon;
 
                 return (
-                  <div key={card.key} className="relative mt-5 rounded-[1.75rem] border-2 border-foreground bg-background p-6 shadow-pop">
-                    <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground ${card.tone} shadow-pop-press`}>
+                  <div key={card.key} className="relative mt-5 rounded-2xl border border-border bg-white p-6 shadow-editorialMd">
+                    <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border ${card.tone} shadow-editorialSm`}>
                       <Icon size={22} className="text-foreground" />
                     </div>
-                    <p className="mt-8 text-sm font-bold uppercase tracking-[0.22em] text-mutedFg">{card.label}</p>
-                    <p className="mt-4 font-heading text-3xl font-extrabold text-foreground">{stats[card.key]}</p>
+                    <p className="mt-8 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{card.label}</p>
+                    <p className="mt-4 font-heading text-4xl font-semibold text-foreground">{stats[card.key]}</p>
                   </div>
                 );
               })}

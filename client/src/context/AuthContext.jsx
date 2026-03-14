@@ -1,8 +1,9 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { setLogoutFunction } from '../services/api';
+import { setAuthToken, setLogoutFunction } from '../services/api';
 import * as authService from '../services/authService';
 
 export const AuthContext = createContext(null);
+const SESSION_HINT_KEY = 'has_auth_session';
 
 export const AuthProvider = ({ children }) => {
   const [token, setToken] = useState(null);
@@ -21,6 +22,11 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsAuthReady(true);
+    setAuthToken(null);
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.removeItem(SESSION_HINT_KEY);
+    }
 
     if (redirect && typeof window !== 'undefined' && window.location.pathname !== '/login') {
       window.location.assign('/login');
@@ -33,6 +39,15 @@ export const AuthProvider = ({ children }) => {
     const restoreSession = async () => {
       setIsAuthReady(false);
 
+      if (typeof window !== 'undefined' && !window.sessionStorage.getItem(SESSION_HINT_KEY)) {
+        if (isMounted) {
+          setUser(null);
+          setToken(null);
+          setIsAuthReady(true);
+        }
+        return;
+      }
+
       try {
         const currentUser = await authService.getCurrentUser();
 
@@ -42,6 +57,7 @@ export const AuthProvider = ({ children }) => {
 
         setUser(currentUser);
         setToken('cookie-session');
+        setAuthToken(null);
       } catch {
         if (!isMounted) {
           return;
@@ -49,6 +65,11 @@ export const AuthProvider = ({ children }) => {
 
         setUser(null);
         setToken(null);
+        setAuthToken(null);
+
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.removeItem(SESSION_HINT_KEY);
+        }
       } finally {
         if (isMounted) {
           setIsAuthReady(true);
@@ -63,10 +84,15 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = useCallback((userData) => {
+  const login = useCallback((userData, nextToken = null) => {
     setUser(userData);
     setToken('cookie-session');
     setIsAuthReady(true);
+    setAuthToken(nextToken);
+
+    if (typeof window !== 'undefined') {
+      window.sessionStorage.setItem(SESSION_HINT_KEY, '1');
+    }
   }, []);
 
   useEffect(() => {

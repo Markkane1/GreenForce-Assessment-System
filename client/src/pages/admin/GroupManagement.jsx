@@ -177,15 +177,18 @@ const GroupManagement = () => {
 
   return (
     <DashboardLayout title="Group Management">
-      <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <section className="editorial-page-header">
         <div>
-          <h2 className="font-heading text-4xl font-extrabold text-foreground">Student Groups</h2>
-          <p className="mt-2 text-mutedFg">Build cohorts, review members, and keep exam targeting organized.</p>
+          <div className="editorial-section-label">
+            <span>Groups</span>
+          </div>
+          <h2 className="editorial-page-title">Student Groups</h2>
+          <p className="editorial-page-copy">Build cohorts, review members, and manage invite-code targeting.</p>
         </div>
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="editorial-button-primary"
         >
           <Plus size={18} />
           Create Group
@@ -214,7 +217,7 @@ const GroupManagement = () => {
                     openDetailModal(group);
                   }
                 }}
-                className="group relative rounded-[2rem] border-2 border-foreground bg-card p-6 text-left shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover"
+                className="group relative rounded-2xl border border-border bg-card p-6 text-left shadow-editorialMd transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-editorialLg"
               >
                 <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground ${iconTones[index % iconTones.length]} shadow-pop-press`}>
                   <Users size={22} className="text-foreground" />

@@ -1,4 +1,4 @@
-import {
+﻿import {
   AlertTriangle,
   BookOpen,
   Check,
@@ -108,27 +108,54 @@ const buildSections = (questions) => {
 const getSectionIndexForQuestion = (sections, questionIndex) =>
   sections.findIndex((section) => questionIndex >= section.startIndex && questionIndex <= section.endIndex);
 
-const eventContentMap = {
-  fullscreen_exit: {
-    Icon: Minimize2,
-    heading: 'Fullscreen Exited',
-    body: 'You left fullscreen mode. This has been recorded.',
-  },
-  tab_switch: {
+const getViolationContent = (violation, isMobile) => {
+  if (!violation) {
+    return null;
+  }
+
+  const { eventType, metadata = {} } = violation;
+
+  if (eventType === 'fullscreen_exit') {
+    return {
+      Icon: Minimize2,
+      heading: 'Fullscreen Exited',
+      body: 'You left fullscreen mode. This has been recorded.',
+    };
+  }
+
+  if (eventType === 'copy_attempt') {
+    return {
+      Icon: Clipboard,
+      heading: 'Copy Detected',
+      body: 'Copying exam content is not allowed. This has been recorded.',
+    };
+  }
+
+  if (eventType === 'window_blur' && metadata.trigger === 'blur' && !isMobile) {
+    return {
+      Icon: EyeOff,
+      heading: 'Focus Lost',
+      body: 'You switched away from this window. This has been recorded.',
+    };
+  }
+
+  if (eventType === 'tab_switch') {
+    return {
+      Icon: EyeOff,
+      heading: 'Focus Lost',
+      body: isMobile
+        ? 'You switched away from this exam. This has been recorded.'
+        : metadata.trigger === 'visibilitychange'
+          ? 'You left this exam tab. This has been recorded.'
+          : 'You switched away from this exam. This has been recorded.',
+    };
+  }
+
+  return {
     Icon: EyeOff,
     heading: 'Focus Lost',
     body: 'You switched away from this exam. This has been recorded.',
-  },
-  window_blur: {
-    Icon: EyeOff,
-    heading: 'Focus Lost',
-    body: 'You switched away from this exam. This has been recorded.',
-  },
-  copy_attempt: {
-    Icon: Clipboard,
-    heading: 'Copy Detected',
-    body: 'Copying exam content is not allowed. This has been recorded.',
-  },
+  };
 };
 
 const submissionContentMap = {
@@ -181,7 +208,7 @@ const ExamPage = () => {
   const [violationDismissSeconds, setViolationDismissSeconds] = useState(8);
   const [submissionReason, setSubmissionReason] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(RESULT_REDIRECT_SECONDS);
-  const { enter, exit, isFullscreen, isSupported } = useFullscreen();
+  const { enter, exit, isFullscreen, isSupported, isMobile: fullscreenIsMobile } = useFullscreen();
 
   const sections = useMemo(() => buildSections(questions), [questions]);
   const currentSectionInfo = sections[currentSectionIndex] || null;
@@ -232,12 +259,12 @@ const ExamPage = () => {
     [answers, questions],
   );
 
-  const showFullscreenGate = examPhase === 'active' && !isFullscreen && !hasBeenFullscreen;
+  const showFullscreenGate =
+    examPhase === 'active'
+    && !isFullscreen
+    && !hasBeenFullscreen
+    && !(fullscreenIsMobile && !isSupported);
   const showFullscreenRecovery = examPhase === 'active' && !isFullscreen && hasBeenFullscreen;
-  const violationContent = violationAlert
-    ? eventContentMap[violationAlert.eventType] || eventContentMap.window_blur
-    : null;
-  const isNearThreshold = violationAlert?.violationsCount === VIOLATION_THRESHOLD - 1;
   const submissionContent = submissionReason ? submissionContentMap[submissionReason] : null;
 
   const persistQuestion = useCallback(
@@ -370,17 +397,19 @@ const ExamPage = () => {
     ),
     onError: (error) => setErrorMessage(error.message || 'Unable to save your answer.'),
   });
+
   const savedStatusLabel = lastSaved
     ? `Saved ${lastSaved.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
     : 'Saved';
   const showNetworkLossBanner = failCount >= 2;
 
-  useAntiCheat({
+  const { isMobile } = useAntiCheat({
     attemptId: examPhase === 'active' ? attempt?._id : null,
-    onViolation: (eventType, violationsCount, forceSubmitted) => {
+    enabled: examPhase === 'active' && Boolean(attempt?._id),
+    onViolation: (eventType, violationsCount, forceSubmitted, metadata) => {
       setAttempt((currentAttempt) =>
-        currentAttempt
-          ? { ...currentAttempt, violationsCount: violationsCount || currentAttempt.violationsCount }
+        currentAttempt && typeof violationsCount === 'number'
+          ? { ...currentAttempt, violationsCount }
           : currentAttempt,
       );
 
@@ -388,10 +417,24 @@ const ExamPage = () => {
         return;
       }
 
-      setViolationAlert({ eventType, violationsCount, forceSubmitted: false });
+      setViolationAlert({
+        eventType,
+        violationsCount: typeof violationsCount === 'number' ? violationsCount : null,
+        forceSubmitted: false,
+        metadata,
+      });
     },
     onForceSubmit: handleForceSubmit,
   });
+
+  const violationContent = getViolationContent(violationAlert, isMobile);
+  const hasServerViolationCount = typeof violationAlert?.violationsCount === 'number';
+  const isNearThreshold =
+    hasServerViolationCount && violationAlert.violationsCount === VIOLATION_THRESHOLD - 1;
+  const shouldShowViolationOverlay = Boolean(
+    violationAlert
+      && !(showFullscreenRecovery && ['fullscreen_exit', 'window_blur'].includes(violationAlert.eventType)),
+  );
 
   useEffect(() => {
     const loadSchedulePreview = async () => {
@@ -401,11 +444,14 @@ const ExamPage = () => {
       try {
         const storedAttemptId = sessionStorage.getItem(getActiveAttemptKey(scheduleId));
 
+
+
         if (storedAttemptId) {
           try {
             const storedAttempt = await examService.getAttemptStatus(storedAttemptId);
 
             if (['submitted', 'force_submitted', 'expired'].includes(storedAttempt.status)) {
+
               sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
               sessionStorage.setItem(LAST_RESULT_KEY, storedAttempt._id);
               navigate(`/student/results/${storedAttempt._id}`, {
@@ -462,12 +508,14 @@ const ExamPage = () => {
             eventType: 'fullscreen_exit',
             violationsCount: nextCount,
             forceSubmitted: false,
+            metadata: { trigger: 'fullscreenchange' },
           });
         } catch {
           setPendingViolationAlert({
             eventType: 'fullscreen_exit',
-            violationsCount: attempt.violationsCount || fullscreenViolationCount || 0,
+            violationsCount: null,
             forceSubmitted: false,
+            metadata: { trigger: 'fullscreenchange' },
           });
         }
       };
@@ -506,16 +554,23 @@ const ExamPage = () => {
     setViolationDismissSeconds(8);
 
     const intervalId = window.setInterval(() => {
-      setViolationDismissSeconds((current) => Math.max(current - 1, 0));
-    }, 1000);
+      if (document.visibilityState !== 'visible') {
+        return;
+      }
 
-    const timeoutId = window.setTimeout(() => {
-      setViolationAlert(null);
-    }, 8000);
+      setViolationDismissSeconds((current) => {
+        if (current <= 1) {
+          window.clearInterval(intervalId);
+          setViolationAlert(null);
+          return 0;
+        }
+
+        return current - 1;
+      });
+    }, 1000);
 
     return () => {
       window.clearInterval(intervalId);
-      window.clearTimeout(timeoutId);
     };
   }, [violationAlert]);
 
@@ -742,13 +797,13 @@ const ExamPage = () => {
   if (errorMessage && !attempt && examPhase === 'confirm' && !schedulePreview) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background p-6">
-        <div className="max-w-xl rounded-[2rem] border-2 border-secondary bg-card p-8 text-center shadow-pop-soft">
+        <div className="editorial-panel max-w-xl p-10 text-center">
           <h2 className="font-heading text-3xl font-extrabold text-foreground">Exam unavailable</h2>
-          <p className="mt-4 text-mutedFg">{errorMessage}</p>
+          <p className="mt-4 font-body text-mutedFg">{errorMessage}</p>
           <button
             type="button"
             onClick={() => navigate('/student/dashboard')}
-            className="mt-6 rounded-full border-2 border-foreground bg-secondary px-5 py-3 font-bold text-foreground shadow-pop"
+            className="editorial-button-secondary mt-8"
           >
             Back to Dashboard
           </button>
@@ -765,28 +820,30 @@ const ExamPage = () => {
 
     return (
       <div className="relative min-h-screen overflow-y-auto bg-background px-6 py-10">
-        <svg className="absolute inset-0 h-full w-full opacity-20" aria-hidden="true">
-          <defs>
-            <pattern id="exam-preview-dot-grid" width="24" height="24" patternUnits="userSpaceOnUse">
-              <circle cx="3" cy="3" r="2" fill="#1E293B" />
-            </pattern>
-          </defs>
-          <rect width="100%" height="100%" fill="url(#exam-preview-dot-grid)" />
-        </svg>
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(184,134,11,0.08),transparent_40%)]" aria-hidden="true" />
 
-        <div className="relative z-10 mx-auto w-full max-w-lg rounded-xl border-2 border-foreground bg-card p-8 shadow-pop animate-pop-in">
-          <div className="flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground bg-accent shadow-pop-press">
+        <div className="relative z-10 mx-auto w-full max-w-3xl animate-pop-in">
+          <div className="mb-6 flex items-center gap-4">
+            <span className="h-px flex-1 bg-border" />
+            <span className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">
+              Exam Preview
+            </span>
+            <span className="h-px flex-1 bg-border" />
+          </div>
+
+          <div className="editorial-panel p-10">
+          <div className="flex h-14 w-14 items-center justify-center rounded-full border border-border bg-accent shadow-sm">
             <BookOpen size={32} strokeWidth={2.5} className="text-white" />
           </div>
 
-          <h1 className="mt-4 font-heading text-2xl font-extrabold text-foreground">
+          <h1 className="mt-6 font-heading text-4xl font-semibold tracking-[-0.02em] text-foreground">
             {schedulePreview?.testId?.title || 'Exam Preview'}
           </h1>
-          <p className="mt-2 text-sm text-mutedFg">
+          <p className="mt-3 max-w-2xl font-body text-base text-mutedFg">
             Available until {schedulePreview?.endTime ? new Date(schedulePreview.endTime).toLocaleString() : '--'}
           </p>
 
-          <div className="mt-6 grid gap-3 sm:grid-cols-2">
+          <div className="mt-8 grid gap-4 sm:grid-cols-2">
             {[
               {
                 label: 'Time Limit',
@@ -816,19 +873,25 @@ const ExamPage = () => {
               const Icon = item.icon;
 
               return (
-                <div key={item.label} className="rounded-lg border-2 border-border bg-muted p-3">
-                  <div className={`flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground ${item.tone} shadow-pop-press`}>
-                    <Icon size={18} strokeWidth={2.5} className="text-foreground" />
+                <div key={item.label} className="rounded-2xl border border-border bg-muted p-5 shadow-sm">
+                  <div className={`flex h-11 w-11 items-center justify-center rounded-full border border-border ${item.tone} shadow-sm`}>
+                    <Icon size={18} strokeWidth={2.5} className="text-white" />
                   </div>
-                  <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-mutedFg">{item.label}</p>
-                  <p className="mt-1 font-heading text-lg font-bold text-foreground">{item.value}</p>
+                  <p className="mt-4 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{item.label}</p>
+                  <p className="mt-2 font-heading text-2xl font-semibold text-foreground">{item.value}</p>
                 </div>
               );
             })}
           </div>
 
-          <div className="mt-6">
-            <p className="font-heading text-sm font-bold uppercase tracking-[0.18em] text-mutedFg">Before you begin</p>
+          <div className="mt-10">
+            <div className="mb-6 flex items-center gap-4">
+              <span className="h-px flex-1 bg-border" />
+              <span className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">
+                Before You Begin
+              </span>
+              <span className="h-px flex-1 bg-border" />
+            </div>
             <div className="mt-4 space-y-3">
               {[
                 'This exam must be taken in fullscreen mode',
@@ -839,21 +902,21 @@ const ExamPage = () => {
                   ? 'If you lose connection, you can resume this exam'
                   : 'This exam cannot be paused or resumed once started',
               ].map((rule) => (
-                <div key={rule} className="flex items-start gap-3">
-                  <div className="flex h-7 w-7 shrink-0 items-center justify-center rounded-full border-2 border-foreground bg-quaternary shadow-pop-press">
-                    <Check size={14} strokeWidth={2.5} className="text-foreground" />
+                <div key={rule} className="flex items-start gap-4 rounded-2xl border border-border bg-muted/60 px-4 py-3">
+                  <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full border border-border bg-quaternary shadow-sm">
+                    <Check size={14} strokeWidth={2.5} className="text-white" />
                   </div>
-                  <p className="text-sm text-foreground">{rule}</p>
+                  <p className="font-body text-sm leading-7 text-foreground">{rule}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {attemptsTaken > 0 && attemptsTaken < maxAttempts ? (
-            <div className="mt-6 rounded-lg border-2 border-tertiary bg-tertiary/20 p-3">
+            <div className="mt-8 rounded-2xl border border-tertiary bg-tertiary/15 p-4">
               <div className="flex items-start gap-3">
                 <AlertTriangle size={18} strokeWidth={2.5} className="mt-0.5 text-foreground" />
-                <p className="text-sm text-foreground">
+                <p className="font-body text-sm leading-7 text-foreground">
                   You have used {attemptsTaken} of {maxAttempts} attempts. You have {remainingAttempts} attempt(s) left.
                 </p>
               </div>
@@ -861,16 +924,16 @@ const ExamPage = () => {
           ) : null}
 
           {!hasAttemptsLeft ? (
-            <div className="mt-6 rounded-lg border-2 border-secondary bg-secondary/20 p-3 text-sm font-medium text-foreground">
+            <div className="mt-8 rounded-2xl border border-secondary bg-secondary/15 p-4 font-body text-sm font-medium text-foreground">
               You have used all attempts for this exam.
             </div>
           ) : null}
 
-          <div className="mt-8 flex flex-col gap-3 sm:flex-row">
+          <div className="mt-10 flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => navigate(-1)}
-              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-secondary flex-1 justify-center"
             >
               Back
             </button>
@@ -880,7 +943,7 @@ const ExamPage = () => {
                 type="button"
                 onClick={handleBeginExam}
                 disabled={isLoading}
-                className="flex-1 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
+                className="editorial-button-primary flex-1 justify-center disabled:cursor-not-allowed disabled:opacity-60"
               >
                 <span className="inline-flex items-center justify-center gap-2">
                   {isLoading ? (
@@ -893,11 +956,12 @@ const ExamPage = () => {
               <button
                 type="button"
                 onClick={() => navigate('/student/dashboard')}
-                className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+                className="editorial-button-secondary flex-1 justify-center"
               >
                 Back to Dashboard
               </button>
             )}
+          </div>
           </div>
         </div>
       </div>
@@ -915,12 +979,12 @@ const ExamPage = () => {
   if (examPhase === 'expiring') {
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-sm rounded-xl border-2 border-foreground bg-card p-8 text-center shadow-pop animate-pop-in">
-          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground bg-secondary shadow-pop">
+        <div className="editorial-panel w-full max-w-sm p-10 text-center animate-pop-in">
+          <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border bg-secondary shadow-sm">
             <Clock size={40} strokeWidth={2.5} className="text-white" />
           </div>
-          <h2 className="mt-6 font-heading text-3xl font-extrabold text-foreground">Time&apos;s Up!</h2>
-          <p className="mt-3 text-mutedFg">Your time has expired. We&apos;re submitting your answers now...</p>
+          <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">Time&apos;s Up!</h2>
+          <p className="mt-3 font-body text-mutedFg">Your time has expired. We&apos;re submitting your answers now...</p>
           <div className="mt-6 flex items-center justify-center gap-1.5">
             {[0, 150, 300].map((delay) => (
               <span
@@ -940,19 +1004,19 @@ const ExamPage = () => {
 
     return (
       <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6">
-        <div className="w-full max-w-md rounded-xl border-2 border-foreground bg-card p-10 text-center shadow-pop animate-pop-in">
-          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground ${submissionContent.tone} shadow-pop`}>
+        <div className="editorial-panel w-full max-w-md p-10 text-center animate-pop-in">
+          <div className={`mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border ${submissionContent.tone} shadow-sm`}>
             <SubmissionIcon size={40} strokeWidth={2.5} className="text-white" />
           </div>
-          <h2 className="mt-6 font-heading text-3xl font-extrabold text-foreground">{submissionContent.heading}</h2>
-          <p className="mt-3 text-mutedFg">{submissionContent.body}</p>
-          <p className="mt-5 text-xs text-mutedFg">
+          <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">{submissionContent.heading}</h2>
+          <p className="mt-3 font-body text-mutedFg">{submissionContent.body}</p>
+          <p className="mt-5 font-editorialMono text-xs uppercase tracking-[0.15em] text-mutedFg">
             Redirecting to your results in {redirectCountdown} seconds...
           </p>
           <button
             type="button"
             onClick={handleViewResultsNow}
-            className="mt-7 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+            className="editorial-button-primary mt-8"
           >
             View Results Now
           </button>
@@ -964,13 +1028,13 @@ const ExamPage = () => {
   if (errorMessage && !attempt) {
     return (
       <div className="fixed inset-0 flex items-center justify-center bg-background p-6">
-        <div className="max-w-xl rounded-[2rem] border-2 border-secondary bg-card p-8 text-center shadow-pop-soft">
+        <div className="editorial-panel max-w-xl p-10 text-center">
           <h2 className="font-heading text-3xl font-extrabold text-foreground">Exam unavailable</h2>
-          <p className="mt-4 text-mutedFg">{errorMessage}</p>
+          <p className="mt-4 font-body text-mutedFg">{errorMessage}</p>
           <button
             type="button"
             onClick={() => navigate('/student/dashboard')}
-            className="mt-6 rounded-full border-2 border-foreground bg-secondary px-5 py-3 font-bold text-foreground shadow-pop"
+            className="editorial-button-secondary mt-8"
           >
             Back to Dashboard
           </button>
@@ -981,30 +1045,30 @@ const ExamPage = () => {
 
   return (
     <div className="fixed inset-0 flex flex-col bg-background">
-      <header className="flex h-16 items-center justify-between border-b-2 border-foreground bg-card px-6">
+      <header className="flex h-20 items-center justify-between border-b border-border bg-card/95 px-6 backdrop-blur">
         <div>
-          <p className="font-heading text-xl font-bold text-foreground">
+          <p className="font-heading text-2xl font-semibold text-foreground">
             {currentSectionInfo?.title || currentQuestion?.section?.title || 'Exam Section'}
           </p>
-          <p className="text-xs font-bold uppercase tracking-[0.18em] text-mutedFg">
+          <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">
             Question {Math.min(currentIndex + 1, questions.length)} of {questions.length}
           </p>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           {saveStatus === 'saving' ? (
-            <div className="inline-flex items-center gap-2 text-xs text-mutedFg">
+            <div className="inline-flex items-center gap-2 font-body text-xs text-mutedFg">
               <CloudUpload size={16} strokeWidth={2.5} className="animate-pulse" />
               <span>Saving...</span>
             </div>
           ) : null}
           {saveStatus === 'saved' ? (
-            <div className="inline-flex items-center gap-2 text-xs text-mutedFg">
+            <div className="inline-flex items-center gap-2 font-body text-xs text-mutedFg">
               <Check size={16} strokeWidth={2.5} className="text-quaternary" />
               <span>{savedStatusLabel}</span>
             </div>
           ) : null}
           {saveStatus === 'error' ? (
-            <div className="inline-flex items-center gap-2 text-xs font-medium text-secondary">
+            <div className="inline-flex items-center gap-2 font-body text-xs font-medium text-secondary">
               <WifiOff size={16} strokeWidth={2.5} />
               <span>Not saved</span>
             </div>
@@ -1014,10 +1078,10 @@ const ExamPage = () => {
             type="button"
             disabled={isCurrentEssayTooLong || showSectionTransition || examPhase !== 'active'}
             onClick={() => setIsSubmitModalOpen(true)}
-            className={`rounded-full border-2 px-5 py-2.5 font-bold ${
+            className={`min-h-[44px] rounded-md border px-5 py-2.5 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
               isCurrentEssayTooLong || showSectionTransition || examPhase !== 'active'
                 ? 'border-border bg-muted text-mutedFg'
-                : 'border-foreground bg-secondary text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press'
+                : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
             }`}
           >
             Submit
@@ -1026,28 +1090,29 @@ const ExamPage = () => {
       </header>
 
       <div className="flex flex-1 overflow-hidden">
-        <aside className="w-64 overflow-y-auto border-r-2 border-border bg-card p-4">
+        <aside className="w-72 overflow-y-auto border-r border-border bg-card px-5 py-6">
           <QuestionNavigator
             questions={questions}
             currentQuestionId={currentQuestion?._id}
             answers={answers}
             onSelectQuestion={moveToQuestion}
           />
-          <div className="mt-6 rounded-[1.25rem] border-2 border-border bg-background p-4 text-sm text-mutedFg">
-            <p>{isSaving ? 'Saving...' : formatSavedTime(lastSaved)}</p>
-            {systemMessage ? <p className="mt-2 text-foreground">{systemMessage}</p> : null}
+          <div className="mt-8 rounded-2xl border border-border bg-muted/60 p-5 shadow-sm">
+            <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">Session</p>
+            <p className="mt-3 font-body text-sm text-mutedFg">{isSaving ? 'Saving...' : formatSavedTime(lastSaved)}</p>
+            {systemMessage ? <p className="mt-3 font-body text-sm leading-7 text-foreground">{systemMessage}</p> : null}
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto p-8">
+        <main className="flex-1 overflow-y-auto px-8 py-10">
           <div className="mx-auto max-w-[800px]">
             {errorMessage ? (
-              <div className="mb-5 rounded-full border-2 border-secondary bg-secondary/20 px-4 py-2 text-sm font-medium text-foreground">
+              <div className="mb-6 rounded-2xl border border-secondary bg-secondary/15 px-5 py-3 font-body text-sm font-medium text-foreground">
                 {errorMessage}
               </div>
             ) : null}
             {resumeBanner ? (
-              <div className="mb-5 inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-tertiary px-4 py-2 text-sm font-bold text-foreground shadow-pop-press">
+              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-tertiary bg-tertiary/15 px-4 py-2 font-body text-sm font-semibold text-foreground shadow-sm">
                 <RotateCcw size={16} strokeWidth={2.5} />
                 {resumeBanner}
               </div>
@@ -1055,46 +1120,46 @@ const ExamPage = () => {
 
             {showSectionTransition && nextSectionInfo ? (
               <div className="flex flex-col items-center justify-center py-16">
-                <div className="w-full rounded-xl border-2 border-foreground bg-card p-10 text-center shadow-pop animate-pop-in">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border-2 border-foreground bg-quaternary shadow-pop">
+                <div className="editorial-panel w-full p-10 text-center animate-pop-in">
+                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-border bg-quaternary shadow-sm">
                     <CheckCircle size={48} strokeWidth={2.5} className="text-white" />
                   </div>
-                  <h2 className="mt-6 font-heading text-3xl font-extrabold text-foreground">Section Complete!</h2>
-                  <div className="mt-4 inline-flex rounded-full border-2 border-border bg-muted px-4 py-1 font-heading text-sm font-bold text-foreground">
+                  <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">Section Complete!</h2>
+                  <div className="mt-4 inline-flex rounded-full border border-border bg-muted px-4 py-1 font-body text-sm font-semibold text-foreground">
                     {currentSectionInfo?.title || 'Current Section'}
                   </div>
 
                   <div className="mt-6 flex flex-col justify-center gap-4 sm:flex-row">
-                    <div className="rounded-lg border-2 border-border bg-muted p-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-quaternary shadow-pop-press">
+                    <div className="rounded-2xl border border-border bg-muted p-5 shadow-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-quaternary shadow-sm">
                         <CheckCircle size={18} strokeWidth={2.5} className="text-white" />
                       </div>
-                      <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-mutedFg">Answered</p>
-                      <p className="mt-1 font-heading text-lg font-bold text-foreground">
+                      <p className="mt-4 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">Answered</p>
+                      <p className="mt-2 font-heading text-2xl font-semibold text-foreground">
                         {currentSectionAnsweredCount} / {currentSectionInfo?.items.length || 0}
                       </p>
                     </div>
-                    <div className="rounded-lg border-2 border-border bg-muted p-3">
-                      <div className="flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-secondary shadow-pop-press">
+                    <div className="rounded-2xl border border-border bg-muted p-5 shadow-sm">
+                      <div className="flex h-10 w-10 items-center justify-center rounded-full border border-border bg-secondary shadow-sm">
                         <SkipForward size={18} strokeWidth={2.5} className="text-white" />
                       </div>
-                      <p className="mt-3 text-xs font-bold uppercase tracking-[0.18em] text-mutedFg">Skipped</p>
-                      <p className="mt-1 font-heading text-lg font-bold text-foreground">{currentSectionSkippedCount}</p>
+                      <p className="mt-4 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">Skipped</p>
+                      <p className="mt-2 font-heading text-2xl font-semibold text-foreground">{currentSectionSkippedCount}</p>
                     </div>
                   </div>
 
-                  <div className="my-6 border-t-2 border-dashed border-border" />
+                  <div className="my-8 border-t border-dashed border-border" />
 
-                  <p className="text-xs uppercase tracking-[0.18em] text-mutedFg">Up Next</p>
-                  <h3 className="mt-2 font-heading text-xl font-bold text-foreground">{nextSectionInfo.title}</h3>
-                  <div className="mt-3 inline-flex rounded-full border border-accent bg-accent/10 px-3 py-1 text-sm font-heading font-bold text-foreground">
+                  <p className="font-editorialMono text-xs uppercase tracking-[0.15em] text-accent">Up Next</p>
+                  <h3 className="mt-2 font-heading text-2xl font-semibold text-foreground">{nextSectionInfo.title}</h3>
+                  <div className="mt-3 inline-flex rounded-full border border-accent bg-accent/10 px-3 py-1 font-body text-sm font-semibold text-foreground">
                     {nextSectionInfo.questionCount} questions
                   </div>
 
                   <button
                     type="button"
                     onClick={handleContinueToNextSection}
-                    className="mt-8 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+                    className="editorial-button-primary mt-8"
                   >
                     Continue to Next Section
                   </button>
@@ -1102,7 +1167,7 @@ const ExamPage = () => {
               </div>
             ) : (
               <>
-                <div className="rounded-xl border-2 border-foreground bg-card p-8 shadow-pop-soft">
+                <div className="editorial-panel p-8">
                   {currentQuestion ? (
                     currentQuestion.type === 'mcq' ? (
                       <MCQQuestion
@@ -1128,10 +1193,10 @@ const ExamPage = () => {
                     type="button"
                     disabled={currentIndex === 0 || isCurrentEssayTooLong}
                     onClick={() => moveToQuestion(currentIndex - 1)}
-                    className={`rounded-full border-2 px-6 py-3 font-bold ${
+                    className={`min-h-[44px] rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
                       currentIndex === 0 || isCurrentEssayTooLong
                         ? 'border-border bg-muted text-mutedFg'
-                        : 'border-foreground bg-secondary text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press'
+                        : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
                     }`}
                   >
                     Prev
@@ -1140,10 +1205,10 @@ const ExamPage = () => {
                     type="button"
                     disabled={isCurrentEssayTooLong}
                     onClick={handleNext}
-                    className={`rounded-full border-2 px-6 py-3 font-bold ${
+                    className={`min-h-[44px] rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
                       isCurrentEssayTooLong
                         ? 'border-border bg-muted text-mutedFg'
-                        : 'border-foreground bg-accent text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press'
+                        : 'border-accent bg-accent text-accentFg shadow-sm hover:bg-accent-secondary'
                     }`}
                   >
                     {currentSectionInfo && currentIndex === currentSectionInfo.endIndex
@@ -1169,34 +1234,49 @@ const ExamPage = () => {
         isSubmitting={isSubmitting}
       />
 
-      {violationAlert && violationContent ? (
+      {shouldShowViolationOverlay && violationContent ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/60 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border-2 border-secondary bg-card p-8 shadow-pop-pink">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground bg-secondary shadow-pop-press">
+          <div
+            className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-8 shadow-lg"
+            style={isMobile ? { paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' } : undefined}
+          >
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary shadow-sm">
               <violationContent.Icon size={24} strokeWidth={2.5} className="text-white" />
             </div>
-            <h2 className="mt-6 text-center font-heading text-2xl font-extrabold text-foreground">
+            <h2 className="mt-6 text-center font-heading text-2xl font-semibold text-foreground">
               {violationContent.heading}
             </h2>
-            <p className="mt-3 text-center text-mutedFg">{violationContent.body}</p>
+            <p className="mt-3 text-center font-body text-mutedFg">{violationContent.body}</p>
             <div
-              className={`mt-5 inline-flex rounded-full border-2 px-4 py-1 font-heading text-sm font-bold ${
+              className={`mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-1 font-body text-sm font-semibold ${
                 isNearThreshold
                   ? 'border-red-500 bg-red-100 text-red-700'
                   : 'border-secondary bg-secondary/20 text-foreground'
               }`}
             >
-              {isNearThreshold
-                ? 'One more violation will auto-submit your exam'
-                : `Violation ${violationAlert.violationsCount} of ${VIOLATION_THRESHOLD} recorded`}
+              {isNearThreshold ? <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" /> : null}
+              <span>
+                {hasServerViolationCount
+                  ? `Violation ${violationAlert.violationsCount} of ${VIOLATION_THRESHOLD} recorded`
+                  : 'Violation recorded'}
+              </span>
             </div>
-            <p className="mt-4 text-xs text-mutedFg">Auto-dismissing in {violationDismissSeconds}s</p>
+            {isNearThreshold ? (
+              <p className="mt-3 font-body text-sm font-medium text-secondary">One more violation will auto-submit your exam.</p>
+            ) : null}
+            <p className="mt-4 font-editorialMono text-xs uppercase tracking-[0.15em] text-mutedFg">Auto-dismissing in {violationDismissSeconds}s</p>
             <button
               type="button"
               onClick={() => setViolationAlert(null)}
-              className="mt-6 w-full rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className={`mt-6 w-full rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+                isMobile ? 'min-h-[56px]' : ''
+              } ${
+                isNearThreshold
+                  ? 'border-secondary bg-secondary text-white hover:opacity-95'
+                  : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
+              }`}
             >
-              I Understand
+              {isNearThreshold ? 'Return to Exam — Last Warning' : 'I Understand'}
             </button>
           </div>
         </div>
@@ -1204,22 +1284,22 @@ const ExamPage = () => {
 
       {showFullscreenGate ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6">
-          <div className="w-full max-w-sm rounded-xl border-2 border-foreground bg-card p-8 text-center shadow-pop">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground bg-tertiary shadow-pop-press">
+          <div className="editorial-panel w-full max-w-sm p-10 text-center">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border bg-tertiary shadow-sm">
               <Maximize size={40} strokeWidth={2.5} className="text-white" />
             </div>
-            <h2 className="mt-6 font-heading text-2xl font-extrabold text-foreground">Fullscreen Required</h2>
-            <p className="mt-3 text-mutedFg">
+            <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">Fullscreen Required</h2>
+            <p className="mt-3 font-body text-mutedFg">
               This exam must be taken in fullscreen mode. Click the button below to continue.
             </p>
             <button
               type="button"
               onClick={() => enter()}
-              className="mt-6 w-full rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-primary mt-8 w-full justify-center"
             >
               Enter Fullscreen
             </button>
-            <p className="mt-4 text-xs text-mutedFg">
+            <p className="mt-4 font-editorialMono text-xs uppercase tracking-[0.15em] text-mutedFg">
               {isSupported
                 ? 'If your browser blocks fullscreen, please allow it in your browser settings.'
                 : 'Your browser does not appear to support fullscreen mode for this exam.'}
@@ -1230,19 +1310,19 @@ const ExamPage = () => {
 
       {showFullscreenRecovery ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/80 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-xl border-2 border-secondary bg-card p-8 text-center shadow-pop-pink">
-            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground bg-secondary shadow-pop animate-wiggle">
+          <div className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-8 text-center shadow-lg">
+            <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary shadow-sm animate-wiggle">
               <AlertTriangle size={24} strokeWidth={2.5} className="text-white" />
             </div>
-            <h2 className="mt-6 font-heading text-2xl font-extrabold text-foreground">Fullscreen Exited</h2>
-            <p className="mt-3 text-mutedFg">Leaving fullscreen is a violation. This has been logged.</p>
-            <div className="mt-5 inline-flex rounded-full border-2 border-secondary bg-secondary/20 px-4 py-1 font-heading text-sm font-bold text-foreground">
+            <h2 className="mt-6 font-heading text-2xl font-semibold text-foreground">Fullscreen Exited</h2>
+            <p className="mt-3 font-body text-mutedFg">Leaving fullscreen is a violation. This has been logged.</p>
+            <div className="mt-5 inline-flex rounded-full border border-secondary bg-secondary/20 px-4 py-1 font-body text-sm font-semibold text-foreground">
               Violations: {fullscreenViolationCount} of {VIOLATION_THRESHOLD}
             </div>
             <button
               type="button"
               onClick={() => enter()}
-              className="mt-6 w-full rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-primary mt-8 w-full justify-center"
             >
               Return to Fullscreen
             </button>
@@ -1251,15 +1331,17 @@ const ExamPage = () => {
       ) : null}
 
       {showNetworkLossBanner ? (
-        <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-4 border-t-2 border-foreground bg-secondary px-6 py-3">
-          <div className="flex items-center gap-3 text-white">
-            <WifiOff size={18} strokeWidth={2.5} />
-            <span className="font-medium">Connection lost — your answers may not be saving</span>
+        <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-4 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
+          <div className="flex items-center gap-3">
+            <div className="flex h-10 w-10 items-center justify-center rounded-full border border-secondary bg-secondary/15 text-secondary">
+              <WifiOff size={18} strokeWidth={2.5} />
+            </div>
+            <span className="font-body font-medium text-foreground">Connection lost — your answers may not be saving</span>
           </div>
           <button
             type="button"
             onClick={handleRetrySave}
-            className="rounded-full border-2 border-foreground bg-white px-4 py-2 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+            className="editorial-button-secondary px-4 py-2 text-sm"
           >
             Retry Now
           </button>
@@ -1270,6 +1352,8 @@ const ExamPage = () => {
 };
 
 export default ExamPage;
+
+
 
 
 

@@ -82,13 +82,16 @@ const StudentDashboard = () => {
 
   return (
     <DashboardLayout title="Student Dashboard">
-      <section>
-        <h2 className="font-heading text-4xl font-extrabold text-foreground">
-          Hello, {greetingName} {String.fromCodePoint(0x1f44b)}
-        </h2>
-        <p className="mt-3 max-w-2xl text-base leading-7 text-mutedFg">
-          These are the exams currently assigned to your groups.
-        </p>
+      <section className="editorial-page-header">
+        <div>
+          <div className="editorial-section-label">
+            <span>Student</span>
+          </div>
+          <h2 className="editorial-page-title">Overview for {greetingName}</h2>
+          <p className="editorial-page-copy">
+            Review the exams assigned to your groups and reopen prior results when needed.
+          </p>
+        </div>
       </section>
 
       {errorMessage ? (
@@ -100,7 +103,7 @@ const StudentDashboard = () => {
       <section className="mt-8">
         {isLoading ? <LoadingSpinner /> : null}
         {!isLoading && schedules.length === 0 ? (
-          <div className="rounded-[2rem] border-2 border-dashed border-border bg-card p-10 text-center shadow-pop-soft">
+          <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-editorialMd">
             <svg viewBox="0 0 120 120" className="mx-auto h-24 w-24" fill="none" aria-hidden="true">
               <rect x="18" y="24" width="84" height="72" rx="18" fill="#BFDBFE" stroke="#1F2937" strokeWidth="4" />
               <circle cx="46" cy="52" r="7" fill="#1F2937" />
@@ -118,15 +121,15 @@ const StudentDashboard = () => {
               const status = getScheduleStatus(schedule);
 
               return (
-                <article key={schedule._id} className="relative mt-5 rounded-[1.75rem] border-2 border-foreground bg-card p-6 shadow-pop">
-                  <div className="absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground bg-accent shadow-pop-press">
+                <article key={schedule._id} className="relative mt-5 rounded-2xl border border-border bg-card p-6 shadow-editorialMd">
+                  <div className="absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border bg-accent shadow-editorialSm">
                     <BookOpen size={22} className="text-accentFg" />
                   </div>
                   <div className="mt-8 flex items-start justify-between gap-4">
                     <h3 className="font-heading text-2xl font-bold text-foreground">{schedule.testId?.title}</h3>
                     <Badge tone={status.tone}>{status.label}</Badge>
                   </div>
-                  <div className="mt-5 flex items-start gap-3 rounded-[1.25rem] border-2 border-border bg-background p-4">
+                  <div className="mt-5 flex items-start gap-3 rounded-2xl border border-border bg-background p-4">
                     <Clock3 size={18} strokeWidth={2.5} className="mt-1 text-foreground" />
                     <p className="text-sm leading-6 text-mutedFg">
                       {new Date(schedule.startTime).toLocaleString()} - {new Date(schedule.endTime).toLocaleString()}
@@ -136,9 +139,9 @@ const StudentDashboard = () => {
                     type="button"
                     disabled={!status.canStart}
                     onClick={() => navigate(`/student/exam/${schedule._id}`)}
-                    className={`mt-6 w-full rounded-full border-2 px-5 py-3 font-bold transition-all duration-200 ease-bounce ${
+                    className={`mt-6 w-full rounded-md border px-5 py-3 font-body text-sm font-semibold transition-all duration-200 ease-out ${
                       status.canStart
-                        ? 'border-foreground bg-accent text-accentFg shadow-pop hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press'
+                        ? 'border-accent bg-accent text-accentFg shadow-editorialMd hover:-translate-y-0.5'
                         : 'border-border bg-muted text-mutedFg'
                     }`}
                   >
@@ -180,8 +183,8 @@ const StudentDashboard = () => {
         ) : null}
 
         {!isAttemptsLoading && attempts.length === 0 ? (
-          <div className="mt-6 rounded-[2rem] border-2 border-dashed border-border bg-card p-8 text-center shadow-pop-soft">
-            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border-2 border-foreground bg-muted shadow-pop-press">
+          <div className="mt-6 rounded-2xl border border-dashed border-border bg-card p-8 text-center shadow-editorialMd">
+            <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border bg-muted shadow-editorialSm">
               <BookOpen size={24} strokeWidth={2.5} className="text-foreground" />
             </div>
             <h4 className="mt-5 font-heading text-2xl font-extrabold text-foreground">No completed exams yet</h4>
@@ -199,7 +202,7 @@ const StudentDashboard = () => {
               return (
                 <article
                   key={attempt.attemptId}
-                  className="rounded-[1.5rem] border-2 border-foreground bg-card p-5 shadow-pop-soft"
+                  className="rounded-2xl border border-border bg-card p-5 shadow-editorialMd"
                 >
                   <div className="flex flex-col gap-4 lg:flex-row lg:items-center lg:justify-between">
                     <div>
@@ -218,7 +221,7 @@ const StudentDashboard = () => {
                       <button
                         type="button"
                         onClick={() => navigate(`/student/results/${attempt.attemptId}`)}
-                        className="inline-flex items-center gap-2 text-sm font-bold text-accent transition-colors hover:underline"
+                        className="inline-flex items-center gap-2 font-body text-sm font-semibold text-accent transition-colors hover:underline"
                       >
                         View Details
                         <ArrowRight size={16} strokeWidth={2.5} />

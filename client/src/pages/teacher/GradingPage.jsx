@@ -176,7 +176,7 @@ const GradingPage = () => {
   return (
     <DashboardLayout title="Grading">
       <section className="grid gap-8 xl:grid-cols-[360px,1fr]">
-        <aside className="rounded-[2rem] border-2 border-border bg-card p-5 shadow-pop-soft">
+        <aside className="editorial-panel p-5">
           <div className="flex items-center gap-3">
             <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-tertiary shadow-pop-press">
               <ClipboardList size={20} className="text-foreground" />
@@ -237,7 +237,7 @@ const GradingPage = () => {
           </div>
         </aside>
 
-        <section className="rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+        <section className="editorial-panel p-6">
           {isDetailLoading ? <LoadingSpinner /> : null}
           {!isDetailLoading && !attemptDetail ? (
             <div className="flex min-h-[420px] items-center justify-center text-center text-mutedFg">

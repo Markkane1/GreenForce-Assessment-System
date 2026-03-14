@@ -9,20 +9,23 @@ const EssayQuestion = ({ question, value, onChange, errorMessage = '' }) => {
 
   return (
     <div>
-      <h2 className="font-heading text-xl font-bold text-foreground">{question.content}</h2>
+      <div className="editorial-section-label mb-6">
+        <span>Essay response</span>
+      </div>
+      <h2 className="font-heading text-3xl font-semibold text-foreground">{question.content}</h2>
       <div className="relative mt-6">
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
-          className="min-h-[200px] w-full resize-y rounded-xl border-2 border-foreground bg-background px-4 py-4 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+          className="min-h-[220px] w-full resize-y rounded-xl border border-border bg-background px-4 py-4 text-foreground shadow-editorialSm outline-none transition-all duration-200 ease-out focus:border-accent focus:shadow-editorialMd"
           placeholder="Write your answer here..."
         />
         <span
-          className={`absolute bottom-3 right-3 rounded-full px-2 py-0.5 text-xs font-medium ${
+          className={`absolute bottom-3 right-3 rounded-full px-3 py-1 font-body text-xs font-medium ${
             isExceeded
               ? 'bg-red-500 text-white'
               : isWarning
-                ? 'bg-secondary text-foreground'
+                ? 'bg-tertiary/20 text-foreground'
                 : 'bg-muted text-mutedFg'
           }`}
         >

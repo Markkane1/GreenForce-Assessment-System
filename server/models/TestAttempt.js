@@ -45,6 +45,10 @@ const testAttemptSchema = new Schema(
       default: 0,
       min: 0,
     },
+    lastViolationAt: {
+      type: Date,
+      default: null,
+    },
     questionOrder: {
       type: Schema.Types.Mixed,
       default: [],

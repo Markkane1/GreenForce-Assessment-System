@@ -159,15 +159,18 @@ const ExamScheduler = () => {
 
   return (
     <DashboardLayout title="Exam Scheduler">
-      <section className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+      <section className="editorial-page-header">
         <div>
-          <h2 className="font-heading text-4xl font-extrabold text-foreground">Exam Scheduler</h2>
-          <p className="mt-2 text-mutedFg">Schedule published tests for your student groups with colorful control.</p>
+          <div className="editorial-section-label">
+            <span>Scheduling</span>
+          </div>
+          <h2 className="editorial-page-title">Exam Scheduler</h2>
+          <p className="editorial-page-copy">Schedule published tests against student groups and review the active timetable.</p>
         </div>
         <button
           type="button"
           onClick={openCreateModal}
-          className="inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+          className="editorial-button-primary"
         >
           <CalendarPlus size={18} strokeWidth={2.5} />
           Create Schedule
@@ -180,7 +183,7 @@ const ExamScheduler = () => {
         </div>
       ) : null}
 
-      <section className="mt-8 rounded-[2rem] border-2 border-border bg-card p-6 shadow-pop-soft">
+      <section className="mt-8 editorial-panel p-6">
         {isLoading ? <LoadingSpinner /> : null}
         {!isLoading && !hasSchedules ? (
           <div className="flex flex-col items-center justify-center rounded-[1.5rem] border-2 border-dashed border-border bg-background px-8 py-16 text-center">
@@ -196,11 +199,11 @@ const ExamScheduler = () => {
         ) : null}
         {!isLoading && hasSchedules ? (
           <div className="overflow-x-auto">
-            <table className="min-w-full border-separate border-spacing-y-3">
+            <table className="editorial-table">
               <thead>
                 <tr>
                   {['Test', 'Start', 'End', 'Groups', 'Status', 'Actions'].map((heading) => (
-                    <th key={heading} className="px-4 text-left text-xs font-bold uppercase tracking-[0.22em] text-mutedFg">
+                    <th key={heading}>
                       {heading}
                     </th>
                   ))}

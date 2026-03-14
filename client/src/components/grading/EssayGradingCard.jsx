@@ -1,16 +1,16 @@
 const EssayGradingCard = ({ answer, value, onChange, onSave, isSaving = false }) => (
-  <article className="rounded-[1.5rem] border-2 border-foreground bg-card p-5 shadow-pop-soft">
+  <article className="rounded-2xl border border-border bg-card p-5 shadow-editorialMd">
     <div className="flex items-start justify-between gap-4">
       <div>
         <h4 className="font-heading text-xl font-extrabold text-foreground">Essay Question</h4>
         <p className="mt-2 text-sm leading-7 text-mutedFg">{answer.questionId?.content}</p>
       </div>
-      <span className="rounded-full border-2 border-foreground bg-secondary px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] text-foreground shadow-pop-soft">
+      <span className="rounded-full border border-border bg-secondary px-3 py-1 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-foreground shadow-editorialSm">
         Max {answer.questionId?.points} pts
       </span>
     </div>
 
-    <div className="mt-5 rounded-xl border-2 border-border bg-muted p-4 text-sm leading-7 text-foreground">
+    <div className="mt-5 rounded-xl border border-border bg-muted p-4 text-sm leading-7 text-foreground">
       {answer.essayText || 'No answer submitted.'}
     </div>
 
@@ -23,7 +23,7 @@ const EssayGradingCard = ({ answer, value, onChange, onSave, isSaving = false })
           max={answer.questionId?.points || 0}
           value={value.score}
           onChange={(event) => onChange('score', event.target.value)}
-          className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+          className="editorial-input-surface"
         />
       </label>
       <label className="space-y-2">
@@ -32,7 +32,7 @@ const EssayGradingCard = ({ answer, value, onChange, onSave, isSaving = false })
           rows="4"
           value={value.feedback}
           onChange={(event) => onChange('feedback', event.target.value)}
-          className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+          className="editorial-input-surface"
         />
       </label>
     </div>
@@ -41,7 +41,7 @@ const EssayGradingCard = ({ answer, value, onChange, onSave, isSaving = false })
       type="button"
       onClick={onSave}
       disabled={isSaving}
-      className="mt-5 rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+      className="editorial-button-secondary mt-5"
     >
       {isSaving ? 'Saving Grade...' : 'Save Grade'}
     </button>
