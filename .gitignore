@@ -5,3 +5,4 @@ docs/
 .qa-tools/
 .qa-*.log
 *.pid
+.claude
