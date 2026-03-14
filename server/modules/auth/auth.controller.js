@@ -1,4 +1,5 @@
 import asyncHandler from '../../utils/asyncHandler.js';
+import { createCsrfToken } from '../../middlewares/csrfMiddleware.js';
 import {
   changePassword,
   forgotPassword,
@@ -10,12 +11,17 @@ import {
 
 const EMAIL_REGEX = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 const AUTH_COOKIE_NAME = 'auth_token';
+const CSRF_COOKIE_NAME = 'csrf_token';
 const AUTH_COOKIE_MAX_AGE_MS = 24 * 60 * 60 * 1000;
+const COOKIE_SAME_SITE = process.env.AUTH_COOKIE_SAMESITE || 'lax';
+const COOKIE_SECURE = process.env.AUTH_COOKIE_SECURE
+  ? process.env.AUTH_COOKIE_SECURE === 'true'
+  : process.env.NODE_ENV === 'production';
 
 const getAuthCookieOptions = () => ({
   httpOnly: true,
-  secure: process.env.NODE_ENV === 'production',
-  sameSite: 'lax',
+  secure: COOKIE_SECURE,
+  sameSite: COOKIE_SAME_SITE,
   maxAge: AUTH_COOKIE_MAX_AGE_MS,
   path: '/',
 });
@@ -24,11 +30,30 @@ const setAuthCookie = (res, token) => {
   res.cookie(AUTH_COOKIE_NAME, token, getAuthCookieOptions());
 };
 
+const setCsrfCookie = (res, token) => {
+  res.cookie(CSRF_COOKIE_NAME, token, {
+    httpOnly: false,
+    secure: COOKIE_SECURE,
+    sameSite: COOKIE_SAME_SITE,
+    maxAge: AUTH_COOKIE_MAX_AGE_MS,
+    path: '/',
+  });
+};
+
 const clearAuthCookie = (res) => {
   res.clearCookie(AUTH_COOKIE_NAME, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
-    sameSite: 'lax',
+    secure: COOKIE_SECURE,
+    sameSite: COOKIE_SAME_SITE,
+    path: '/',
+  });
+};
+
+const clearCsrfCookie = (res) => {
+  res.clearCookie(CSRF_COOKIE_NAME, {
+    httpOnly: false,
+    secure: COOKIE_SECURE,
+    sameSite: COOKIE_SAME_SITE,
     path: '/',
   });
 };
@@ -70,6 +95,7 @@ export const registerStudentHandler = asyncHandler(async (req, res) => {
 
   const result = await registerStudent(name, email, phone, password, inviteCode);
   setAuthCookie(res, result.token);
+  setCsrfCookie(res, createCsrfToken());
 
   res.status(201).json({
     success: true,
@@ -94,6 +120,7 @@ export const login = asyncHandler(async (req, res) => {
 
   const result = await loginUser(email, password);
   setAuthCookie(res, result.token);
+  setCsrfCookie(res, createCsrfToken());
 
   res.status(200).json({
     success: true,
@@ -168,6 +195,10 @@ export const changePasswordHandler = asyncHandler(async (req, res) => {
 export const meHandler = asyncHandler(async (req, res) => {
   const user = await getCurrentUser(req.user.id);
 
+  if (!req.cookies?.[CSRF_COOKIE_NAME]) {
+    setCsrfCookie(res, createCsrfToken());
+  }
+
   res.status(200).json({
     success: true,
     user,
@@ -176,6 +207,7 @@ export const meHandler = asyncHandler(async (req, res) => {
 
 export const logoutHandler = asyncHandler(async (req, res) => {
   clearAuthCookie(res);
+  clearCsrfCookie(res);
 
   res.status(200).json({
     success: true,

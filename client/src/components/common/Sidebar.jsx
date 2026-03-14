@@ -8,6 +8,10 @@ const navigationByRole = {
     { label: 'Dashboard', to: '/admin/dashboard', icon: LayoutDashboard },
     { label: 'Users', to: '/admin/users', icon: Users },
     { label: 'Groups', to: '/admin/groups', icon: UsersRound },
+    { label: 'Teaching', to: '/teacher/dashboard', icon: LayoutDashboard },
+    { label: 'Tests', to: '/teacher/tests/new', icon: ScrollText },
+    { label: 'Schedule', to: '/teacher/schedule', icon: UsersRound },
+    { label: 'Grading', to: '/teacher/grade', icon: ShieldCheck },
   ],
   teacher: [
     { label: 'Dashboard', to: '/teacher/dashboard', icon: LayoutDashboard },

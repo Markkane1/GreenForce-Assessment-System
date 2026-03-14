@@ -48,6 +48,32 @@ const testSchema = new Schema(
       type: Boolean,
       default: false,
     },
+    antiCheat: {
+      disableContextMenu: {
+        type: Boolean,
+        default: true,
+      },
+      disableCopyPaste: {
+        type: Boolean,
+        default: true,
+      },
+      disableTranslate: {
+        type: Boolean,
+        default: true,
+      },
+      disableAutocomplete: {
+        type: Boolean,
+        default: true,
+      },
+      disableSpellcheck: {
+        type: Boolean,
+        default: true,
+      },
+      disablePrinting: {
+        type: Boolean,
+        default: true,
+      },
+    },
     createdBy: {
       type: Schema.Types.ObjectId,
       ref: 'User',

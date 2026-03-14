@@ -1,0 +1,1013 @@
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'No token provided',
+  stack: 'Error: No token provided\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:9:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Invalid token',
+  stack: 'Error: Invalid token\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Token expired',
+  stack: 'Error: Token expired\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/users',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/tests',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'DELETE',
+  path: '/api/users/69b44078d5d720d588f4e278',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/questions',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptQuestions (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:546:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:62:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/save-answer',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at saveAnswer (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:452:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:47:23'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/grading/essay',
+  statusCode: 403,
+  message: 'You are not authorized to grade this test.',
+  stack: 'Error: You are not authorized to grade this test.\n' +
+    '    at ensureTeacherOwnsTest (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:19:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async gradeEssay (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:203:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.controller.js:55:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/status',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptStatus (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:603:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:92:19'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'Exam is not currently active',
+  stack: 'Error: Exam is not currently active\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:264:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'You are not assigned to this exam schedule.',
+  stack: 'Error: You are not assigned to this exam schedule.\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:276:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'No token provided',
+  stack: 'Error: No token provided\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:9:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Invalid token',
+  stack: 'Error: Invalid token\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Token expired',
+  stack: 'Error: Token expired\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/users',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/tests',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'DELETE',
+  path: '/api/users/69b44078d5d720d588f4e278',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/questions',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptQuestions (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:546:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:62:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/save-answer',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at saveAnswer (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:452:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:47:23'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/grading/essay',
+  statusCode: 403,
+  message: 'You are not authorized to grade this test.',
+  stack: 'Error: You are not authorized to grade this test.\n' +
+    '    at ensureTeacherOwnsTest (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:19:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async gradeEssay (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:203:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.controller.js:55:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/status',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptStatus (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:603:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:92:19'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'Exam is not currently active',
+  stack: 'Error: Exam is not currently active\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:264:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'You are not assigned to this exam schedule.',
+  stack: 'Error: You are not assigned to this exam schedule.\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:276:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'No token provided',
+  stack: 'Error: No token provided\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:9:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Invalid token',
+  stack: 'Error: Invalid token\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests',
+  statusCode: 401,
+  message: 'Token expired',
+  stack: 'Error: Token expired\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:31:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)\n' +
+    '    at router (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:47:12)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 401,
+  message: 'Invalid email or password.',
+  stack: 'Error: Invalid email or password.\n' +
+    '    at loginUser (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.service.js:128:19)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:95:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/users',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/tests',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'DELETE',
+  path: '/api/users/69b44078d5d720d588f4e278',
+  statusCode: 403,
+  message: 'Forbidden: insufficient permissions.',
+  stack: 'Error: Forbidden: insufficient permissions.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:44:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/middlewares/authMiddleware.js:29:5\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/questions',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptQuestions (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:546:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:62:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/save-answer',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at saveAnswer (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:452:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:47:23'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/grading/essay',
+  statusCode: 403,
+  message: 'You are not authorized to grade this test.',
+  stack: 'Error: You are not authorized to grade this test.\n' +
+    '    at ensureTeacherOwnsTest (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:19:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async gradeEssay (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.service.js:203:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/grading/grading.controller.js:55:18'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/exam/69b445c79a7ec5127af89d62/status',
+  statusCode: 403,
+  message: 'You are not authorized to access this exam attempt.',
+  stack: 'Error: You are not authorized to access this exam attempt.\n' +
+    '    at ensureAttemptOwnership (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:82:19)\n' +
+    '    at getAttemptStatus (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:603:3)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:92:19'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'Exam is not currently active',
+  stack: 'Error: Exam is not currently active\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:264:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/start',
+  statusCode: 403,
+  message: 'You are not assigned to this exam schedule.',
+  stack: 'Error: You are not assigned to this exam schedule.\n' +
+    '    at startExam (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.service.js:276:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/examEngine/examEngine.controller.js:20:18'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/auth/login',
+  statusCode: 400,
+  message: 'A valid email address is required.',
+  stack: 'Error: A valid email address is required.\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/auth/auth.controller.js:84:19\n' +
+    '    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/utils/asyncHandler.js:2:19\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\route.js:149:13)\n' +
+    '    at Route.dispatch (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\route.js:119:3)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:284:15\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at Function.handle (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:175:3)'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/users?role[$gt]=',
+  statusCode: 400,
+  message: 'Invalid resource identifier: role.',
+  stack: 'CastError: Cast to string failed for value "{}" (type Object) at path "role" for model "User"\n' +
+    '    at SchemaString.cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schema\\string.js:609:11)\n' +
+    '    at SchemaType.applySetters (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schemaType.js:1288:12)\n' +
+    '    at SchemaString.castForQuery (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schema\\string.js:703:17)\n' +
+    '    at cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\cast.js:319:34)\n' +
+    '    at Query.cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:5060:12)\n' +
+    '    at Query._castConditions (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:2374:10)\n' +
+    '    at model.Query._find (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:2401:8)\n' +
+    '    at model.Query.exec (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:4627:80)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/users/users.controller.js:20:17'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/exam/save-answer',
+  statusCode: 413,
+  message: 'request entity too large',
+  stack: 'PayloadTooLargeError: request entity too large\n' +
+    '    at readStream (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\raw-body\\index.js:163:17)\n' +
+    '    at getRawBody (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\raw-body\\index.js:116:12)\n' +
+    '    at read (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\body-parser\\lib\\read.js:79:3)\n' +
+    '    at jsonParser (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\body-parser\\lib\\types\\json.js:138:5)\n' +
+    '    at Layer.handle [as handle_request] (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\layer.js:95:5)\n' +
+    '    at trim_prefix (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:328:13)\n' +
+    '    at D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:286:9\n' +
+    '    at Function.process_params (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:346:12)\n' +
+    '    at next (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\express\\lib\\router\\index.js:280:10)\n' +
+    '    at cookieParser (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\cookie-parser\\index.js:57:14)'
+}
+Request failed {
+  method: 'POST',
+  path: '/api/schedules',
+  statusCode: 400,
+  message: 'A schedule for this test and student-group selection already overlaps the chosen time window.',
+  stack: 'Error: A schedule for this test and student-group selection already overlaps the chosen time window.\n' +
+    '    at ensureNoDuplicateSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:94:19)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async createSchedule (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.service.js:172:3)\n' +
+    '    at async file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/schedules/schedules.controller.js:16:20'
+}
+Request failed {
+  method: 'GET',
+  path: '/api/tests/notanobjectid',
+  statusCode: 400,
+  message: 'Invalid resource identifier: _id.',
+  stack: 'CastError: Cast to ObjectId failed for value "notanobjectid" (type string) at path "_id" for model "Test"\n' +
+    '    at SchemaObjectId.cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schema\\objectId.js:253:11)\n' +
+    '    at SchemaType.applySetters (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schemaType.js:1288:12)\n' +
+    '    at SchemaType.castForQuery (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\schemaType.js:1724:17)\n' +
+    '    at cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\cast.js:390:32)\n' +
+    '    at Query.cast (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:5060:12)\n' +
+    '    at Query._castConditions (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:2374:10)\n' +
+    '    at model.Query._findOne (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:2697:8)\n' +
+    '    at model.Query.exec (D:\\web temps\\EPA Testing Suite\\server\\node_modules\\mongoose\\lib\\query.js:4627:80)\n' +
+    '    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)\n' +
+    '    at async ensureTestExists (file:///D:/web%20temps/EPA%20Testing%20Suite/server/modules/tests/tests.service.js:33:16)'
+}
+Port 5000 is already in use. Stop the existing process or change PORT.
+ValidationError: Custom keyGenerator appears to use request IP without calling the ipKeyGenerator helper function for IPv6 addresses. This could allow IPv6 users to bypass limits. See https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/ for more information.
+    at Object.keyGeneratorIpFallback (file:///D:/web%20temps/EPA%20Testing%20Suite/server/node_modules/express-rate-limit/dist/index.mjs:613:13)
+    at wrappedValidations.<computed> [as keyGeneratorIpFallback] (file:///D:/web%20temps/EPA%20Testing%20Suite/server/node_modules/express-rate-limit/dist/index.mjs:656:22)
+    at parseOptions (file:///D:/web%20temps/EPA%20Testing%20Suite/server/node_modules/express-rate-limit/dist/index.mjs:726:16)
+    at rateLimit (file:///D:/web%20temps/EPA%20Testing%20Suite/server/node_modules/express-rate-limit/dist/index.mjs:807:18)
+    at file:///D:/web%20temps/EPA%20Testing%20Suite/server/app.js:67:21
+    at ModuleJob.run (node:internal/modules/esm/module_job:345:25)
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+    at async onImport.tracePromise.__proto__ (node:internal/modules/esm/loader:651:26)
+    at async asyncRunEntryPointWithESMLoader (node:internal/modules/run_main:117:5) {
+  code: 'ERR_ERL_KEY_GEN_IPV6',
+  help: 'https://express-rate-limit.github.io/ERR_ERL_KEY_GEN_IPV6/'
+}
+Port 5000 is already in use. Stop the existing process or change PORT.
+Port 5000 is already in use. Stop the existing process or change PORT.
+Port 5000 is already in use. Stop the existing process or change PORT.
+Port 5000 is already in use. Stop the existing process or change PORT.

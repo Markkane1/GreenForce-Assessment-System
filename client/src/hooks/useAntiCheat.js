@@ -4,8 +4,13 @@ import * as examService from '../services/examService';
 const MOBILE_REGEX = /iPhone|iPad|iPod|Android/i;
 const IOS_REGEX = /iPhone|iPad|iPod/i;
 const DEBOUNCE_MS = 2000;
+const DEFAULT_RESTRICTIONS = {
+  disableContextMenu: true,
+  disableCopyPaste: true,
+  disablePrinting: true,
+};
 
-const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
+const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit, restrictions = DEFAULT_RESTRICTIONS }) => {
   const userAgent = typeof navigator !== 'undefined' ? navigator.userAgent : '';
   const isMobile = MOBILE_REGEX.test(userAgent);
   const isIOS = IOS_REGEX.test(userAgent);
@@ -20,6 +25,11 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
     if (!enabled || !attemptId) {
       return undefined;
     }
+
+    const activeRestrictions = {
+      ...DEFAULT_RESTRICTIONS,
+      ...restrictions,
+    };
 
     // Mobile notification shade and screen lock both transition the page to hidden.
     // These are treated as legitimate focus-loss violations.
@@ -132,11 +142,19 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
       dispatchViolation('copy_attempt', 'cut');
     };
 
+    const handlePaste = (event) => {
+      event.preventDefault();
+      dispatchViolation('copy_attempt', 'paste');
+    };
+
     const handleKeyDown = (event) => {
       const key = String(event.key || '').toLowerCase();
       const hasCommandModifier = event.ctrlKey || event.metaKey;
 
       if (key === 'printscreen') {
+        if (!activeRestrictions.disableCopyPaste) {
+          return;
+        }
         event.preventDefault();
         dispatchViolation('copy_attempt', 'printscreen');
         return;
@@ -150,10 +168,18 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
         c: event.metaKey ? 'meta+c' : 'ctrl+c',
         x: event.metaKey ? 'meta+x' : 'ctrl+x',
         a: event.metaKey ? 'meta+a' : 'ctrl+a',
+        v: event.metaKey ? 'meta+v' : 'ctrl+v',
         p: event.metaKey ? 'meta+p' : 'ctrl+p',
       };
 
       if (shortcutTriggers[key]) {
+        const isPrintShortcut = key === 'p';
+        const isCopyShortcut = ['a', 'c', 'v', 'x'].includes(key);
+
+        if ((isPrintShortcut && !activeRestrictions.disablePrinting) || (isCopyShortcut && !activeRestrictions.disableCopyPaste)) {
+          return;
+        }
+
         event.preventDefault();
         dispatchViolation('copy_attempt', shortcutTriggers[key]);
       }
@@ -161,6 +187,10 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
 
     const handleContextMenu = (event) => {
       event.preventDefault();
+    };
+
+    const handleBeforePrint = () => {
+      dispatchViolation('copy_attempt', 'beforeprint');
     };
 
     const handlePageHide = () => {
@@ -174,10 +204,21 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
     };
 
     document.addEventListener('visibilitychange', handleVisibilityChange);
-    document.addEventListener('copy', handleCopy);
-    document.addEventListener('cut', handleCut);
     document.addEventListener('keydown', handleKeyDown);
-    document.addEventListener('contextmenu', handleContextMenu);
+
+    if (activeRestrictions.disableCopyPaste) {
+      document.addEventListener('copy', handleCopy);
+      document.addEventListener('cut', handleCut);
+      document.addEventListener('paste', handlePaste);
+    }
+
+    if (activeRestrictions.disableContextMenu) {
+      document.addEventListener('contextmenu', handleContextMenu);
+    }
+
+    if (activeRestrictions.disablePrinting) {
+      window.addEventListener('beforeprint', handleBeforePrint);
+    }
 
     if (!isIOS) {
       // iOS Safari: window blur unreliable, skip in favor of visibilitychange + pagehide.
@@ -191,10 +232,21 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
 
     return () => {
       document.removeEventListener('visibilitychange', handleVisibilityChange);
-      document.removeEventListener('copy', handleCopy);
-      document.removeEventListener('cut', handleCut);
       document.removeEventListener('keydown', handleKeyDown);
-      document.removeEventListener('contextmenu', handleContextMenu);
+
+      if (activeRestrictions.disableCopyPaste) {
+        document.removeEventListener('copy', handleCopy);
+        document.removeEventListener('cut', handleCut);
+        document.removeEventListener('paste', handlePaste);
+      }
+
+      if (activeRestrictions.disableContextMenu) {
+        document.removeEventListener('contextmenu', handleContextMenu);
+      }
+
+      if (activeRestrictions.disablePrinting) {
+        window.removeEventListener('beforeprint', handleBeforePrint);
+      }
 
       if (!isIOS) {
         window.removeEventListener('blur', handleWindowBlur);
@@ -205,7 +257,7 @@ const useAntiCheat = ({ attemptId, enabled, onViolation, onForceSubmit }) => {
         window.removeEventListener('pageshow', handlePageShow);
       }
     };
-  }, [attemptId, enabled, isIOS, isMobile, onForceSubmit, onViolation]);
+  }, [attemptId, enabled, isIOS, isMobile, onForceSubmit, onViolation, restrictions]);
 
   return { isMobile };
 };

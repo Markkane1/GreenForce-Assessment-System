@@ -1,4 +1,4 @@
-import { Eye, EyeOff, Feather, LockKeyhole } from 'lucide-react';
+﻿import { Eye, EyeOff, Feather, LockKeyhole } from 'lucide-react';
 import { useMemo, useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../hooks/useAuth';
@@ -82,7 +82,7 @@ const LoginPage = () => {
 
     try {
       const response = await authService.login(formData.email, formData.password);
-      login(response.user, response.token);
+      login(response.user);
       navigate(getRedirectPath(response.user.role), { replace: true });
     } catch (error) {
       setErrorMessage(error.message || 'Unable to sign in. Please try again.');
@@ -175,7 +175,7 @@ const LoginPage = () => {
           </div>
 
           <button type="submit" disabled={isSubmitting} className="editorial-primary-button">
-            {isSubmitting ? 'Signing in…' : 'Sign In'}
+            {isSubmitting ? 'Signing in...' : 'Sign In'}
           </button>
         </form>
 

@@ -17,20 +17,12 @@ const getRedirectPath = (role) => {
 };
 
 const normalizeInviteCode = (value) => {
-  const sanitized = value.toUpperCase().replace(/[^A-Z0-9]/g, '');
-  const parts = [];
-
-  if (sanitized.length > 0) {
-    parts.push(sanitized.slice(0, Math.min(5, sanitized.length)));
-  }
-  if (sanitized.length > 5) {
-    parts.push(sanitized.slice(5, Math.min(10, sanitized.length)));
-  }
-  if (sanitized.length > 10) {
-    parts.push(sanitized.slice(10, Math.min(12, sanitized.length)));
-  }
-
-  return parts.join('-');
+  return value
+    .toUpperCase()
+    .replace(/[^A-Z0-9-]/g, '')
+    .replace(/-+/g, '-')
+    .replace(/^-/, '')
+    .replace(/-$/, '');
 };
 
 const getPhoneDigits = (value) => value.replace(/\D/g, '');

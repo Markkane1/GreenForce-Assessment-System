@@ -19,6 +19,9 @@ const buildPopulatedScheduleQuery = (query) =>
       path: 'assignedGroups',
     });
 
+export const getAllSchedules = async () =>
+  buildPopulatedScheduleQuery(TestSchedule.find({}).sort({ startTime: 1 }));
+
 const ensureValidDateRange = (startTime, endTime) => {
   const start = new Date(startTime);
   const end = new Date(endTime);
@@ -57,6 +60,43 @@ const validateAssignedGroups = async (assignedGroups) => {
   return uniqueGroupIds;
 };
 
+const haveSameGroups = (firstGroups = [], secondGroups = []) => {
+  if (firstGroups.length !== secondGroups.length) {
+    return false;
+  }
+
+  const normalizeGroupId = (group) => (group?._id || group).toString();
+  const firstSorted = [...firstGroups].map(normalizeGroupId).sort();
+  const secondSorted = [...secondGroups].map(normalizeGroupId).sort();
+
+  return firstSorted.every((groupId, index) => groupId === secondSorted[index]);
+};
+
+const ensureNoDuplicateSchedule = async ({
+  scheduleId = null,
+  testId,
+  start,
+  end,
+  assignedGroups,
+}) => {
+  const overlappingSchedules = await TestSchedule.find({
+    ...(scheduleId ? { _id: { $ne: scheduleId } } : {}),
+    testId,
+    startTime: { $lt: end },
+    endTime: { $gt: start },
+  }).select('_id assignedGroups startTime endTime');
+
+  const duplicate = overlappingSchedules.find((schedule) =>
+    haveSameGroups(schedule.assignedGroups || [], assignedGroups),
+  );
+
+  if (duplicate) {
+    const error = new Error('A schedule for this test and student-group selection already overlaps the chosen time window.');
+    error.statusCode = 400;
+    throw error;
+  }
+};
+
 const ensureScheduleExists = async (id) => {
   const schedule = await buildPopulatedScheduleQuery(TestSchedule.findById(id));
 
@@ -69,7 +109,11 @@ const ensureScheduleExists = async (id) => {
   return schedule;
 };
 
-const ensureTeacherOwnsTest = (test, teacherId) => {
+const ensureTeacherOwnsTest = (test, teacherId, role = 'teacher') => {
+  if (role === 'admin') {
+    return;
+  }
+
   if (test.createdBy._id.toString() !== teacherId.toString()) {
     const error = new Error('You are not authorized to manage this schedule.');
     error.statusCode = 403;
@@ -103,7 +147,7 @@ const ensureUserCanAccessSchedule = async (schedule, userId, role) => {
   throw error;
 };
 
-export const createSchedule = async (testId, startTime, endTime, assignedGroups, teacherId) => {
+export const createSchedule = async (testId, startTime, endTime, assignedGroups, teacherId, role = 'teacher') => {
   const test = await Test.findById(testId).populate({
     path: 'createdBy',
     select: '-password',
@@ -115,7 +159,7 @@ export const createSchedule = async (testId, startTime, endTime, assignedGroups,
     throw error;
   }
 
-  ensureTeacherOwnsTest(test, teacherId);
+  ensureTeacherOwnsTest(test, teacherId, role);
 
   if (!test.isPublished) {
     const error = new Error('Only published tests can be scheduled.');
@@ -125,6 +169,12 @@ export const createSchedule = async (testId, startTime, endTime, assignedGroups,
 
   const { start, end } = ensureValidDateRange(startTime, endTime);
   const validGroupIds = await validateAssignedGroups(assignedGroups);
+  await ensureNoDuplicateSchedule({
+    testId,
+    start,
+    end,
+    assignedGroups: validGroupIds,
+  });
 
   const schedule = await TestSchedule.create({
     testId,
@@ -147,12 +197,47 @@ export const getSchedulesForStudent = async (studentId) => {
   const memberships = await GroupMember.find({ studentId }).select('groupId');
   const groupIds = memberships.map((membership) => membership.groupId);
 
-  return buildPopulatedScheduleQuery(
+  const schedules = await buildPopulatedScheduleQuery(
     TestSchedule.find({
       assignedGroups: { $in: groupIds },
       endTime: { $gte: new Date() },
     }).sort({ startTime: 1 }),
   );
+
+  if (schedules.length === 0) {
+    return [];
+  }
+
+  const scheduleIds = schedules.map((schedule) => schedule._id);
+  const attemptsBySchedule = await TestAttempt.aggregate([
+    {
+      $match: {
+        studentId,
+        scheduleId: { $in: scheduleIds },
+        status: { $ne: 'in_progress' },
+      },
+    },
+    {
+      $group: {
+        _id: '$scheduleId',
+        attemptsTaken: { $sum: 1 },
+      },
+    },
+  ]);
+  const attemptsMap = new Map(
+    attemptsBySchedule.map((entry) => [entry._id.toString(), entry.attemptsTaken]),
+  );
+
+  return schedules.map((schedule) => {
+    const attemptsTaken = attemptsMap.get(schedule._id.toString()) || 0;
+    const maxAttempts = schedule.testId?.maxAttempts || 0;
+
+    return {
+      ...schedule.toObject(),
+      attemptsTaken,
+      hasAttemptsLeft: attemptsTaken < maxAttempts,
+    };
+  });
 };
 
 export const getScheduleById = async (id, userId, role) => {
@@ -179,19 +264,29 @@ export const getScheduleById = async (id, userId, role) => {
   };
 };
 
-export const updateSchedule = async (id, data, teacherId) => {
+export const updateSchedule = async (id, data, teacherId, role = 'teacher') => {
   const schedule = await ensureScheduleExists(id);
-  ensureTeacherOwnsTest(schedule.testId, teacherId);
+  ensureTeacherOwnsTest(schedule.testId, teacherId, role);
 
   const nextStartTime = data.startTime !== undefined ? data.startTime : schedule.startTime;
   const nextEndTime = data.endTime !== undefined ? data.endTime : schedule.endTime;
   const { start, end } = ensureValidDateRange(nextStartTime, nextEndTime);
+  const nextAssignedGroups =
+    data.assignedGroups !== undefined ? await validateAssignedGroups(data.assignedGroups) : schedule.assignedGroups;
+
+  await ensureNoDuplicateSchedule({
+    scheduleId: schedule._id,
+    testId: schedule.testId._id,
+    start,
+    end,
+    assignedGroups: nextAssignedGroups,
+  });
 
   schedule.startTime = start;
   schedule.endTime = end;
 
   if (data.assignedGroups !== undefined) {
-    schedule.assignedGroups = await validateAssignedGroups(data.assignedGroups);
+    schedule.assignedGroups = nextAssignedGroups;
   }
 
   await schedule.save();
@@ -199,9 +294,9 @@ export const updateSchedule = async (id, data, teacherId) => {
   return buildPopulatedScheduleQuery(TestSchedule.findById(schedule._id));
 };
 
-export const deleteSchedule = async (id, teacherId) => {
+export const deleteSchedule = async (id, teacherId, role = 'teacher') => {
   const schedule = await ensureScheduleExists(id);
-  ensureTeacherOwnsTest(schedule.testId, teacherId);
+  ensureTeacherOwnsTest(schedule.testId, teacherId, role);
 
   await TestSchedule.findByIdAndDelete(id);
 

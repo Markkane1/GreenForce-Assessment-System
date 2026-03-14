@@ -8,7 +8,7 @@ import {
 } from './grading.service.js';
 
 export const getAttemptsForGrading = asyncHandler(async (req, res) => {
-  const attempts = await getAttemptsForGradingService(req.user.id, req.query);
+  const attempts = await getAttemptsForGradingService(req.user.id, req.query, req.user.role);
 
   res.status(200).json({
     success: true,
@@ -23,7 +23,7 @@ export const getAttemptDetail = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const attempt = await getAttemptDetailService(req.params.id, req.user.id);
+  const attempt = await getAttemptDetailService(req.params.id, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,
@@ -52,7 +52,7 @@ export const gradeEssay = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const result = await gradeEssayService(answerId, score, feedback, req.user.id);
+  const result = await gradeEssayService(answerId, score, feedback, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,
@@ -67,7 +67,7 @@ export const finalizeAttempt = asyncHandler(async (req, res) => {
     throw error;
   }
 
-  const attempt = await finalizeAttemptService(req.params.attemptId, req.user.id);
+  const attempt = await finalizeAttemptService(req.params.attemptId, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,

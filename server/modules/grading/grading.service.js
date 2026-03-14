@@ -6,7 +6,7 @@ import TestAttempt from '../../models/TestAttempt.js';
 
 const FINISHED_ATTEMPT_STATUSES = ['submitted', 'force_submitted', 'expired'];
 
-const ensureTeacherOwnsTest = async (testId, teacherId) => {
+const ensureTeacherOwnsTest = async (testId, teacherId, role = 'teacher') => {
   const test = await Test.findById(testId).select('title passingScore createdBy');
 
   if (!test) {
@@ -15,7 +15,7 @@ const ensureTeacherOwnsTest = async (testId, teacherId) => {
     throw error;
   }
 
-  if (test.createdBy.toString() !== teacherId.toString()) {
+  if (role !== 'admin' && test.createdBy.toString() !== teacherId.toString()) {
     const error = new Error('You are not authorized to grade this test.');
     error.statusCode = 403;
     throw error;
@@ -47,7 +47,7 @@ const getEssayQuestionIds = async (attemptIds) => {
   }, {});
 };
 
-export const finalizeAttempt = async (attemptId, teacherId) => {
+export const finalizeAttempt = async (attemptId, teacherId, role = 'teacher') => {
   const attempt = await TestAttempt.findById(attemptId)
     .populate({ path: 'testId', select: 'title passingScore createdBy' })
     .populate({ path: 'studentId', select: 'name email' });
@@ -64,7 +64,7 @@ export const finalizeAttempt = async (attemptId, teacherId) => {
     throw error;
   }
 
-  if (attempt.testId.createdBy.toString() !== teacherId.toString()) {
+  if (role !== 'admin' && attempt.testId.createdBy.toString() !== teacherId.toString()) {
     const error = new Error('You are not authorized to finalize this attempt.');
     error.statusCode = 403;
     throw error;
@@ -89,8 +89,8 @@ export const finalizeAttempt = async (attemptId, teacherId) => {
   return attempt;
 };
 
-export const getAttemptsForGrading = async (teacherId, filters = {}) => {
-  const testQuery = { createdBy: teacherId };
+export const getAttemptsForGrading = async (teacherId, filters = {}, role = 'teacher') => {
+  const testQuery = role === 'admin' ? {} : { createdBy: teacherId };
 
   if (filters.testId) {
     testQuery._id = filters.testId;
@@ -124,7 +124,7 @@ export const getAttemptsForGrading = async (teacherId, filters = {}) => {
   });
 };
 
-export const getAttemptDetail = async (attemptId, teacherId) => {
+export const getAttemptDetail = async (attemptId, teacherId, role = 'teacher') => {
   const attempt = await TestAttempt.findById(attemptId)
     .populate({ path: 'studentId', select: 'name email' })
     .populate({ path: 'testId', select: 'title passingScore createdBy' })
@@ -136,7 +136,7 @@ export const getAttemptDetail = async (attemptId, teacherId) => {
     throw error;
   }
 
-  if (attempt.testId.createdBy.toString() !== teacherId.toString()) {
+  if (role !== 'admin' && attempt.testId.createdBy.toString() !== teacherId.toString()) {
     const error = new Error('You are not authorized to view this attempt.');
     error.statusCode = 403;
     throw error;
@@ -174,7 +174,7 @@ export const getAttemptDetail = async (attemptId, teacherId) => {
   };
 };
 
-export const gradeEssay = async (answerId, score, feedback, teacherId) => {
+export const gradeEssay = async (answerId, score, feedback, teacherId, role = 'teacher') => {
   const answer = await Answer.findById(answerId).populate({
     path: 'questionId',
     select: 'type points',
@@ -200,7 +200,7 @@ export const gradeEssay = async (answerId, score, feedback, teacherId) => {
     throw error;
   }
 
-  await ensureTeacherOwnsTest(attempt.testId, teacherId);
+  await ensureTeacherOwnsTest(attempt.testId, teacherId, role);
 
   if (score < 0 || score > answer.questionId.points) {
     const error = new Error(`Score must be between 0 and ${answer.questionId.points}.`);
@@ -232,7 +232,7 @@ export const gradeEssay = async (answerId, score, feedback, teacherId) => {
   let finalizedAttempt = null;
 
   if (!hasPendingEssay) {
-    finalizedAttempt = await finalizeAttempt(answer.attemptId, teacherId);
+    finalizedAttempt = await finalizeAttempt(answer.attemptId, teacherId, role);
   }
 
   return {

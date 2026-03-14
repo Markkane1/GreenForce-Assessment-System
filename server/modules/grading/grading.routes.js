@@ -9,7 +9,7 @@ import {
 
 const router = Router();
 
-router.use(protect, authorize('teacher'));
+router.use(protect, authorize('teacher', 'admin'));
 
 router.get('/attempts', getAttemptsForGrading);
 router.get('/attempts/:id', getAttemptDetail);

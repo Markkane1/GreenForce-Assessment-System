@@ -2,8 +2,10 @@ import cookieParser from 'cookie-parser';
 import cors from 'cors';
 import express from 'express';
 import rateLimit from 'express-rate-limit';
+import { ipKeyGenerator } from 'express-rate-limit';
 import mongoSanitize from 'express-mongo-sanitize';
 import helmet from 'helmet';
+import { csrfProtection } from './middlewares/csrfMiddleware.js';
 import errorMiddleware from './middlewares/errorMiddleware.js';
 import antiCheatRoutes from './modules/antiCheat/antiCheat.routes.js';
 import authRoutes from './modules/auth/auth.routes.js';
@@ -21,6 +23,19 @@ import usersRoutes from './modules/users/users.routes.js';
 
 const app = express();
 const isProduction = process.env.NODE_ENV === 'production';
+const trustProxySetting = process.env.TRUST_PROXY;
+
+if (trustProxySetting) {
+  if (trustProxySetting === 'true') {
+    app.set('trust proxy', true);
+  } else if (trustProxySetting === 'false') {
+    app.set('trust proxy', false);
+  } else if (!Number.isNaN(Number(trustProxySetting))) {
+    app.set('trust proxy', Number(trustProxySetting));
+  } else {
+    app.set('trust proxy', trustProxySetting);
+  }
+}
 
 const buildAllowedOrigins = () => {
   const configuredOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
@@ -44,13 +59,14 @@ const rateLimitHandler = (req, res) => {
   });
 };
 
-const shouldSkipRateLimit = (req) => !isProduction || req.method === 'OPTIONS';
+const shouldSkipGeneralRateLimit = (req) => !isProduction || req.method === 'OPTIONS';
+const shouldSkipAuthRateLimit = (req) => req.method === 'OPTIONS';
 
 const corsOptions = {
   origin: buildAllowedOrigins(),
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
-  allowedHeaders: ['Content-Type', 'Authorization'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
 };
 
 const globalLimiter = rateLimit({
@@ -58,7 +74,7 @@ const globalLimiter = rateLimit({
   max: 100,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: shouldSkipRateLimit,
+  skip: shouldSkipGeneralRateLimit,
   handler: rateLimitHandler,
 });
 
@@ -67,7 +83,15 @@ const authLimiter = rateLimit({
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: shouldSkipRateLimit,
+  skip: shouldSkipAuthRateLimit,
+  skipSuccessfulRequests: true,
+  keyGenerator: (req) => {
+    const email = typeof req.body?.email === 'string'
+      ? req.body.email.trim().toLowerCase()
+      : 'anonymous';
+
+    return `${ipKeyGenerator(req.ip)}:${email}`;
+  },
   handler: rateLimitHandler,
 });
 
@@ -76,7 +100,7 @@ const saveAnswerLimiter = rateLimit({
   max: 60,
   standardHeaders: true,
   legacyHeaders: false,
-  skip: shouldSkipRateLimit,
+  skip: shouldSkipGeneralRateLimit,
   handler: rateLimitHandler,
 });
 
@@ -85,6 +109,7 @@ app.use(cors(corsOptions));
 app.options('*', cors(corsOptions));
 app.use(globalLimiter);
 app.use(cookieParser());
+app.use(csrfProtection);
 app.use('/api/exam/save-answer', express.json({ limit: '50kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(mongoSanitize());
@@ -106,7 +131,10 @@ app.use(
   }),
 );
 
-app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/auth/login', authLimiter);
+app.use('/api/auth/forgot-password', authLimiter);
+app.use('/api/auth/register-student', authLimiter);
+app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/groups', groupsRoutes);
 app.use('/api/invite-codes', inviteCodesRoutes);

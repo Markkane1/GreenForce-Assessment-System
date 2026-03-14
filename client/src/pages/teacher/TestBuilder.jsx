@@ -8,7 +8,6 @@
 } from 'lucide-react';
 import { useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
-import * as XLSX from 'xlsx';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -16,6 +15,24 @@ import * as testService from '../../services/testService';
 
 const stripTones = ['border-accent', 'border-secondary', 'border-tertiary', 'border-quaternary'];
 const DEFAULT_MCQ_OPTION_COUNT = 4;
+const DEFAULT_ANTI_CHEAT_SETTINGS = {
+  disableContextMenu: true,
+  disableCopyPaste: true,
+  disableTranslate: true,
+  disableAutocomplete: true,
+  disableSpellcheck: true,
+  disablePrinting: true,
+};
+
+let readExcelFileModulePromise;
+
+const loadReadExcelFile = async () => {
+  if (!readExcelFileModulePromise) {
+    readExcelFileModulePromise = import('read-excel-file/browser');
+  }
+
+  return readExcelFileModulePromise;
+};
 
 const buildDefaultOptions = () =>
   Array.from({ length: DEFAULT_MCQ_OPTION_COUNT }, (_, index) => ({
@@ -45,6 +62,97 @@ const getRowValue = (row, keys) => {
   return '';
 };
 
+const normalizeSpreadsheetCell = (value) => {
+  if (value === null || value === undefined) {
+    return '';
+  }
+
+  if (typeof value === 'object') {
+    if (Array.isArray(value.richText)) {
+      return value.richText.map((entry) => entry.text || '').join('');
+    }
+
+    if (value.text !== undefined) {
+      return String(value.text);
+    }
+
+    if (value.result !== undefined) {
+      return String(value.result ?? '');
+    }
+
+    if (value.hyperlink) {
+      return String(value.text || value.hyperlink);
+    }
+  }
+
+  return String(value);
+};
+
+const parseCsvText = (text) => {
+  const rows = [];
+  let currentCell = '';
+  let currentRow = [];
+  let inQuotes = false;
+
+  for (let index = 0; index < text.length; index += 1) {
+    const character = text[index];
+    const nextCharacter = text[index + 1];
+
+    if (character === '"') {
+      if (inQuotes && nextCharacter === '"') {
+        currentCell += '"';
+        index += 1;
+      } else {
+        inQuotes = !inQuotes;
+      }
+      continue;
+    }
+
+    if (character === ',' && !inQuotes) {
+      currentRow.push(currentCell);
+      currentCell = '';
+      continue;
+    }
+
+    if ((character === '\n' || character === '\r') && !inQuotes) {
+      if (character === '\r' && nextCharacter === '\n') {
+        index += 1;
+      }
+      currentRow.push(currentCell);
+      rows.push(currentRow);
+      currentCell = '';
+      currentRow = [];
+      continue;
+    }
+
+    currentCell += character;
+  }
+
+  if (currentCell.length > 0 || currentRow.length > 0) {
+    currentRow.push(currentCell);
+    rows.push(currentRow);
+  }
+
+  return rows;
+};
+
+const tabularRowsToObjects = (rows) => {
+  if (!rows.length) {
+    return [];
+  }
+
+  const [headerRow, ...dataRows] = rows;
+  const headers = headerRow.map((value) => String(value ?? '').trim());
+
+  return dataRows
+    .filter((row) => row.some((value) => String(value ?? '').trim() !== ''))
+    .map((row) =>
+      headers.reduce((accumulator, header, index) => {
+        accumulator[header || `column${index + 1}`] = row[index] ?? '';
+        return accumulator;
+      }, {}));
+};
+
 const createEmptyDraft = () => ({
   _id: null,
   title: 'Untitled Test',
@@ -55,8 +163,17 @@ const createEmptyDraft = () => ({
   allowResume: false,
   randomizeQuestions: false,
   randomizeOptions: false,
+  antiCheat: { ...DEFAULT_ANTI_CHEAT_SETTINGS },
   isPublished: false,
   sections: [],
+});
+
+const normalizeTestDraft = (draft) => ({
+  ...draft,
+  antiCheat: {
+    ...DEFAULT_ANTI_CHEAT_SETTINGS,
+    ...(draft?.antiCheat || {}),
+  },
 });
 
 const createEmptyQuestionPayload = (type) => ({
@@ -120,18 +237,18 @@ const validateQuestionDraft = (question) => {
 };
 
 const Toggle = ({ label, checked, onChange }) => (
-  <div className="flex items-center justify-between gap-3 rounded-full border-2 border-foreground bg-background px-4 py-3 shadow-pop-soft">
-    <span className="text-sm font-bold text-foreground">{label}</span>
+  <div className="flex items-center justify-between gap-3 rounded-2xl border border-border bg-background px-4 py-3 shadow-editorialSm">
+    <span className="font-body text-sm font-semibold text-foreground">{label}</span>
     <button
       type="button"
       onClick={onChange}
-      className={`relative inline-flex h-10 w-20 items-center rounded-full border-2 border-foreground px-1 transition-all duration-200 ease-bounce ${
-        checked ? 'bg-accent' : 'bg-muted'
+      className={`relative inline-flex h-9 w-[4.5rem] items-center rounded-full border px-1 transition-all duration-200 ease-out ${
+        checked ? 'border-accent bg-accent' : 'border-border bg-muted'
       }`}
     >
       <span
-        className={`h-7 w-7 rounded-full border-2 border-foreground bg-card shadow-pop-press transition-all duration-200 ease-bounce ${
-          checked ? 'translate-x-9' : 'translate-x-0'
+        className={`h-6 w-6 rounded-full border border-border bg-card shadow-editorialSm transition-all duration-200 ease-out ${
+          checked ? 'translate-x-8' : 'translate-x-0'
         }`}
       />
     </button>
@@ -139,7 +256,7 @@ const Toggle = ({ label, checked, onChange }) => (
 );
 
 const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, isSaving, isDirty }) => (
-  <div className="rounded-[1.25rem] border-2 border-border bg-background p-4 shadow-pop-soft">
+  <div className="rounded-[1.25rem] border border-border bg-background p-5 shadow-editorialSm">
     <div className="flex items-center justify-between gap-3">
       <div className="flex items-center gap-2">
         <Badge tone={question.type === 'mcq' ? 'secondary' : 'tertiary'}>{question.type}</Badge>
@@ -149,7 +266,7 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
         type="button"
         onClick={onDelete}
         disabled={isSaving}
-        className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
+        className="editorial-icon-button editorial-icon-button--accent disabled:cursor-not-allowed disabled:opacity-70"
       >
         <Trash2 size={16} strokeWidth={2.5} />
       </button>
@@ -165,13 +282,13 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
             rows="4"
             value={question.content}
             onChange={(event) => onChange('content', event.target.value)}
-            className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+            className="editorial-input-surface bg-card"
           />
         ) : (
           <input
             value={question.content}
             onChange={(event) => onChange('content', event.target.value)}
-            className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+            className="editorial-input-surface bg-card"
           />
         )}
       </label>
@@ -183,14 +300,14 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
               <input
                 value={option.text}
                 onChange={(event) => onOptionChange(index, 'text', event.target.value)}
-                className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+                className="editorial-input-surface bg-card"
               />
               <button
                 type="button"
                 onClick={() => onOptionChange(index, 'isCorrect', true, true)}
                 disabled={isSaving}
-                className={`rounded-full border-2 px-4 py-3 text-sm font-bold ${
-                  option.isCorrect ? 'border-foreground bg-accent text-accentFg shadow-pop' : 'border-border bg-muted text-foreground'
+                className={`rounded-full border px-4 py-3 font-body text-sm font-semibold transition-all duration-200 ease-out ${
+                  option.isCorrect ? 'border-accent bg-accent text-white shadow-editorialSm' : 'border-border bg-muted text-foreground'
                 } disabled:cursor-not-allowed disabled:opacity-70`}
               >
                 Correct?
@@ -206,7 +323,7 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
             min="1"
             value={question.maxWordCount || ''}
             onChange={(event) => onChange('maxWordCount', Number(event.target.value))}
-            className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+            className="editorial-input-surface bg-card"
           />
         </label>
       )}
@@ -218,7 +335,7 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
           min="1"
           value={question.points}
           onChange={(event) => onChange('points', Number(event.target.value))}
-          className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none focus:shadow-pop"
+          className="editorial-input-surface bg-card"
         />
       </label>
 
@@ -226,7 +343,7 @@ const QuestionEditor = ({ question, onChange, onSave, onDelete, onOptionChange, 
         type="button"
         onClick={onSave}
         disabled={isSaving}
-        className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
+        className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70"
       >
         {isSaving ? 'Saving...' : isDirty ? 'Save Question' : 'Saved'}
       </button>
@@ -264,7 +381,7 @@ const TestBuilder = () => {
 
   const loadWorkspace = async (testId) => {
     const workspace = await testService.getTestWorkspace(testId);
-    setCurrentTest(workspace);
+    setCurrentTest(normalizeTestDraft(workspace));
     setDirtyQuestionIds([]);
   };
 
@@ -306,6 +423,10 @@ const TestBuilder = () => {
       allowResume: draft.allowResume,
       randomizeQuestions: draft.randomizeQuestions,
       randomizeOptions: draft.randomizeOptions,
+      antiCheat: {
+        ...DEFAULT_ANTI_CHEAT_SETTINGS,
+        ...(draft.antiCheat || {}),
+      },
     };
 
     const savedTest = draft._id
@@ -352,15 +473,20 @@ const TestBuilder = () => {
   };
 
   const parseImportedQuestions = async (file) => {
-    const buffer = await file.arrayBuffer();
-    const workbook = XLSX.read(buffer, { type: 'array' });
-    const [sheetName] = workbook.SheetNames;
+    const fileName = file.name.toLowerCase();
+    let rows = [];
 
-    if (!sheetName) {
-      throw new Error('The selected file does not contain any sheets.');
+    if (fileName.endsWith('.csv')) {
+      rows = tabularRowsToObjects(parseCsvText(await file.text()));
+    } else if (fileName.endsWith('.xlsx')) {
+      const readExcelFileModule = await loadReadExcelFile();
+      const readXlsxFile = readExcelFileModule.default || readExcelFileModule;
+      rows = tabularRowsToObjects(
+        (await readXlsxFile(file)).map((row) => row.map((value) => normalizeSpreadsheetCell(value))),
+      );
+    } else {
+      throw new Error('Please import a CSV or XLSX file.');
     }
-
-    const rows = XLSX.utils.sheet_to_json(workbook.Sheets[sheetName], { defval: '' });
 
     if (rows.length === 0) {
       throw new Error('The selected file is empty.');
@@ -470,6 +596,10 @@ const TestBuilder = () => {
         allowResume: currentTest.allowResume,
         randomizeQuestions: currentTest.randomizeQuestions,
         randomizeOptions: currentTest.randomizeOptions,
+        antiCheat: {
+          ...DEFAULT_ANTI_CHEAT_SETTINGS,
+          ...(currentTest.antiCheat || {}),
+        },
       };
 
       const savedTest = currentTest._id
@@ -519,6 +649,22 @@ const TestBuilder = () => {
   const updateTestField = (field, value) => {
     setCurrentTest((current) => {
       const nextDraft = { ...current, [field]: value };
+      setErrorMessage('');
+      queueDraftAutosave(nextDraft);
+      return nextDraft;
+    });
+  };
+
+  const updateAntiCheatField = (field, value) => {
+    setCurrentTest((current) => {
+      const nextDraft = {
+        ...current,
+        antiCheat: {
+          ...DEFAULT_ANTI_CHEAT_SETTINGS,
+          ...(current.antiCheat || {}),
+          [field]: value,
+        },
+      };
       setErrorMessage('');
       queueDraftAutosave(nextDraft);
       return nextDraft;
@@ -808,7 +954,7 @@ const TestBuilder = () => {
         </div>
 
         {errorMessage ? (
-          <div className="mt-5 rounded-full border-2 border-secondary bg-secondary/20 px-4 py-2 text-sm font-medium text-foreground">
+          <div className="mt-5 rounded-2xl border border-secondary bg-secondary/15 px-4 py-3 font-body text-sm font-medium text-foreground">
             {errorMessage}
           </div>
         ) : null}
@@ -826,8 +972,8 @@ const TestBuilder = () => {
                 key={test._id}
                 type="button"
                 onClick={() => navigate(`/teacher/tests/${test._id}`)}
-                className={`rounded-full border-2 px-4 py-2 text-sm font-bold ${
-                  currentTest._id === test._id ? 'border-foreground bg-accent text-accentFg shadow-pop-press' : 'border-border bg-muted text-foreground'
+                className={`rounded-full border px-4 py-2 font-body text-sm font-semibold transition-all duration-200 ease-out ${
+                  currentTest._id === test._id ? 'border-accent bg-accent text-white shadow-editorialSm' : 'border-border bg-muted text-foreground'
                 }`}
               >
                 {test.title || 'Untitled Test'} · {String(test._id).slice(-4)}
@@ -838,7 +984,7 @@ const TestBuilder = () => {
       </section>
 
       <section className="mt-8 grid gap-8 xl:grid-cols-[320px,1fr]">
-        <aside className="rounded-xl border-2 border-border bg-card p-6 shadow-pop-soft">
+        <aside className="rounded-xl border border-border bg-card p-6 shadow-editorialMd">
           <button
             type="button"
             onClick={() => setIsSettingsOpen((current) => !current)}
@@ -855,44 +1001,85 @@ const TestBuilder = () => {
             <div className="mt-6 space-y-4">
               <label className="block space-y-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Time Limit (mins)</span>
-                <input type="number" min="1" value={currentTest.timeLimitMinutes} onChange={(event) => updateTestField('timeLimitMinutes', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                <input type="number" min="1" value={currentTest.timeLimitMinutes} onChange={(event) => updateTestField('timeLimitMinutes', Number(event.target.value))} className="editorial-input-surface" />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Passing Score</span>
-                <input type="number" min="0" value={currentTest.passingScore} onChange={(event) => updateTestField('passingScore', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                <input type="number" min="0" value={currentTest.passingScore} onChange={(event) => updateTestField('passingScore', Number(event.target.value))} className="editorial-input-surface" />
               </label>
               <label className="block space-y-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Max Attempts</span>
-                <input type="number" min="1" value={currentTest.maxAttempts} onChange={(event) => updateTestField('maxAttempts', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                <input type="number" min="1" value={currentTest.maxAttempts} onChange={(event) => updateTestField('maxAttempts', Number(event.target.value))} className="editorial-input-surface" />
               </label>
               <Toggle label="Allow Resume" checked={currentTest.allowResume} onChange={() => updateTestField('allowResume', !currentTest.allowResume)} />
               <Toggle label="Randomize Questions" checked={currentTest.randomizeQuestions} onChange={() => updateTestField('randomizeQuestions', !currentTest.randomizeQuestions)} />
               <Toggle label="Randomize Options" checked={currentTest.randomizeOptions} onChange={() => updateTestField('randomizeOptions', !currentTest.randomizeOptions)} />
+
+              <div className="mt-6 border-t border-border pt-5">
+                <div className="editorial-section-label mb-3">
+                  <span>Anti-Cheat</span>
+                </div>
+                <p className="mb-4 text-sm leading-6 text-mutedFg">
+                  Configure which browser restrictions are enforced during this exam.
+                </p>
+                <div className="space-y-3">
+                  <Toggle
+                    label="Disable right-click context menu"
+                    checked={currentTest.antiCheat?.disableContextMenu}
+                    onChange={() => updateAntiCheatField('disableContextMenu', !currentTest.antiCheat?.disableContextMenu)}
+                  />
+                  <Toggle
+                    label="Disable copy/paste"
+                    checked={currentTest.antiCheat?.disableCopyPaste}
+                    onChange={() => updateAntiCheatField('disableCopyPaste', !currentTest.antiCheat?.disableCopyPaste)}
+                  />
+                  <Toggle
+                    label="Disable translate"
+                    checked={currentTest.antiCheat?.disableTranslate}
+                    onChange={() => updateAntiCheatField('disableTranslate', !currentTest.antiCheat?.disableTranslate)}
+                  />
+                  <Toggle
+                    label="Disable autocomplete"
+                    checked={currentTest.antiCheat?.disableAutocomplete}
+                    onChange={() => updateAntiCheatField('disableAutocomplete', !currentTest.antiCheat?.disableAutocomplete)}
+                  />
+                  <Toggle
+                    label="Disable spellcheck"
+                    checked={currentTest.antiCheat?.disableSpellcheck}
+                    onChange={() => updateAntiCheatField('disableSpellcheck', !currentTest.antiCheat?.disableSpellcheck)}
+                  />
+                  <Toggle
+                    label="Disable printing"
+                    checked={currentTest.antiCheat?.disablePrinting}
+                    onChange={() => updateAntiCheatField('disablePrinting', !currentTest.antiCheat?.disablePrinting)}
+                  />
+                </div>
+              </div>
             </div>
           ) : null}
         </aside>
 
         <section className="space-y-6">
           {currentTest.sections.map((section, sectionIndex) => (
-            <article key={section._id} className="rounded-xl border-2 border-foreground bg-card shadow-pop-soft">
+            <article key={section._id} className="rounded-xl border border-border bg-card shadow-editorialMd">
               <div className={`border-l-4 ${stripTones[sectionIndex % stripTones.length]} p-5`}>
                 <div className="grid gap-4 xl:grid-cols-[1fr,180px,180px,150px,56px] xl:items-end">
                   <label className="space-y-2">
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Section Title</span>
-                    <input value={section.title} onChange={(event) => updateSectionLocal(section._id, 'title', event.target.value)} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                    <input value={section.title} onChange={(event) => updateSectionLocal(section._id, 'title', event.target.value)} className="editorial-input-surface" />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Pool Size</span>
-                    <input type="number" min="1" value={section.questionPoolSize} onChange={(event) => updateSectionLocal(section._id, 'questionPoolSize', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                    <input type="number" min="1" value={section.questionPoolSize} onChange={(event) => updateSectionLocal(section._id, 'questionPoolSize', Number(event.target.value))} className="editorial-input-surface" />
                   </label>
                   <label className="space-y-2">
                     <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Serve</span>
-                    <input type="number" min="1" value={section.questionsToServe} onChange={(event) => updateSectionLocal(section._id, 'questionsToServe', Number(event.target.value))} className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none" />
+                    <input type="number" min="1" value={section.questionsToServe} onChange={(event) => updateSectionLocal(section._id, 'questionsToServe', Number(event.target.value))} className="editorial-input-surface" />
                   </label>
-                  <button type="button" onClick={() => saveSection(section)} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-4 py-3 text-sm font-bold text-foreground shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                  <button type="button" onClick={() => saveSection(section)} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
                     {savingSectionId === section._id ? 'Saving...' : 'Save Section'}
                   </button>
-                  <button type="button" onClick={() => removeSection(section._id)} disabled={isSaving} className="inline-flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                  <button type="button" onClick={() => removeSection(section._id)} disabled={isSaving} className="editorial-icon-button editorial-icon-button--accent h-12 w-12 disabled:cursor-not-allowed disabled:opacity-70">
                     <Trash2 size={16} strokeWidth={2.5} />
                   </button>
                 </div>
@@ -924,17 +1111,17 @@ const TestBuilder = () => {
                 </div>
 
                 <div className="mt-5 flex flex-wrap gap-3">
-                  <button type="button" onClick={() => addQuestion(section._id, 'mcq')} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                  <button type="button" onClick={() => addQuestion(section._id, 'mcq')} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
                     {actingSectionId === section._id && addingQuestionType === 'mcq' ? 'Adding MCQ...' : 'Add MCQ'}
                   </button>
-                  <button type="button" onClick={() => addQuestion(section._id, 'essay')} disabled={isSaving} className="rounded-full border-2 border-foreground bg-secondary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70">
+                  <button type="button" onClick={() => addQuestion(section._id, 'essay')} disabled={isSaving} className="editorial-button-secondary disabled:cursor-not-allowed disabled:opacity-70">
                     {actingSectionId === section._id && addingQuestionType === 'essay' ? 'Adding Essay...' : 'Add Essay'}
                   </button>
                   <button
                     type="button"
                     onClick={() => fileInputRefs.current[section._id]?.click()}
                     disabled={isSaving}
-                    className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-tertiary px-5 py-3 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press disabled:cursor-not-allowed disabled:opacity-70"
+                    className="editorial-pill-button border-tertiary bg-tertiary/15 text-foreground disabled:cursor-not-allowed disabled:opacity-70"
                   >
                     <FileUp size={18} strokeWidth={2.5} />
                     {actingSectionId === section._id ? 'Importing...' : 'Import CSV/XLSX'}
@@ -944,7 +1131,7 @@ const TestBuilder = () => {
                       fileInputRefs.current[section._id] = element;
                     }}
                     type="file"
-                    accept=".csv,.xlsx,.xls"
+                    accept=".csv,.xlsx"
                     className="hidden"
                     onChange={(event) => {
                       const [file] = event.target.files || [];
@@ -961,7 +1148,7 @@ const TestBuilder = () => {
             </article>
           ))}
 
-          <button type="button" onClick={addSection} disabled={isSaving} className="flex w-full items-center justify-center gap-2 rounded-xl border-2 border-dashed border-border p-4 font-bold text-mutedFg transition-all duration-200 ease-bounce hover:border-accent hover:bg-accent/5 hover:text-accent disabled:cursor-not-allowed disabled:opacity-70">
+          <button type="button" onClick={addSection} disabled={isSaving} className="flex w-full items-center justify-center gap-2 rounded-xl border border-dashed border-border p-4 font-body text-sm font-semibold text-mutedFg transition-all duration-200 ease-out hover:border-accent hover:bg-accent/5 hover:text-accent disabled:cursor-not-allowed disabled:opacity-70">
             <FilePlus2 size={18} strokeWidth={2.5} />
             {actingSectionId === 'new' ? 'Adding Section...' : 'Add Section'}
           </button>

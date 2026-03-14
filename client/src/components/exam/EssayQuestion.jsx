@@ -1,14 +1,22 @@
 const getWordCount = (text = '') =>
   text.trim().length === 0 ? 0 : text.trim().split(/\s+/).length;
 
-const EssayQuestion = ({ question, value, onChange, errorMessage = '' }) => {
+const EssayQuestion = ({
+  question,
+  value,
+  onChange,
+  errorMessage = '',
+  disableTranslate = true,
+  disableAutocomplete = true,
+  disableSpellcheck = true,
+}) => {
   const currentWordCount = getWordCount(value);
   const warningRatio = question.maxWordCount ? currentWordCount / question.maxWordCount : 0;
   const isWarning = warningRatio >= 0.85;
   const isExceeded = Boolean(question.maxWordCount) && currentWordCount > question.maxWordCount;
 
   return (
-    <div>
+    <div translate={disableTranslate ? 'no' : undefined} className={disableTranslate ? 'notranslate' : undefined}>
       <div className="editorial-section-label mb-6">
         <span>Essay response</span>
       </div>
@@ -17,6 +25,13 @@ const EssayQuestion = ({ question, value, onChange, errorMessage = '' }) => {
         <textarea
           value={value}
           onChange={(event) => onChange(event.target.value)}
+          autoComplete={disableAutocomplete ? 'off' : 'on'}
+          autoCorrect={disableSpellcheck ? 'off' : 'on'}
+          autoCapitalize={disableSpellcheck ? 'off' : 'sentences'}
+          spellCheck={!disableSpellcheck}
+          data-gramm={disableSpellcheck ? 'false' : undefined}
+          data-gramm_editor={disableSpellcheck ? 'false' : undefined}
+          data-enable-grammarly={disableSpellcheck ? 'false' : undefined}
           className="min-h-[220px] w-full resize-y rounded-xl border border-border bg-background px-4 py-4 text-foreground shadow-editorialSm outline-none transition-all duration-200 ease-out focus:border-accent focus:shadow-editorialMd"
           placeholder="Write your answer here..."
         />

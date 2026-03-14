@@ -12,6 +12,12 @@ const getScheduleStatus = (schedule) => {
   const now = Date.now();
   const start = new Date(schedule.startTime).getTime();
   const end = new Date(schedule.endTime).getTime();
+  const attemptsTaken = schedule.attemptsTaken || 0;
+  const maxAttempts = schedule.testId?.maxAttempts || 0;
+
+  if (maxAttempts > 0 && attemptsTaken >= maxAttempts) {
+    return { label: 'Attempts Exhausted', tone: 'secondary', canStart: false };
+  }
 
   if (now > end) {
     return { label: 'Ended', tone: 'muted', canStart: false };
@@ -79,6 +85,35 @@ const StudentDashboard = () => {
   }, []);
 
   const greetingName = useMemo(() => user?.name?.split(' ')[0] || 'Student', [user?.name]);
+  const visibleSchedules = useMemo(() => {
+    const statusWeight = (schedule) => {
+      const status = getScheduleStatus(schedule);
+
+      if (status.label === 'Available Now') {
+        return 0;
+      }
+
+      if (status.label === 'Starting Soon') {
+        return 1;
+      }
+
+      if (status.label === 'Attempts Exhausted') {
+        return 2;
+      }
+
+      return 3;
+    };
+
+    return [...schedules].sort((first, second) => {
+      const weightDifference = statusWeight(first) - statusWeight(second);
+
+      if (weightDifference !== 0) {
+        return weightDifference;
+      }
+
+      return new Date(first.startTime).getTime() - new Date(second.startTime).getTime();
+    });
+  }, [schedules]);
 
   return (
     <DashboardLayout title="Student Dashboard">
@@ -104,20 +139,17 @@ const StudentDashboard = () => {
         {isLoading ? <LoadingSpinner /> : null}
         {!isLoading && schedules.length === 0 ? (
           <div className="rounded-2xl border border-dashed border-border bg-card p-10 text-center shadow-editorialMd">
-            <svg viewBox="0 0 120 120" className="mx-auto h-24 w-24" fill="none" aria-hidden="true">
-              <rect x="18" y="24" width="84" height="72" rx="18" fill="#BFDBFE" stroke="#1F2937" strokeWidth="4" />
-              <circle cx="46" cy="52" r="7" fill="#1F2937" />
-              <circle cx="74" cy="52" r="7" fill="#1F2937" />
-              <path d="M42 76C47 68 73 68 78 76" stroke="#1F2937" strokeWidth="4" strokeLinecap="round" />
-            </svg>
-            <h3 className="mt-6 font-heading text-2xl font-extrabold text-foreground">No exams scheduled for you yet</h3>
-            <p className="mt-2 text-mutedFg">Check back later after your teacher publishes and schedules a test.</p>
+            <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-border bg-muted shadow-editorialSm">
+              <BookOpen size={28} strokeWidth={2.2} className="text-accent" />
+            </div>
+            <h3 className="mt-6 font-heading text-2xl font-semibold text-foreground">No exams scheduled for you yet</h3>
+            <p className="mt-2 font-body text-mutedFg">Check back later after your teacher publishes and schedules a test.</p>
           </div>
         ) : null}
 
-        {!isLoading && schedules.length > 0 ? (
+        {!isLoading && visibleSchedules.length > 0 ? (
           <div className="grid gap-6 lg:grid-cols-2 xl:grid-cols-3">
-            {schedules.map((schedule) => {
+            {visibleSchedules.map((schedule) => {
               const status = getScheduleStatus(schedule);
 
               return (
@@ -135,6 +167,11 @@ const StudentDashboard = () => {
                       {new Date(schedule.startTime).toLocaleString()} - {new Date(schedule.endTime).toLocaleString()}
                     </p>
                   </div>
+                  {typeof schedule.attemptsTaken === 'number' ? (
+                    <p className="mt-4 text-xs uppercase tracking-[0.12em] text-mutedFg">
+                      Attempts used: {schedule.attemptsTaken} / {schedule.testId?.maxAttempts || 0}
+                    </p>
+                  ) : null}
                   <button
                     type="button"
                     disabled={!status.canStart}
@@ -145,7 +182,7 @@ const StudentDashboard = () => {
                         : 'border-border bg-muted text-mutedFg'
                     }`}
                   >
-                    Start Exam
+                    {status.label === 'Attempts Exhausted' ? 'Attempts Used' : 'Start Exam'}
                   </button>
                 </article>
               );
@@ -156,8 +193,8 @@ const StudentDashboard = () => {
 
       <section className="mt-12">
         <div className="flex items-center gap-3">
-          <div className="flex h-12 w-12 items-center justify-center rounded-full border-2 border-foreground bg-secondary shadow-pop-press">
-            <History size={20} strokeWidth={2.5} className="text-foreground" />
+          <div className="flex h-12 w-12 items-center justify-center rounded-full border border-border bg-secondary/15 shadow-editorialSm">
+            <History size={20} strokeWidth={2.2} className="text-secondary" />
           </div>
           <div>
             <h3 className="font-heading text-3xl font-bold text-foreground">Past Exams</h3>

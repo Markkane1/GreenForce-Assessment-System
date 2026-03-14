@@ -1,0 +1,33 @@
+NAVIGATION
+
+ExamPop
+
+TESTING SUITE
+
+Dashboard
+Users
+Groups
+Teaching
+Tests
+Schedule
+Grading
+SA
+
+System Admin
+
+ADMIN
+Change Password
+Logout
+WORKSPACE
+Live Monitor
+SA
+
+System Admin
+
+ADMIN
+
+Sample JavaScript Basics Test
+Active: 3/14/2026, 11:42:57 AM - 3/14/2026, 12:38:57 PM
+0 students in exam
+Last updated: 12:26:36 PM
+No students are currently taking this exam

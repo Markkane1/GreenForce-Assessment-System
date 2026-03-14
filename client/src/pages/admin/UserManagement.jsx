@@ -26,7 +26,7 @@ const defaultFormState = {
 };
 
 const EmptyState = () => (
-  <div className="flex flex-col items-center justify-center rounded-[2rem] border-2 border-dashed border-border bg-card px-8 py-16 text-center shadow-pop-soft">
+  <div className="flex flex-col items-center justify-center rounded-[2rem] border border-dashed border-border bg-card px-8 py-16 text-center shadow-editorialMd">
     <svg viewBox="0 0 120 120" className="h-24 w-24" fill="none" aria-hidden="true">
       <circle cx="60" cy="60" r="44" fill="#FDE68A" stroke="#1F2937" strokeWidth="4" />
       <circle cx="45" cy="52" r="5" fill="#1F2937" />
@@ -163,7 +163,7 @@ const UserManagement = () => {
       </section>
 
       {errorMessage ? (
-        <div className="mt-6 rounded-full border-2 border-secondary bg-secondary/20 px-4 py-2 text-sm font-medium text-foreground">
+        <div className="mt-6 rounded-2xl border border-secondary bg-secondary/15 px-4 py-3 font-body text-sm font-medium text-foreground">
           {errorMessage}
         </div>
       ) : null}
@@ -199,14 +199,14 @@ const UserManagement = () => {
                         <button
                           type="button"
                           onClick={() => openEditModal(user)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-secondary text-foreground shadow-pop-press"
+                          className="editorial-icon-button"
                         >
                           <Pencil size={16} />
                         </button>
                         <button
                           type="button"
                           onClick={() => handleDeletePrompt(user)}
-                          className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
+                          className="editorial-icon-button editorial-icon-button--accent"
                         >
                           <Trash2 size={16} />
                         </button>
@@ -228,7 +228,7 @@ const UserManagement = () => {
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+              className="editorial-input-surface"
               required
             />
           </label>
@@ -239,7 +239,7 @@ const UserManagement = () => {
               type="email"
               value={formData.email}
               onChange={handleChange}
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+              className="editorial-input-surface"
               required
             />
           </label>
@@ -251,7 +251,7 @@ const UserManagement = () => {
               value={formData.password}
               onChange={handleChange}
               placeholder={selectedUser ? 'Leave blank to keep current password' : 'Create a password'}
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+              className="editorial-input-surface"
               required={!selectedUser}
             />
           </label>
@@ -272,8 +272,8 @@ const UserManagement = () => {
                       className="sr-only"
                     />
                     <span
-                      className={`inline-flex rounded-full border-2 px-4 py-3 text-sm font-bold transition-all duration-200 ease-bounce ${
-                        isSelected ? 'border-foreground bg-accent text-accentFg shadow-pop' : 'border-border bg-muted text-foreground'
+                      className={`inline-flex rounded-full border px-4 py-3 font-body text-sm font-semibold transition-all duration-200 ease-out ${
+                        isSelected ? 'border-accent bg-accent text-white shadow-editorialSm' : 'border-border bg-muted text-foreground'
                       }`}
                     >
                       {roleOption.label}
@@ -286,7 +286,7 @@ const UserManagement = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+            className="editorial-button-primary w-full"
           >
             {isSubmitting ? 'Saving...' : selectedUser ? 'Save Changes' : 'Create User'}
           </button>
@@ -295,14 +295,14 @@ const UserManagement = () => {
 
       <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Delete User?">
         <div className="space-y-6">
-          <div className="rounded-[1.5rem] border-2 border-accent bg-accent/10 p-4 text-sm leading-7 text-foreground">
+          <div className="rounded-[1.5rem] border border-accent bg-accent/10 p-4 font-body text-sm leading-7 text-foreground">
             This action removes <strong>{selectedUser?.name}</strong> from the platform. This cannot be undone.
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setIsDeleteOpen(false)}
-              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-secondary flex-1"
             >
               Cancel
             </button>
@@ -310,7 +310,7 @@ const UserManagement = () => {
               type="button"
               onClick={handleDelete}
               disabled={isSubmitting}
-              className="flex-1 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-primary flex-1"
             >
               {isSubmitting ? 'Deleting...' : 'Delete User'}
             </button>

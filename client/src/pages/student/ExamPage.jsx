@@ -34,6 +34,14 @@ const VIOLATION_THRESHOLD = 3;
 const RESULT_REDIRECT_SECONDS = 5;
 const EXPIRING_SCREEN_MIN_MS = 1500;
 const getActiveAttemptKey = (scheduleId) => `active_exam_attempt_${scheduleId}`;
+const DEFAULT_ANTI_CHEAT_SETTINGS = {
+  disableContextMenu: true,
+  disableCopyPaste: true,
+  disableTranslate: true,
+  disableAutocomplete: true,
+  disableSpellcheck: true,
+  disablePrinting: true,
+};
 
 const wait = (ms) => new Promise((resolve) => window.setTimeout(resolve, ms));
 
@@ -214,6 +222,13 @@ const ExamPage = () => {
   const currentSectionInfo = sections[currentSectionIndex] || null;
   const currentQuestion = questions[currentIndex] || null;
   const currentAnswer = currentQuestion ? answers[currentQuestion._id] : null;
+  const antiCheatSettings = useMemo(
+    () => ({
+      ...DEFAULT_ANTI_CHEAT_SETTINGS,
+      ...(attempt?.testId?.antiCheat || schedulePreview?.testId?.antiCheat || {}),
+    }),
+    [attempt?.testId?.antiCheat, schedulePreview?.testId?.antiCheat],
+  );
 
   const isCurrentEssayTooLong = useMemo(() => {
     if (currentQuestion?.type !== 'essay' || !currentQuestion.maxWordCount) {
@@ -406,6 +421,7 @@ const ExamPage = () => {
   const { isMobile } = useAntiCheat({
     attemptId: examPhase === 'active' ? attempt?._id : null,
     enabled: examPhase === 'active' && Boolean(attempt?._id),
+    restrictions: antiCheatSettings,
     onViolation: (eventType, violationsCount, forceSubmitted, metadata) => {
       setAttempt((currentAttempt) =>
         currentAttempt && typeof violationsCount === 'number'
@@ -617,6 +633,52 @@ const ExamPage = () => {
   }, [retrySave, setSaveStatus]);
 
   useEffect(() => {
+    const shouldApplyExamGuards = ['confirm', 'active', 'expiring', 'submitted'].includes(examPhase);
+
+    if (!shouldApplyExamGuards) {
+      return undefined;
+    }
+
+    const { documentElement, body } = document;
+    const previousHtmlTranslate = documentElement.getAttribute('translate');
+    const previousBodyTranslate = body.getAttribute('translate');
+
+    if (antiCheatSettings.disableTranslate) {
+      documentElement.setAttribute('translate', 'no');
+      body.setAttribute('translate', 'no');
+      documentElement.classList.add('notranslate');
+      body.classList.add('notranslate');
+    }
+
+    if (antiCheatSettings.disablePrinting) {
+      documentElement.classList.add('exam-print-locked');
+    }
+
+    return () => {
+      if (antiCheatSettings.disableTranslate) {
+        if (previousHtmlTranslate === null) {
+          documentElement.removeAttribute('translate');
+        } else {
+          documentElement.setAttribute('translate', previousHtmlTranslate);
+        }
+
+        if (previousBodyTranslate === null) {
+          body.removeAttribute('translate');
+        } else {
+          body.setAttribute('translate', previousBodyTranslate);
+        }
+
+        documentElement.classList.remove('notranslate');
+        body.classList.remove('notranslate');
+      }
+
+      if (antiCheatSettings.disablePrinting) {
+        documentElement.classList.remove('exam-print-locked');
+      }
+    };
+  }, [antiCheatSettings.disablePrinting, antiCheatSettings.disableTranslate, examPhase]);
+
+  useEffect(() => {
     if (examPhase !== 'submitted' || !attempt?._id) {
       return undefined;
     }
@@ -819,7 +881,10 @@ const ExamPage = () => {
     const hasAttemptsLeft = attemptsTaken < maxAttempts;
 
     return (
-      <div className="relative min-h-screen overflow-y-auto bg-background px-6 py-10">
+      <div
+        className={`relative min-h-screen overflow-y-auto bg-background px-6 py-10 ${antiCheatSettings.disableTranslate ? 'notranslate' : ''}`}
+        translate={antiCheatSettings.disableTranslate ? 'no' : undefined}
+      >
         <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,rgba(184,134,11,0.08),transparent_40%)]" aria-hidden="true" />
 
         <div className="relative z-10 mx-auto w-full max-w-3xl animate-pop-in">
@@ -1044,7 +1109,10 @@ const ExamPage = () => {
   }
 
   return (
-    <div className="fixed inset-0 flex flex-col bg-background">
+    <div
+      className={`fixed inset-0 flex flex-col bg-background ${antiCheatSettings.disableTranslate ? 'notranslate' : ''}`}
+      translate={antiCheatSettings.disableTranslate ? 'no' : undefined}
+    >
       <header className="flex h-20 items-center justify-between border-b border-border bg-card/95 px-6 backdrop-blur">
         <div>
           <p className="font-heading text-2xl font-semibold text-foreground">
@@ -1174,6 +1242,7 @@ const ExamPage = () => {
                         question={currentQuestion}
                         value={currentAnswer?.selectedOptionId || ''}
                         onChange={handleQuestionChange}
+                        disableTranslate={antiCheatSettings.disableTranslate}
                       />
                     ) : (
                       <EssayQuestion
@@ -1181,6 +1250,9 @@ const ExamPage = () => {
                         value={currentAnswer?.essayText || ''}
                         onChange={handleQuestionChange}
                         errorMessage={currentEssayErrorMessage}
+                        disableTranslate={antiCheatSettings.disableTranslate}
+                        disableAutocomplete={antiCheatSettings.disableAutocomplete}
+                        disableSpellcheck={antiCheatSettings.disableSpellcheck}
                       />
                     )
                   ) : (

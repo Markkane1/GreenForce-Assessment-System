@@ -11,8 +11,8 @@ export default defineConfig({
             return undefined;
           }
 
-          if (id.includes('xlsx')) {
-            return 'xlsx';
+          if (id.includes('read-excel-file')) {
+            return 'read-excel-file';
           }
 
           if (id.includes('react') || id.includes('react-dom') || id.includes('react-router-dom')) {

@@ -1,0 +1,155 @@
+NAVIGATION
+
+ExamPop
+
+TESTING SUITE
+
+Dashboard
+Users
+Groups
+Teaching
+Tests
+Schedule
+Grading
+SA
+
+System Admin
+
+ADMIN
+Change Password
+Logout
+WORKSPACE
+Grading
+SA
+
+System Admin
+
+ADMIN
+
+Attempt Queue
+
+Pending essays and finished grading runs.
+
+Olive Otherstudent
+
+Other Teacher Essay Test
+
+NEEDS ESSAY GRADING
+
+Submitted 3/13/2026, 10:11:43 PM
+
+Publish QA Student 1773473029733
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/14/2026, 12:24:09 PM
+
+Sam Student
+
+QA submit-twice 1773472804651-937
+
+FULLY GRADED
+
+Submitted 3/14/2026, 12:20:05 PM
+
+Sam Student
+
+QA submit-twice 1773472353648-354
+
+FULLY GRADED
+
+Submitted 3/14/2026, 12:12:34 PM
+
+Publish QA Student 1773472107044
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/14/2026, 12:08:46 PM
+
+Sam Student
+
+QA submit-twice 1773471621547-766
+
+FULLY GRADED
+
+Submitted 3/14/2026, 12:00:22 PM
+
+Sam Student
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/14/2026, 11:51:30 AM
+
+Publish QA Student 1773469894603
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/14/2026, 11:31:51 AM
+
+Sam Student
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/14/2026, 10:17:35 AM
+
+Sam Student
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/13/2026, 11:08:24 PM
+
+Sam Student
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/13/2026, 10:26:15 PM
+
+Olive Otherstudent
+
+Sample JavaScript Basics Test
+
+FULLY GRADED
+
+Submitted 3/13/2026, 10:08:43 PM
+
+Olive Otherstudent - Other Teacher Essay Test
+
+Submitted 3/13/2026, 10:11:43 PM
+
+FINAL SCORE
+
+0
+
+Passing score: 5
+
+REVIEW
+MCQ Review
+No MCQ answers for this attempt.
+Essay Grading
+
+Assign essay scores and add actionable feedback.
+
+Finalize Attempt
+Essay Question
+
+Explain event delegation in JavaScript.
+
+MAX 10 PTS
+Event delegation attaches one listener to a parent and handles child events via bubbling.
+SCORE
+FEEDBACK
+Save Grade

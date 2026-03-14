@@ -297,7 +297,7 @@ const GradingPage = () => {
                             </td>
                             <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
                               <span
-                                className={`inline-flex rounded-full border-2 px-3 py-1 text-xs font-bold uppercase tracking-[0.18em] ${
+                                className={`inline-flex rounded-full border px-3 py-1 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] ${
                                   (answer.score || 0) > 0
                                     ? 'border-quaternary bg-quaternary/20 text-foreground'
                                     : 'border-secondary bg-secondary/20 text-foreground'
@@ -324,9 +324,9 @@ const GradingPage = () => {
                     type="button"
                     onClick={handleFinalize}
                     disabled={!allEssaysGraded || isFinalizing}
-                    className={`rounded-full border-2 px-6 py-3 font-bold transition-all duration-200 ease-bounce ${
+                    className={`rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
                       allEssaysGraded && !isFinalizing
-                        ? 'border-foreground bg-accent text-accentFg shadow-pop hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press'
+                        ? 'border-accent bg-accent text-white shadow-editorialSm hover:bg-accent-secondary'
                         : 'border-border bg-muted text-mutedFg'
                     }`}
                   >
@@ -335,7 +335,7 @@ const GradingPage = () => {
                 </div>
 
                 {essayAnswers.length === 0 ? (
-                  <div className="mt-4 rounded-[1.5rem] border-2 border-dashed border-border bg-background p-6 text-sm text-mutedFg">
+                  <div className="mt-4 rounded-[1.5rem] border border-dashed border-border bg-background p-6 font-body text-sm text-mutedFg">
                     No essay answers for this attempt.
                   </div>
                 ) : (

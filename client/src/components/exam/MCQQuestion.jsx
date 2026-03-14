@@ -1,7 +1,7 @@
 const getOptionLabel = (index) => String.fromCharCode(65 + index);
 
-const MCQQuestion = ({ question, value, onChange }) => (
-  <div>
+const MCQQuestion = ({ question, value, onChange, disableTranslate = true }) => (
+  <div translate={disableTranslate ? 'no' : undefined} className={disableTranslate ? 'notranslate' : undefined}>
     <div className="editorial-section-label mb-6">
       <span>Multiple choice</span>
     </div>

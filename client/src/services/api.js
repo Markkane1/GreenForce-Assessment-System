@@ -2,8 +2,6 @@ import axios from 'axios';
 import { API_BASE_URL } from '../env';
 
 let logoutHandler = null;
-let authToken = null;
-const SESSION_TOKEN_KEY = 'auth_bearer_fallback';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
@@ -14,45 +12,23 @@ export const setLogoutFunction = (fn) => {
   logoutHandler = fn;
 };
 
-export const setAuthToken = (token) => {
-  authToken = token || null;
-
-  if (typeof window === 'undefined') {
-    return;
-  }
-
-  if (authToken) {
-    window.sessionStorage.setItem(SESSION_TOKEN_KEY, authToken);
-    return;
-  }
-
-  window.sessionStorage.removeItem(SESSION_TOKEN_KEY);
-};
-
-const getStoredToken = () => {
-  if (authToken) {
-    return authToken;
-  }
-
-  if (typeof window === 'undefined') {
+const readCookie = (name) => {
+  if (typeof document === 'undefined') {
     return null;
   }
 
-  const storedToken = window.sessionStorage.getItem(SESSION_TOKEN_KEY);
-
-  if (storedToken) {
-    authToken = storedToken;
-  }
-
-  return authToken;
+  const escapedName = name.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+  const match = document.cookie.match(new RegExp(`(?:^|; )${escapedName}=([^;]*)`));
+  return match ? decodeURIComponent(match[1]) : null;
 };
 
 api.interceptors.request.use((config) => {
-  const token = getStoredToken();
+  const method = (config.method || 'get').toUpperCase();
+  const csrfToken = readCookie('csrf_token');
 
-  if (token) {
+  if (!['GET', 'HEAD', 'OPTIONS'].includes(method) && csrfToken) {
     config.headers = config.headers || {};
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers['X-CSRF-Token'] = csrfToken;
   }
 
   return config;
@@ -62,7 +38,6 @@ api.interceptors.response.use(
   (response) => response,
   (error) => {
     if (error.response?.status === 401 && !error.config?.skipAuthRedirect) {
-      setAuthToken(null);
       logoutHandler?.({ syncServer: false, redirect: false });
 
       if (typeof window !== 'undefined' && window.location.pathname !== '/login') {

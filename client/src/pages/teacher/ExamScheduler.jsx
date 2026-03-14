@@ -242,7 +242,7 @@ const ExamScheduler = () => {
                             <button
                               type="button"
                               onClick={() => navigate(`/teacher/monitor/${schedule._id}`)}
-                              className="inline-flex items-center gap-2 rounded-full border-2 border-foreground bg-secondary px-3 py-1 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover"
+                            className="editorial-pill-button"
                             >
                               <Monitor size={16} strokeWidth={2.5} />
                               Monitor
@@ -251,14 +251,14 @@ const ExamScheduler = () => {
                           <button
                             type="button"
                             onClick={() => openEditModal(schedule)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-secondary text-foreground shadow-pop-press"
+                            className="editorial-icon-button"
                           >
                             <Pencil size={16} strokeWidth={2.5} />
                           </button>
                           <button
                             type="button"
                             onClick={() => handleDelete(schedule._id)}
-                            className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
+                            className="editorial-icon-button editorial-icon-button--accent"
                           >
                             <Trash2 size={16} strokeWidth={2.5} />
                           </button>
@@ -280,7 +280,7 @@ const ExamScheduler = () => {
             <select
               value={formData.testId}
               onChange={(event) => setFormData((current) => ({ ...current, testId: event.target.value }))}
-              className="w-full rounded-md border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none"
+              className="editorial-input-surface"
               required
             >
               <option value="">Select a test</option>
@@ -299,7 +299,7 @@ const ExamScheduler = () => {
                 type="datetime-local"
                 value={formData.startTime}
                 onChange={(event) => setFormData((current) => ({ ...current, startTime: event.target.value }))}
-                className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none"
+                className="editorial-input-surface"
                 required
               />
             </label>
@@ -309,7 +309,7 @@ const ExamScheduler = () => {
                 type="datetime-local"
                 value={formData.endTime}
                 onChange={(event) => setFormData((current) => ({ ...current, endTime: event.target.value }))}
-                className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none"
+                className="editorial-input-surface"
                 required
               />
             </label>
@@ -326,9 +326,9 @@ const ExamScheduler = () => {
                     key={group._id}
                     type="button"
                     onClick={() => toggleGroup(group._id)}
-                    className={`rounded-full border-2 px-4 py-3 text-sm font-bold transition-all duration-200 ease-bounce ${
+                    className={`rounded-full border px-4 py-3 font-body text-sm font-semibold transition-all duration-200 ease-out ${
                       isSelected
-                        ? 'border-foreground bg-accent text-accentFg shadow-pop'
+                        ? 'border-accent bg-accent text-white shadow-editorialSm'
                         : 'border-border bg-muted text-foreground'
                     }`}
                   >
@@ -342,7 +342,7 @@ const ExamScheduler = () => {
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+            className="editorial-button-primary w-full"
           >
             {isSubmitting ? 'Saving...' : selectedSchedule ? 'Update Schedule' : 'Create Schedule'}
           </button>

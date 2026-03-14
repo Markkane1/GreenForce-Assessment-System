@@ -98,7 +98,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/dashboard"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <TeacherDashboard />
               </RoleRoute>
             }
@@ -106,7 +106,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/tests/new"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <TestBuilder />
               </RoleRoute>
             }
@@ -114,7 +114,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/tests/:id"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <TestBuilder />
               </RoleRoute>
             }
@@ -123,7 +123,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/schedule"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <ExamScheduler />
               </RoleRoute>
             }
@@ -132,7 +132,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/grade"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <GradingPage />
               </RoleRoute>
             }
@@ -141,7 +141,7 @@ const AppRoutes = () => (
           <Route
             path="/teacher/monitor/:id"
             element={
-              <RoleRoute allowedRoles={['teacher']}>
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
                 <MonitorPage />
               </RoleRoute>
             }

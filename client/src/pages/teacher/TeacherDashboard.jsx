@@ -11,7 +11,7 @@ import { getSchedules } from '../../services/scheduleService';
 import { deleteTest, getTests } from '../../services/testService';
 
 const statsConfig = [
-  { key: 'myTests', label: 'My Tests', tone: 'bg-accent', icon: PartyPopper },
+  { key: 'myTests', label: 'Tests', tone: 'bg-accent', icon: PartyPopper },
   { key: 'scheduledExams', label: 'Scheduled Exams', tone: 'bg-secondary', icon: Sparkles },
   { key: 'pendingGradings', label: 'Pending Gradings', tone: 'bg-quaternary', icon: Wand2 },
 ];
@@ -94,7 +94,7 @@ const TeacherDashboard = () => {
           </div>
           <h2 className="editorial-page-title">Overview for {user?.name || 'Teacher'}</h2>
           <p className="editorial-page-copy">
-            Manage authored tests, live schedules, and grading activity from a single editorial workspace.
+            Manage tests, live schedules, and grading activity from a single editorial workspace.
           </p>
         </div>
       </section>
@@ -138,12 +138,12 @@ const TeacherDashboard = () => {
         <div className="flex items-center justify-between gap-4">
           <div>
             <h3 className="font-heading text-3xl font-semibold text-foreground">Recent Tests</h3>
-            <p className="mt-1 text-sm text-mutedFg">Your latest drafts and published assessments.</p>
+            <p className="mt-1 text-sm text-mutedFg">Latest drafts and published assessments available to your role.</p>
           </div>
         </div>
 
         {errorMessage ? (
-          <div className="mt-5 rounded-full border-2 border-secondary bg-secondary/20 px-4 py-2 text-sm font-medium text-foreground">
+          <div className="mt-5 rounded-2xl border border-secondary bg-secondary/15 px-4 py-3 font-body text-sm font-medium text-foreground">
             {errorMessage}
           </div>
         ) : null}
@@ -185,7 +185,7 @@ const TeacherDashboard = () => {
                           <button
                             type="button"
                             onClick={() => navigate('/teacher/schedule?create=1')}
-                            className="inline-flex items-center justify-center rounded-md border border-quaternary bg-quaternary/15 px-4 py-2 font-body text-sm font-semibold text-foreground transition-all duration-200 ease-out hover:bg-quaternary/25"
+                            className="editorial-pill-button"
                           >
                             Schedule
                           </button>
@@ -214,14 +214,14 @@ const TeacherDashboard = () => {
       </section>
       <Modal isOpen={Boolean(selectedTest)} onClose={() => setSelectedTest(null)} title="Delete Test?">
         <div className="space-y-6">
-          <div className="rounded-[1.5rem] border-2 border-accent bg-accent/10 p-4 text-sm leading-7 text-foreground">
+          <div className="rounded-[1.5rem] border border-accent bg-accent/10 p-4 font-body text-sm leading-7 text-foreground">
             Deleting <strong>{selectedTest?.title}</strong> removes its sections and questions. This cannot be undone.
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setSelectedTest(null)}
-              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop"
+              className="editorial-button-secondary flex-1"
             >
               Cancel
             </button>
@@ -229,7 +229,7 @@ const TeacherDashboard = () => {
               type="button"
               onClick={handleDeleteTest}
               disabled={isDeleting}
-              className="flex-1 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop disabled:cursor-not-allowed disabled:opacity-70"
+              className="editorial-button-primary flex-1 disabled:cursor-not-allowed disabled:opacity-70"
             >
               {isDeleting ? 'Deleting...' : 'Delete Test'}
             </button>

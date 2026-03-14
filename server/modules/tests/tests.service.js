@@ -3,6 +3,32 @@ import Question from '../../models/Question.js';
 import Section from '../../models/Section.js';
 import Test from '../../models/Test.js';
 
+const DEFAULT_ANTI_CHEAT = {
+  disableContextMenu: true,
+  disableCopyPaste: true,
+  disableTranslate: true,
+  disableAutocomplete: true,
+  disableSpellcheck: true,
+  disablePrinting: true,
+};
+
+const buildAntiCheatPayload = (antiCheat = {}) => ({
+  ...DEFAULT_ANTI_CHEAT,
+  ...antiCheat,
+});
+
+const buildTestPayload = (data = {}) => ({
+  title: data.title,
+  description: data.description,
+  timeLimitMinutes: data.timeLimitMinutes,
+  passingScore: data.passingScore,
+  maxAttempts: data.maxAttempts,
+  allowResume: data.allowResume,
+  randomizeQuestions: data.randomizeQuestions,
+  randomizeOptions: data.randomizeOptions,
+  antiCheat: buildAntiCheatPayload(data.antiCheat),
+});
+
 const ensureTestExists = async (id) => {
   const test = await Test.findById(id).populate({
     path: 'createdBy',
@@ -18,7 +44,11 @@ const ensureTestExists = async (id) => {
   return test;
 };
 
-const ensureOwnership = (test, userId) => {
+const ensureOwnership = (test, userId, role) => {
+  if (role === 'admin') {
+    return;
+  }
+
   if (test.createdBy._id.toString() !== userId.toString()) {
     const error = new Error('You are not authorized to modify this test.');
     error.statusCode = 403;
@@ -79,7 +109,7 @@ const buildQuestionCountMap = async (testIds) => {
 
 export const createTest = async (data, teacherId) =>
   Test.create({
-    ...data,
+    ...buildTestPayload(data),
     createdBy: teacherId,
   });
 
@@ -167,9 +197,9 @@ export const getTestWorkspace = async (id) => {
   };
 };
 
-export const updateTest = async (id, data, userId) => {
+export const updateTest = async (id, data, userId, role) => {
   const test = await ensureTestExists(id);
-  ensureOwnership(test, userId);
+  ensureOwnership(test, userId, role);
 
   const updatableFields = [
     'title',
@@ -188,14 +218,21 @@ export const updateTest = async (id, data, userId) => {
     }
   });
 
+  if (data.antiCheat !== undefined) {
+    test.antiCheat = buildAntiCheatPayload({
+      ...(test.antiCheat?.toObject?.() || test.antiCheat || {}),
+      ...data.antiCheat,
+    });
+  }
+
   await test.save();
 
   return test;
 };
 
-export const deleteTest = async (id, userId) => {
+export const deleteTest = async (id, userId, role) => {
   const test = await ensureTestExists(id);
-  ensureOwnership(test, userId);
+  ensureOwnership(test, userId, role);
 
   const sections = await Section.find({ testId: id }).select('_id');
   const sectionIds = sections.map((section) => section._id);
@@ -213,9 +250,9 @@ export const deleteTest = async (id, userId) => {
   };
 };
 
-export const publishTest = async (id, userId) => {
+export const publishTest = async (id, userId, role) => {
   const test = await ensureTestExists(id);
-  ensureOwnership(test, userId);
+  ensureOwnership(test, userId, role);
 
   const sections = await Section.find({ testId: id }).select('_id title');
 

@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import asyncHandler from '../../utils/asyncHandler.js';
 import {
   createUser as createUserService,
@@ -26,6 +27,12 @@ export const getAllUsers = asyncHandler(async (req, res) => {
 });
 
 export const getUserById = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid userId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const user = await getUserByIdService(req.params.id);
 
   res.status(200).json({
@@ -35,6 +42,12 @@ export const getUserById = asyncHandler(async (req, res) => {
 });
 
 export const updateUser = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid userId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const user = await updateUserService(req.params.id, req.body);
 
   res.status(200).json({
@@ -44,6 +57,12 @@ export const updateUser = asyncHandler(async (req, res) => {
 });
 
 export const deleteUser = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid userId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const result = await deleteUserService(req.params.id);
 
   res.status(200).json(result);

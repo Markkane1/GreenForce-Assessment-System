@@ -1,6 +1,7 @@
 import mongoose from 'mongoose';
 import asyncHandler from '../../utils/asyncHandler.js';
 import {
+  getAllSchedules as getAllSchedulesService,
   createSchedule as createScheduleService,
   deleteSchedule as deleteScheduleService,
   getActiveAttempts as getActiveAttemptsService,
@@ -12,7 +13,7 @@ import {
 
 export const createSchedule = asyncHandler(async (req, res) => {
   const { testId, startTime, endTime, assignedGroups } = req.body;
-  const schedule = await createScheduleService(testId, startTime, endTime, assignedGroups, req.user.id);
+  const schedule = await createScheduleService(testId, startTime, endTime, assignedGroups, req.user.id, req.user.role);
 
   res.status(201).json({
     success: true,
@@ -25,6 +26,8 @@ export const getSchedules = asyncHandler(async (req, res) => {
 
   if (req.user.role === 'teacher') {
     schedules = await getSchedulesForTeacherService(req.user.id);
+  } else if (req.user.role === 'admin') {
+    schedules = await getAllSchedulesService();
   } else if (req.user.role === 'student') {
     schedules = await getSchedulesForStudentService(req.user.id);
   } else {
@@ -49,7 +52,7 @@ export const getScheduleById = asyncHandler(async (req, res) => {
 });
 
 export const updateSchedule = asyncHandler(async (req, res) => {
-  const schedule = await updateScheduleService(req.params.id, req.body, req.user.id);
+  const schedule = await updateScheduleService(req.params.id, req.body, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,
@@ -58,7 +61,7 @@ export const updateSchedule = asyncHandler(async (req, res) => {
 });
 
 export const deleteSchedule = asyncHandler(async (req, res) => {
-  const result = await deleteScheduleService(req.params.id, req.user.id);
+  const result = await deleteScheduleService(req.params.id, req.user.id, req.user.role);
 
   res.status(200).json(result);
 });

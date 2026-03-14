@@ -219,8 +219,8 @@ const GroupManagement = () => {
                 }}
                 className="group relative rounded-2xl border border-border bg-card p-6 text-left shadow-editorialMd transition-all duration-200 ease-out hover:-translate-y-0.5 hover:shadow-editorialLg"
               >
-                <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border-2 border-foreground ${iconTones[index % iconTones.length]} shadow-pop-press`}>
-                  <Users size={22} className="text-foreground" />
+                <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border ${iconTones[index % iconTones.length]} shadow-editorialSm`}>
+                  <Users size={22} className="text-white" />
                 </div>
                 <div className="ml-auto flex justify-end gap-2">
                   <button
@@ -229,7 +229,7 @@ const GroupManagement = () => {
                       event.stopPropagation();
                       openEditModal(group);
                     }}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-secondary text-foreground shadow-pop-press"
+                    className="editorial-icon-button"
                   >
                     <Pencil size={16} />
                   </button>
@@ -239,7 +239,7 @@ const GroupManagement = () => {
                       event.stopPropagation();
                       openDeleteModal(group);
                     }}
-                    className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
+                    className="editorial-icon-button editorial-icon-button--accent"
                   >
                     <Trash2 size={16} />
                   </button>
@@ -249,17 +249,25 @@ const GroupManagement = () => {
                 <div className="mt-5">
                   <Badge tone="tertiary">{group.members?.length || 0} Members</Badge>
                 </div>
-                <button
-                  type="button"
-                  onClick={(event) => {
-                    event.stopPropagation();
-                    openInviteCodesModal(group);
-                  }}
-                  className="mt-5 inline-flex items-center justify-center gap-2 rounded-full border-2 border-foreground bg-secondary px-3 py-1 text-sm font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
-                >
-                  <Key size={16} strokeWidth={2.5} />
-                  Manage Invite Codes
-                </button>
+                <div className="mt-6 border-t border-border pt-5">
+                  <div className="editorial-section-label mb-3">
+                    <span>Invite Codes</span>
+                  </div>
+                  <p className="text-sm leading-6 text-mutedFg">
+                    Generate, review, export, and revoke the codes students use to join this group.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={(event) => {
+                      event.stopPropagation();
+                      openInviteCodesModal(group);
+                    }}
+                    className="editorial-button-secondary mt-4 w-full"
+                  >
+                    <Key size={18} strokeWidth={2.5} />
+                    Manage Invite Codes
+                  </button>
+                </div>
               </div>
             ))}
           </div>
@@ -274,7 +282,7 @@ const GroupManagement = () => {
               name="name"
               value={formData.name}
               onChange={handleFormChange}
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+              className="editorial-input-surface"
               required
             />
           </label>
@@ -285,13 +293,13 @@ const GroupManagement = () => {
               value={formData.description}
               onChange={handleFormChange}
               rows="4"
-              className="w-full rounded-lg border-2 border-foreground bg-background px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+              className="editorial-input-surface"
             />
           </label>
           <button
             type="submit"
             disabled={isSubmitting}
-            className="w-full rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-1 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+            className="editorial-button-primary w-full"
           >
             {isSubmitting ? 'Saving...' : selectedGroup ? 'Save Group' : 'Create Group'}
           </button>
@@ -300,14 +308,14 @@ const GroupManagement = () => {
 
       <Modal isOpen={isDeleteOpen} onClose={() => setIsDeleteOpen(false)} title="Delete Group?">
         <div className="space-y-6">
-          <div className="rounded-[1.5rem] border-2 border-accent bg-accent/10 p-4 text-sm leading-7 text-foreground">
+          <div className="rounded-[1.5rem] border border-accent bg-accent/10 p-4 font-body text-sm leading-7 text-foreground">
             Deleting <strong>{selectedGroup?.name}</strong> also removes all of its memberships. This cannot be undone.
           </div>
           <div className="flex flex-col gap-3 sm:flex-row">
             <button
               type="button"
               onClick={() => setIsDeleteOpen(false)}
-              className="flex-1 rounded-full border-2 border-foreground bg-secondary px-6 py-3 font-bold text-foreground shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-secondary flex-1"
             >
               Cancel
             </button>
@@ -315,7 +323,7 @@ const GroupManagement = () => {
               type="button"
               onClick={handleDeleteGroup}
               disabled={isSubmitting}
-              className="flex-1 rounded-full border-2 border-foreground bg-accent px-6 py-3 font-bold text-accentFg shadow-pop transition-all duration-200 ease-bounce hover:-translate-y-0.5 hover:shadow-pop-hover active:translate-y-0.5 active:shadow-pop-press"
+              className="editorial-button-primary flex-1"
             >
               {isSubmitting ? 'Deleting...' : 'Delete Group'}
             </button>
@@ -332,20 +340,20 @@ const GroupManagement = () => {
             </div>
           </div>
 
-          <div className="space-y-3 rounded-[1.5rem] border-2 border-border bg-background p-4">
+          <div className="space-y-3 rounded-[1.5rem] border border-border bg-background p-4">
             <label className="block space-y-2">
               <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Add Member</span>
               <input
                 value={searchTerm}
                 onChange={(event) => setSearchTerm(event.target.value)}
                 placeholder="Search students by name"
-                className="w-full rounded-lg border-2 border-foreground bg-card px-4 py-3 text-foreground shadow-pop-soft outline-none transition-all duration-200 ease-bounce focus:shadow-pop"
+                className="editorial-input-surface bg-card"
               />
             </label>
             {searchTerm ? (
               <div className="space-y-2">
                 {filteredStudents.slice(0, 5).map((student) => (
-                  <div key={student._id} className="flex items-center justify-between rounded-xl border-2 border-border bg-card px-4 py-3 shadow-pop-soft">
+                  <div key={student._id} className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-editorialSm">
                     <div>
                       <p className="font-bold text-foreground">{student.name}</p>
                       <p className="text-sm text-mutedFg">{student.email}</p>
@@ -353,7 +361,7 @@ const GroupManagement = () => {
                     <button
                       type="button"
                       onClick={() => handleAddMember(student._id)}
-                      className="rounded-full border-2 border-foreground bg-accent px-4 py-2 text-sm font-bold text-accentFg shadow-pop-press"
+                      className="editorial-pill-button editorial-pill-button--accent"
                     >
                       Add
                     </button>
@@ -366,7 +374,7 @@ const GroupManagement = () => {
 
           <div className="space-y-3">
             {(selectedGroup?.members || []).map((member) => (
-              <div key={member._id} className="flex items-center justify-between rounded-[1.5rem] border-2 border-border bg-background px-4 py-3 shadow-pop-soft">
+              <div key={member._id} className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-4 py-3 shadow-editorialSm">
                 <div>
                   <p className="font-bold text-foreground">{member.studentId?.name}</p>
                   <p className="text-sm text-mutedFg">{member.studentId?.email}</p>
@@ -374,7 +382,7 @@ const GroupManagement = () => {
                 <button
                   type="button"
                   onClick={() => handleRemoveMember(member.studentId?._id)}
-                  className="inline-flex h-10 w-10 items-center justify-center rounded-full border-2 border-foreground bg-accent text-accentFg shadow-pop-press"
+                  className="editorial-icon-button editorial-icon-button--accent"
                 >
                   <X size={16} />
                 </button>

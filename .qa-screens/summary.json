@@ -1,0 +1,50 @@
+[
+  {
+    "role": "admin",
+    "route": "/admin/dashboard",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\admin-admin_dashboard.png",
+    "url": "http://127.0.0.1:5173/admin/dashboard"
+  },
+  {
+    "role": "admin",
+    "route": "/admin/users",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\admin-admin_users.png",
+    "url": "http://127.0.0.1:5173/admin/users"
+  },
+  {
+    "role": "admin",
+    "route": "/admin/groups",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\admin-admin_groups.png",
+    "url": "http://127.0.0.1:5173/admin/groups"
+  },
+  {
+    "role": "teacher",
+    "route": "/teacher/dashboard",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\teacher-teacher_dashboard.png",
+    "url": "http://127.0.0.1:5173/teacher/dashboard"
+  },
+  {
+    "role": "teacher",
+    "route": "/teacher/tests/new",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\teacher-teacher_tests_new.png",
+    "url": "http://127.0.0.1:5173/teacher/tests/new"
+  },
+  {
+    "role": "teacher",
+    "route": "/teacher/schedule",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\teacher-teacher_schedule.png",
+    "url": "http://127.0.0.1:5173/teacher/schedule"
+  },
+  {
+    "role": "teacher",
+    "route": "/teacher/grade",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\teacher-teacher_grade.png",
+    "url": "http://127.0.0.1:5173/teacher/grade"
+  },
+  {
+    "role": "student",
+    "route": "/student/dashboard",
+    "screenshot": "D:\\web temps\\EPA Testing Suite\\.qa-screens\\student-student_dashboard.png",
+    "url": "http://127.0.0.1:5173/student/dashboard"
+  }
+]

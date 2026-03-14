@@ -13,12 +13,12 @@ const router = Router();
 
 router.use(protect);
 
-router.route('/').post(authorize('teacher'), createSchedule).get(authorize('teacher', 'student'), getSchedules);
+router.route('/').post(authorize('teacher', 'admin'), createSchedule).get(authorize('teacher', 'admin', 'student'), getSchedules);
 router.get('/:id/active-attempts', authorize('teacher', 'admin'), getActiveAttempts);
 router
   .route('/:id')
   .get(authorize('admin', 'teacher', 'student'), getScheduleById)
-  .put(authorize('teacher'), updateSchedule)
-  .delete(authorize('teacher'), deleteSchedule);
+  .put(authorize('teacher', 'admin'), updateSchedule)
+  .delete(authorize('teacher', 'admin'), deleteSchedule);
 
 export default router;

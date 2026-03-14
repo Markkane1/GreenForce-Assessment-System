@@ -32,6 +32,28 @@
   }
 }
 
+@media print {
+  html.exam-print-locked body > * {
+    display: none !important;
+  }
+
+  html.exam-print-locked body::before {
+    color: #1a1a1a;
+    content: 'Printing is disabled during active exams.';
+    display: block;
+    font-family: "Playfair Display", Georgia, serif;
+    font-size: 28px;
+    left: 50%;
+    line-height: 1.3;
+    max-width: 32rem;
+    padding: 3rem 2rem;
+    position: fixed;
+    text-align: center;
+    top: 50%;
+    transform: translate(-50%, -50%);
+  }
+}
+
 @layer components {
   .editorial-app-shell {
     background:
@@ -160,6 +182,56 @@
   .editorial-input-surface:focus {
     border-color: #b8860b;
     box-shadow: 0 0 0 2px rgba(184, 134, 11, 0.12), 0 0 0 4px rgba(250, 250, 248, 1);
+  }
+
+  .editorial-icon-button {
+    @apply inline-flex h-10 w-10 items-center justify-center rounded-full border bg-white text-foreground transition-all duration-200 ease-out;
+    border-color: #1a1a1a;
+    box-shadow: 0 1px 2px rgba(26, 26, 26, 0.04);
+  }
+
+  .editorial-icon-button:hover:not(:disabled) {
+    background: #f5f3f0;
+    border-color: #b8860b;
+    color: #b8860b;
+  }
+
+  .editorial-icon-button--accent {
+    background: linear-gradient(180deg, #d4a84b 0%, #b8860b 100%);
+    border-color: #b8860b;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.16);
+  }
+
+  .editorial-icon-button--accent:hover:not(:disabled) {
+    color: #ffffff;
+    opacity: 0.96;
+  }
+
+  .editorial-pill-button {
+    @apply inline-flex items-center justify-center gap-2 rounded-full border px-4 py-2 font-body text-sm font-semibold transition-all duration-200 ease-out;
+    min-height: 40px;
+    border-color: #1a1a1a;
+    color: #1a1a1a;
+    background: transparent;
+  }
+
+  .editorial-pill-button:hover:not(:disabled) {
+    background: #f5f3f0;
+    border-color: #b8860b;
+    color: #b8860b;
+  }
+
+  .editorial-pill-button--accent {
+    background: linear-gradient(180deg, #d4a84b 0%, #b8860b 100%);
+    border-color: #b8860b;
+    color: #ffffff;
+    box-shadow: 0 4px 12px rgba(184, 134, 11, 0.16);
+  }
+
+  .editorial-pill-button--accent:hover:not(:disabled) {
+    color: #ffffff;
+    opacity: 0.96;
   }
 
   .editorial-auth-shell {

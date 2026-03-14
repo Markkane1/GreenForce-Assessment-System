@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import asyncHandler from '../../utils/asyncHandler.js';
 import {
   createTest as createTestService,
@@ -28,6 +29,12 @@ export const getAllTests = asyncHandler(async (req, res) => {
 });
 
 export const getTestById = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid testId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const test = await getTestByIdService(req.params.id);
 
   res.status(200).json({
@@ -37,6 +44,12 @@ export const getTestById = asyncHandler(async (req, res) => {
 });
 
 export const getTestWorkspace = asyncHandler(async (req, res) => {
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid testId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
   const test = await getTestWorkspaceService(req.params.id);
 
   res.status(200).json({
@@ -46,7 +59,13 @@ export const getTestWorkspace = asyncHandler(async (req, res) => {
 });
 
 export const updateTest = asyncHandler(async (req, res) => {
-  const test = await updateTestService(req.params.id, req.body, req.user.id);
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid testId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const test = await updateTestService(req.params.id, req.body, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,
@@ -55,13 +74,25 @@ export const updateTest = asyncHandler(async (req, res) => {
 });
 
 export const deleteTest = asyncHandler(async (req, res) => {
-  const result = await deleteTestService(req.params.id, req.user.id);
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid testId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const result = await deleteTestService(req.params.id, req.user.id, req.user.role);
 
   res.status(200).json(result);
 });
 
 export const publishTest = asyncHandler(async (req, res) => {
-  const test = await publishTestService(req.params.id, req.user.id);
+  if (!mongoose.isValidObjectId(req.params.id)) {
+    const error = new Error('A valid testId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const test = await publishTestService(req.params.id, req.user.id, req.user.role);
 
   res.status(200).json({
     success: true,

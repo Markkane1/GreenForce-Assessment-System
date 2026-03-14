@@ -6,17 +6,6 @@ import { useAuth } from '../../hooks/useAuth';
 import api from '../../services/api';
 import { getUsers } from '../../services/userService';
 
-const DotGrid = () => (
-  <svg className="absolute inset-0 h-full w-full opacity-20" aria-hidden="true">
-    <defs>
-      <pattern id="admin-dot-grid" width="26" height="26" patternUnits="userSpaceOnUse">
-        <circle cx="4" cy="4" r="2.5" fill="#1F2937" />
-      </pattern>
-    </defs>
-    <rect width="100%" height="100%" fill="url(#admin-dot-grid)" />
-  </svg>
-);
-
 const statCards = [
   { key: 'totalUsers', label: 'Total Users', tone: 'bg-accent', icon: Users },
   { key: 'totalTests', label: 'Total Tests', tone: 'bg-secondary', icon: ClipboardList },
@@ -68,8 +57,7 @@ const AdminDashboard = () => {
         </div>
       </section>
 
-      <section className="relative mt-10 overflow-hidden editorial-panel p-6">
-        <DotGrid />
+      <section className="relative mt-10 overflow-hidden editorial-panel bg-[radial-gradient(circle_at_top,rgba(184,134,11,0.06),transparent_32%)] p-6">
         <div className="relative z-10">
           {isLoading ? <LoadingSpinner /> : null}
           {errorMessage ? (
@@ -83,11 +71,11 @@ const AdminDashboard = () => {
                 const Icon = card.icon;
 
                 return (
-                  <div key={card.key} className="relative mt-5 rounded-2xl border border-border bg-white p-6 shadow-editorialMd">
-                    <div className={`absolute -top-5 left-6 flex h-14 w-14 items-center justify-center rounded-full border border-border ${card.tone} shadow-editorialSm`}>
-                      <Icon size={22} className="text-foreground" />
+                  <div key={card.key} className="relative rounded-2xl border border-border bg-white p-6 shadow-editorialMd">
+                    <div className={`mb-6 flex h-12 w-12 items-center justify-center rounded-full border border-border ${card.tone} shadow-editorialSm`}>
+                      <Icon size={20} className="text-white" />
                     </div>
-                    <p className="mt-8 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{card.label}</p>
+                    <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">{card.label}</p>
                     <p className="mt-4 font-heading text-4xl font-semibold text-foreground">{stats[card.key]}</p>
                   </div>
                 );

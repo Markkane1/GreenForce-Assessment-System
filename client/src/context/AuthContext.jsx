@@ -1,5 +1,5 @@
 import { createContext, useCallback, useEffect, useMemo, useState } from 'react';
-import { setAuthToken, setLogoutFunction } from '../services/api';
+import { setLogoutFunction } from '../services/api';
 import * as authService from '../services/authService';
 
 export const AuthContext = createContext(null);
@@ -22,7 +22,6 @@ export const AuthProvider = ({ children }) => {
     setToken(null);
     setUser(null);
     setIsAuthReady(true);
-    setAuthToken(null);
 
     if (typeof window !== 'undefined') {
       window.sessionStorage.removeItem(SESSION_HINT_KEY);
@@ -57,7 +56,6 @@ export const AuthProvider = ({ children }) => {
 
         setUser(currentUser);
         setToken('cookie-session');
-        setAuthToken(null);
       } catch {
         if (!isMounted) {
           return;
@@ -65,7 +63,6 @@ export const AuthProvider = ({ children }) => {
 
         setUser(null);
         setToken(null);
-        setAuthToken(null);
 
         if (typeof window !== 'undefined') {
           window.sessionStorage.removeItem(SESSION_HINT_KEY);
@@ -84,11 +81,10 @@ export const AuthProvider = ({ children }) => {
     };
   }, []);
 
-  const login = useCallback((userData, nextToken = null) => {
+  const login = useCallback((userData) => {
     setUser(userData);
     setToken('cookie-session');
     setIsAuthReady(true);
-    setAuthToken(nextToken);
 
     if (typeof window !== 'undefined') {
       window.sessionStorage.setItem(SESSION_HINT_KEY, '1');

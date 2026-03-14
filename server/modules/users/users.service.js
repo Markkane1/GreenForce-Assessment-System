@@ -58,7 +58,13 @@ export const createUser = async (data) => {
 export const getAllUsers = async (filters = {}) => {
   const query = {};
 
-  if (filters.role) {
+  if (filters.role !== undefined) {
+    if (typeof filters.role !== 'string' || !ALLOWED_ROLES.includes(filters.role)) {
+      const error = new Error('Role filter must be admin, teacher, or student.');
+      error.statusCode = 400;
+      throw error;
+    }
+
     query.role = filters.role;
   }
 
