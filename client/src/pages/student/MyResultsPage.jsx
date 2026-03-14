@@ -14,6 +14,18 @@ const formatSubmittedDate = (submittedAt) => {
   return new Date(submittedAt).toLocaleString();
 };
 
+const getResultTone = (attempt) => {
+  if (attempt.resultStatus === 'pending' || attempt.pendingEssayCount > 0) {
+    return { tone: 'tertiary', label: 'Pending' };
+  }
+
+  if (attempt.passed) {
+    return { tone: 'quaternary', label: 'Passed' };
+  }
+
+  return { tone: 'secondary', label: 'Failed' };
+};
+
 const MyResultsPage = () => {
   const navigate = useNavigate();
   const [attempts, setAttempts] = useState([]);
@@ -82,7 +94,10 @@ const MyResultsPage = () => {
                 </tr>
               </thead>
               <tbody>
-                {attempts.map((attempt) => (
+                {attempts.map((attempt) => {
+                  const resultBadge = getResultTone(attempt);
+
+                  return (
                   <tr key={attempt.attemptId}>
                     <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4">
                       <div className="flex items-start gap-3">
@@ -104,8 +119,8 @@ const MyResultsPage = () => {
                       {attempt.score} / {attempt.totalPoints}
                     </td>
                     <td className="border-y-2 border-border bg-background px-4 py-4">
-                      <Badge tone={attempt.passed ? 'quaternary' : 'secondary'}>
-                        {attempt.passed ? 'Passed' : 'Failed'}
+                      <Badge tone={resultBadge.tone}>
+                        {resultBadge.label}
                       </Badge>
                     </td>
                     <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
@@ -119,7 +134,8 @@ const MyResultsPage = () => {
                       </button>
                     </td>
                   </tr>
-                ))}
+                  );
+                })}
               </tbody>
             </table>
           </div>

@@ -27,7 +27,7 @@ export const startExam = asyncHandler(async (req, res) => {
     alreadySubmitted: Boolean(result.alreadySubmitted),
     resumed: result.resumed,
     remainingSeconds: result.remainingSeconds,
-    violationThreshold: getViolationThreshold(),
+    violationThreshold: getViolationThreshold(result.attempt?.testId),
   });
 });
 

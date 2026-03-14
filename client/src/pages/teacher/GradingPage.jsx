@@ -1,4 +1,4 @@
-import { Download, FileSpreadsheet, FileText, GraduationCap, ShieldAlert } from 'lucide-react';
+import { ArrowRight, CheckCircle2, FileSpreadsheet, FileText, GraduationCap, ShieldAlert, UserX } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
@@ -9,7 +9,7 @@ import * as gradingService from '../../services/gradingService';
 
 const formatDateTime = (value) => {
   if (!value) {
-    return '—';
+    return '\u2014';
   }
 
   return new Date(value).toLocaleString();
@@ -496,7 +496,7 @@ const GradingPage = () => {
                     <div>
                       <p className="font-semibold text-foreground">{schedule.testTitle}</p>
                       <p className="mt-1 text-sm text-mutedFg">
-                        {formatDateTime(schedule.startTime)} — {formatDateTime(schedule.endTime)}
+                        {formatDateTime(schedule.startTime)} {'\u2014'} {formatDateTime(schedule.endTime)}
                       </p>
                     </div>
                     <Badge tone={schedule.gradingStatus === 'ready' ? 'quaternary' : 'tertiary'}>
@@ -505,13 +505,14 @@ const GradingPage = () => {
                   </div>
                   <div className="mt-4 flex flex-wrap gap-2 text-xs text-mutedFg">
                     <span>{schedule.attendanceCount} present</span>
-                    <span>•</span>
+                    <span>&bull;</span>
                     <span>{schedule.absentCount} absent</span>
-                    <span>•</span>
+                    <span>&bull;</span>
                     <span>{schedule.totalViolations} cheating tries</span>
                   </div>
                   <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent">
                     {schedule.gradingStatus === 'ready' ? 'Open Report' : 'Review Grading'}
+                    <ArrowRight size={16} strokeWidth={2.5} />
                   </div>
                 </button>
               ))}
@@ -539,7 +540,7 @@ const GradingPage = () => {
                     <p className="mt-3 text-sm leading-7 text-mutedFg">
                       Conducting Officer: {scheduleReport.test.conductingOfficer}
                       <br />
-                      Schedule Window: {formatDateTime(scheduleReport.schedule.startTime)} — {formatDateTime(scheduleReport.schedule.endTime)}
+                      Schedule Window: {formatDateTime(scheduleReport.schedule.startTime)} {'\u2014'} {formatDateTime(scheduleReport.schedule.endTime)}
                       <br />
                       Assigned Groups: {scheduleReport.schedule.assignedGroups.map((group) => group.name).join(', ')}
                     </p>
@@ -572,12 +573,12 @@ const GradingPage = () => {
                     {
                       label: 'Present',
                       value: scheduleReport.candidateRows.filter((row) => row.attendanceStatus === 'Present').length,
-                      icon: Download,
+                      icon: CheckCircle2,
                     },
                     {
                       label: 'Absent',
                       value: scheduleReport.candidateRows.filter((row) => row.attendanceStatus === 'Absent').length,
-                      icon: ShieldAlert,
+                      icon: UserX,
                     },
                     { label: 'Cheating Tries', value: scheduleReport.totalViolations, icon: ShieldAlert },
                   ].map((item) => {
@@ -711,7 +712,7 @@ const GradingPage = () => {
                       <div className="grid gap-5 lg:grid-cols-[1fr,280px]">
                         <div className="rounded-lg border border-border bg-surfaceAlt p-5 shadow-card">
                           <h4 className="text-xl font-semibold text-foreground">
-                            {attemptDetail.studentId?.name} — {attemptDetail.testId?.title}
+                            {attemptDetail.studentId?.name} {'\u2014'} {attemptDetail.testId?.title}
                           </h4>
                           <p className="mt-2 text-sm text-mutedFg">
                             Submitted {formatDateTime(attemptDetail.submittedAt)}

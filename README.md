@@ -1,113 +1,180 @@
-# EPA Testing Suite
+# Green Force Assessment System
 
-Online Testing System built with the MERN stack for admins, teachers, and students. The platform supports test authoring, sectioned exams, student group scheduling, deterministic exam delivery, auto-grading for MCQs, manual grading for essays, autosave, and anti-cheat logging.
+Online testing platform for admins, teachers, and students. The system supports invite-code student onboarding, sectioned tests, exam scheduling, deterministic exam delivery, MCQ auto-grading, essay grading, anti-cheat logging, and result reporting.
 
-## Prerequisites
+## Stack
 
-- Node.js 18 or newer
-- MongoDB running locally or a reachable MongoDB connection string
+- Backend: Node.js, Express, MongoDB, Mongoose
+- Frontend: React, Vite, React Router
+- Auth: JWT in `httpOnly` cookie + CSRF token
+- Runtime: PM2 + Nginx
 
-## Setup
+## Local setup
 
-1. Install root tooling:
+1. Install dependencies
    - `npm install`
-2. Install backend dependencies:
    - `npm --prefix server install`
-3. Install frontend dependencies:
    - `npm --prefix client install`
-4. Create environment files:
-   - copy `D:\web temps\EPA Testing Suite\server\.env.example` to `D:\web temps\EPA Testing Suite\server\.env`
-   - copy `D:\web temps\EPA Testing Suite\client\.env.example` to `D:\web temps\EPA Testing Suite\client\.env`
-5. Seed the database:
-   - `node server/utils/seed.js`
-6. Start both apps:
+2. Create env files
+   - copy `server/.env.example` to `server/.env`
+   - copy `client/.env.example` to `client/.env`
+3. Seed sample data
+   - `npm --prefix server run seed`
+4. Start development
    - `npm run dev`
 
-## Environment Variables
+## Current auth model
 
-### Server
+- Public registration is student-only via `POST /api/auth/register-student`
+- Invite code validation is public via `POST /api/invite-codes/validate`
+- Admins and teachers are created by admin UI or seed script
+- The client does not use `localStorage` auth tokens as the primary auth path
+- Protected requests rely on:
+  - `auth_token` cookie
+  - `csrf_token` cookie + `X-CSRF-Token` header on state-changing requests
 
-- `PORT` - API port, default `5000`
-- `NODE_ENV` - environment name
-- `CLIENT_URL` - allowed frontend origin for CORS
-- `MONGO_URI` - MongoDB connection string
-- `JWT_SECRET` - signing secret for JWTs
-- `JWT_EXPIRES_IN` - token lifetime, for example `7d`
-- `VIOLATION_THRESHOLD` - proctor violations before force submit
-
-### Client
-
-- `VITE_API_BASE_URL` - backend base URL, default `http://localhost:5000/api`
-
-## Seed Credentials
-
-The seed script creates these accounts:
+## Seed credentials
 
 - Admin: `admin@exam-pop.local` / `Admin123!`
 - Teacher: `teacher@exam-pop.local` / `Teacher123!`
 - Student: `student@exam-pop.local` / `Student123!`
 
-## API Base URL
+EPA inspector accounts are also seeded by `npm --prefix server run seed`.
 
-- Base URL: `http://localhost:5000/api`
-
-## Authentication Flow
-
-- `POST /api/auth/register` creates a new teacher or student account
-- `POST /api/auth/login` returns a JWT token and user payload
-- The client stores the JWT in `localStorage`
-- Axios attaches `Authorization: Bearer <token>` automatically on protected requests
-- A `401` response clears the token and redirects the client to `/login`
-
-## Development Scripts
-
-### Root
-
-- `npm run dev` - runs backend and frontend together with `concurrently`
+## Environment
 
 ### Server
 
-- `npm --prefix server run server` - starts the API with `nodemon`
-- `npm --prefix server run seed` - seeds sample data
-- `node server/utils/seed.js` - seeds the database directly from the repo root
+Required:
+
+- `PORT`
+- `NODE_ENV`
+- `CLIENT_URL`
+- `MONGO_URI`
+- `JWT_SECRET`
+
+Important:
+
+- `CORS_ALLOWED_ORIGINS`
+  - comma-separated list of allowed frontend origins
+  - if omitted, falls back to `CLIENT_URL`
+- `TRUST_PROXY`
+  - set to `1` behind Nginx
+- `AUTH_COOKIE_SAMESITE`
+  - `lax` for same-site frontend/API
+  - `none` only when frontend and API are cross-site
+- `AUTH_COOKIE_SECURE`
+  - must be `true` in production over HTTPS
 
 ### Client
 
-- `npm --prefix client run dev` - starts the Vite development server
+- `VITE_API_BASE_URL`
+  - example: `https://greenforceassessment.duckdns.org/api`
 
-## Folder Structure
+## Build
 
-```text
-root
-|-- client
-|   |-- pages
-|   |-- components
-|   |-- hooks
-|   |-- services
-|   `-- utils
-|-- server
-|   |-- controllers
-|   |-- services
-|   |-- routes
-|   |-- models
-|   |-- middlewares
-|   |-- modules
-|   `-- utils
-`-- docs
+- Client build:
+  - `npm run build`
+- API production start:
+  - `npm run start`
+
+## Oracle/Nginx/PM2 deployment
+
+Recommended deployment shape:
+
+- serve `client/dist` with Nginx
+- reverse proxy `/api` to the Node API
+- run the API on port `3004`
+- use a single public domain for frontend + API if possible
+
+Included deploy templates:
+
+- PM2: `deploy/ecosystem.config.cjs`
+- Nginx: `deploy/nginx-green-force-assessment.conf`
+- Quick deploy script: `deploy/quick-deploy.sh`
+
+### Quick deployment
+
+On your Ubuntu server, from the checked-out repo:
+
+```bash
+chmod +x deploy/quick-deploy.sh
+
+DOMAIN=greenforceassessment.duckdns.org \
+JWT_SECRET='replace-with-a-long-random-secret-of-at-least-32-characters' \
+MONGO_URI='mongodb://127.0.0.1:27017/green-force-assessment' \
+./deploy/quick-deploy.sh
 ```
 
-## Key Routes
+If you want the script to also issue/refresh the certificate:
 
-- `POST /api/auth/login`
-- `GET /api/users`
-- `GET /api/groups`
-- `GET /api/tests`
-- `PUT /api/sections/:id`
-- `PUT /api/questions/:id`
-- `GET /api/schedules`
-- `POST /api/exam/start`
-- `POST /api/exam/save-answer`
-- `POST /api/exam/:attemptId/submit`
-- `GET /api/exam/:attemptId/results`
-- `GET /api/grading/attempts`
-- `POST /api/proctor/log`
+```bash
+DOMAIN=greenforceassessment.duckdns.org \
+JWT_SECRET='replace-with-a-long-random-secret-of-at-least-32-characters' \
+MONGO_URI='mongodb://127.0.0.1:27017/green-force-assessment' \
+ENABLE_CERTBOT=true \
+CERTBOT_EMAIL='you@example.com' \
+./deploy/quick-deploy.sh
+```
+
+The script will:
+
+- write/update `server/.env`
+- write/update `client/.env.production`
+- install dependencies
+- build the client
+- start or reload the API with PM2
+- write and enable the Nginx site config
+- test and reload Nginx
+
+### Production env example
+
+Server:
+
+```env
+PORT=3004
+NODE_ENV=production
+CLIENT_URL=https://greenforceassessment.duckdns.org
+CORS_ALLOWED_ORIGINS=https://greenforceassessment.duckdns.org
+MONGO_URI=mongodb://127.0.0.1:27017/green-force-assessment
+JWT_SECRET=replace-with-a-long-random-secret-of-at-least-32-characters
+JWT_EXPIRES_IN=7d
+VIOLATION_THRESHOLD=3
+TRUST_PROXY=1
+AUTH_COOKIE_SAMESITE=lax
+AUTH_COOKIE_SECURE=true
+```
+
+Client:
+
+```env
+VITE_API_BASE_URL=https://greenforceassessment.duckdns.org/api
+```
+
+## Deployment notes
+
+- If you deploy frontend and API on different origins, use:
+  - `AUTH_COOKIE_SAMESITE=none`
+  - `AUTH_COOKIE_SECURE=true`
+- In production, the API now rejects startup if:
+  - `JWT_SECRET` is weak/placeholder
+  - `CLIENT_URL` is missing
+  - `AUTH_COOKIE_SAMESITE=none` without `AUTH_COOKIE_SECURE=true`
+- `CORS_ALLOWED_ORIGINS` accepts multiple origins as a comma-separated list.
+
+## Reset-password caveat
+
+The backend stores reset tokens correctly, but there is no SMTP mailer in this repo yet. In production, the forgot-password flow is not complete until you integrate email delivery.
+
+## Sanity checklist before go-live
+
+- `npm run build` passes
+- API starts with production env
+- `/login` loads behind Nginx
+- login sets auth + CSRF cookies
+- `/api/auth/me` succeeds after login
+- admin can manage users and groups
+- teacher can create, publish, and schedule a test
+- student can start, save, submit, and view results
+- invite-code signup works
+- MongoDB is not exposed publicly

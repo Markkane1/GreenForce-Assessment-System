@@ -16,6 +16,7 @@ import * as testService from '../../services/testService';
 const stripTones = ['border-accent', 'border-secondary', 'border-tertiary', 'border-quaternary'];
 const DEFAULT_MCQ_OPTION_COUNT = 4;
 const DEFAULT_ANTI_CHEAT_SETTINGS = {
+  violationThreshold: 3,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,
@@ -1117,6 +1118,23 @@ const TestBuilder = () => {
               <label className="block space-y-2">
                 <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Max Attempts</span>
                 <input type="number" min="1" value={currentTest.maxAttempts} onChange={(event) => updateTestField('maxAttempts', Number(event.target.value))} className="editorial-input-surface" />
+              </label>
+              <label className="block space-y-2">
+                <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Cheating Threshold</span>
+                <input
+                  type="number"
+                  min="1"
+                  value={currentTest.antiCheat?.violationThreshold ?? DEFAULT_ANTI_CHEAT_SETTINGS.violationThreshold}
+                  onChange={(event) =>
+                    updateAntiCheatField(
+                      'violationThreshold',
+                      Math.max(1, Number.parseInt(event.target.value || `${DEFAULT_ANTI_CHEAT_SETTINGS.violationThreshold}`, 10) || DEFAULT_ANTI_CHEAT_SETTINGS.violationThreshold),
+                    )}
+                  className="editorial-input-surface"
+                />
+                <p className="text-xs text-mutedFg">
+                  Auto-submit the exam after this many recorded anti-cheat violations.
+                </p>
               </label>
               <Toggle label="Allow Resume" checked={currentTest.allowResume} onChange={() => updateTestField('allowResume', !currentTest.allowResume)} />
               <Toggle label="Randomize Questions" checked={currentTest.randomizeQuestions} onChange={() => updateTestField('randomizeQuestions', !currentTest.randomizeQuestions)} />

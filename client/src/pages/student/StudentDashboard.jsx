@@ -38,6 +38,30 @@ const formatSubmittedDate = (submittedAt) => {
   return new Date(submittedAt).toLocaleString();
 };
 
+const getAttemptBadge = (attempt) => {
+  if (attempt.resultStatus === 'pending' || attempt.pendingEssayCount > 0) {
+    return {
+      tone: 'tertiary',
+      label: 'Pending',
+      scoreTone: 'border-tertiary bg-tertiary/20 text-foreground',
+    };
+  }
+
+  if (attempt.passed) {
+    return {
+      tone: 'quaternary',
+      label: 'Passed',
+      scoreTone: 'border-quaternary bg-quaternary/20 text-foreground',
+    };
+  }
+
+  return {
+    tone: 'secondary',
+    label: 'Failed',
+    scoreTone: 'border-secondary bg-secondary/20 text-foreground',
+  };
+};
+
 const StudentDashboard = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
@@ -232,9 +256,7 @@ const StudentDashboard = () => {
         {!isAttemptsLoading && attempts.length > 0 ? (
           <div className="mt-6 space-y-4">
             {attempts.map((attempt) => {
-              const scoreTone = attempt.passed
-                ? 'border-quaternary bg-quaternary/20 text-foreground'
-                : 'border-secondary bg-secondary/20 text-foreground';
+              const attemptBadge = getAttemptBadge(attempt);
 
               return (
                 <article
@@ -249,11 +271,11 @@ const StudentDashboard = () => {
                       </p>
                     </div>
                     <div className="flex flex-wrap items-center gap-3">
-                      <div className={`rounded-full border px-4 py-2 text-sm font-bold ${scoreTone}`}>
+                      <div className={`rounded-full border px-4 py-2 text-sm font-bold ${attemptBadge.scoreTone}`}>
                         {attempt.score} / {attempt.totalPoints}
                       </div>
-                      <Badge tone={attempt.passed ? 'quaternary' : 'secondary'}>
-                        {attempt.passed ? 'Passed' : 'Failed'}
+                      <Badge tone={attemptBadge.tone}>
+                        {attemptBadge.label}
                       </Badge>
                       <button
                         type="button"

@@ -5,15 +5,17 @@ import { autoGradeMCQ } from '../examEngine/examEngine.service.js';
 const ALLOWED_EVENT_TYPES = ['fullscreen_exit', 'tab_switch', 'copy_attempt', 'window_blur'];
 const SERVER_COOLDOWN_MS = 1500;
 
-export const getViolationThreshold = () => {
-  const threshold = Number(process.env.VIOLATION_THRESHOLD ?? 3);
+export const getViolationThreshold = (testOrAntiCheat = null) => {
+  const configuredThreshold =
+    testOrAntiCheat?.antiCheat?.violationThreshold ?? testOrAntiCheat?.violationThreshold;
+  const threshold = Number(configuredThreshold ?? process.env.VIOLATION_THRESHOLD ?? 3);
   return Number.isInteger(threshold) && threshold > 0 ? threshold : 3;
 };
 
 const getAttemptWithTest = async (attemptId) => {
   const attempt = await TestAttempt.findById(attemptId).populate({
     path: 'testId',
-    select: 'createdBy',
+    select: 'createdBy antiCheat',
   });
 
   if (!attempt) {
@@ -68,7 +70,7 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
     },
   ).populate({
     path: 'testId',
-    select: 'createdBy',
+    select: 'createdBy antiCheat',
   });
 
   if (!updatedAttempt) {
@@ -105,7 +107,7 @@ export const logViolation = async (attemptId, studentId, eventType, metadata = {
     timestamp: now,
   });
 
-  const threshold = getViolationThreshold();
+  const threshold = getViolationThreshold(updatedAttempt.testId);
 
   if (updatedAttempt.violationsCount >= threshold) {
     const score = await autoGradeMCQ(updatedAttempt._id);

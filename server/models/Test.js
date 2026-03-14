@@ -49,6 +49,11 @@ const testSchema = new Schema(
       default: false,
     },
     antiCheat: {
+      violationThreshold: {
+        type: Number,
+        min: 1,
+        default: 3,
+      },
       disableContextMenu: {
         type: Boolean,
         default: true,

@@ -24,6 +24,13 @@ const validateEnvironment = () => {
     if (!process.env.CLIENT_URL) {
       throw new Error('CLIENT_URL is required in production.');
     }
+
+    if (
+      String(process.env.AUTH_COOKIE_SAMESITE || 'lax').toLowerCase() === 'none'
+      && String(process.env.AUTH_COOKIE_SECURE || 'false').toLowerCase() !== 'true'
+    ) {
+      throw new Error('AUTH_COOKIE_SAMESITE=none requires AUTH_COOKIE_SECURE=true in production.');
+    }
   }
 };
 

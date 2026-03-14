@@ -34,6 +34,7 @@ const RESULT_REDIRECT_SECONDS = 5;
 const EXPIRING_SCREEN_MIN_MS = 1500;
 const getActiveAttemptKey = (scheduleId) => `active_exam_attempt_${scheduleId}`;
 const DEFAULT_ANTI_CHEAT_SETTINGS = {
+  violationThreshold: 3,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,
@@ -615,6 +616,18 @@ const ExamPage = () => {
   }, [resumeBanner]);
 
   useEffect(() => {
+    if (!systemMessage || systemMessage === location.state?.message) {
+      return undefined;
+    }
+
+    const timeoutId = window.setTimeout(() => {
+      setSystemMessage('');
+    }, 2200);
+
+    return () => window.clearTimeout(timeoutId);
+  }, [location.state?.message, systemMessage]);
+
+  useEffect(() => {
     const handleOnline = () => {
       retrySave();
     };
@@ -773,12 +786,11 @@ const ExamPage = () => {
         const upcomingSection = sections[currentSectionIndex + 1];
 
         if (upcomingSection) {
-          setNextSectionInfo({
-            title: upcomingSection.title,
-            questionCount: upcomingSection.items.length,
-            sectionIndex: currentSectionIndex + 1,
-          });
-          setShowSectionTransition(true);
+          setSystemMessage(`Section complete. Continuing to ${upcomingSection.title}.`);
+          setShowSectionTransition(false);
+          setNextSectionInfo(null);
+          setCurrentSectionIndex(currentSectionIndex + 1);
+          setCurrentIndex(upcomingSection.startIndex);
           return;
         }
 

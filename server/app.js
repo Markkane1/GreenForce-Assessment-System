@@ -37,17 +37,37 @@ if (trustProxySetting) {
   }
 }
 
+const addOriginVariants = (origins, origin) => {
+  if (!origin) {
+    return;
+  }
+
+  const trimmedOrigin = origin.trim();
+
+  if (!trimmedOrigin) {
+    return;
+  }
+
+  origins.add(trimmedOrigin);
+
+  if (trimmedOrigin.includes('localhost')) {
+    origins.add(trimmedOrigin.replace('localhost', '127.0.0.1'));
+  }
+
+  if (trimmedOrigin.includes('127.0.0.1')) {
+    origins.add(trimmedOrigin.replace('127.0.0.1', 'localhost'));
+  }
+};
+
 const buildAllowedOrigins = () => {
-  const configuredOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-  const origins = new Set([configuredOrigin]);
+  const origins = new Set();
+  const configuredOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.CLIENT_URL || 'http://localhost:5173';
 
-  if (configuredOrigin.includes('localhost')) {
-    origins.add(configuredOrigin.replace('localhost', '127.0.0.1'));
-  }
-
-  if (configuredOrigin.includes('127.0.0.1')) {
-    origins.add(configuredOrigin.replace('127.0.0.1', 'localhost'));
-  }
+  configuredOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .forEach((origin) => addOriginVariants(origins, origin));
 
   return [...origins];
 };
@@ -62,8 +82,17 @@ const rateLimitHandler = (req, res) => {
 const shouldSkipGeneralRateLimit = (req) => !isProduction || req.method === 'OPTIONS';
 const shouldSkipAuthRateLimit = (req) => req.method === 'OPTIONS';
 
+const allowedOrigins = buildAllowedOrigins();
+
 const corsOptions = {
-  origin: buildAllowedOrigins(),
+  origin(origin, callback) {
+    if (!origin || allowedOrigins.includes(origin)) {
+      callback(null, true);
+      return;
+    }
+
+    callback(new Error('Origin not allowed by CORS'));
+  },
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
@@ -119,10 +148,11 @@ app.use(
     contentSecurityPolicy: {
       directives: {
         defaultSrc: ["'self'"],
-        connectSrc: ["'self'"],
+        connectSrc: ["'self'", ...allowedOrigins],
         scriptSrc: ["'self'"],
-        styleSrc: ["'self'"],
-        imgSrc: ["'self'"],
+        styleSrc: ["'self'", "'unsafe-inline'", 'https://fonts.googleapis.com'],
+        fontSrc: ["'self'", 'https://fonts.gstatic.com', 'data:'],
+        imgSrc: ["'self'", 'data:', 'blob:'],
         objectSrc: ["'none'"],
         frameAncestors: ["'self'"],
         baseUri: ["'self'"],

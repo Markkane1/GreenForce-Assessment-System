@@ -8,6 +8,7 @@ import TestAttempt from '../../models/TestAttempt.js';
 import TestSchedule from '../../models/TestSchedule.js';
 
 const DEFAULT_ANTI_CHEAT = {
+  violationThreshold: 3,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,
@@ -16,9 +17,17 @@ const DEFAULT_ANTI_CHEAT = {
   disablePrinting: true,
 };
 
+const normalizeViolationThreshold = (value) => {
+  const threshold = Number.parseInt(value, 10);
+  return Number.isInteger(threshold) && threshold > 0 ? threshold : DEFAULT_ANTI_CHEAT.violationThreshold;
+};
+
 const buildAntiCheatPayload = (antiCheat = {}) => ({
   ...DEFAULT_ANTI_CHEAT,
   ...antiCheat,
+  violationThreshold: normalizeViolationThreshold(
+    antiCheat?.violationThreshold ?? DEFAULT_ANTI_CHEAT.violationThreshold,
+  ),
 });
 
 const buildTestPayload = (data = {}) => ({

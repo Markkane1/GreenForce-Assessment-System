@@ -291,6 +291,18 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
     return accumulator;
   }, new Map());
 
+  latestAttemptByStudent.forEach((attempt, studentId) => {
+    if (!attempt.studentId || candidates.has(studentId)) {
+      return;
+    }
+
+    candidates.set(studentId, {
+      _id: attempt.studentId._id || attempt.studentId,
+      name: attempt.studentId.name || 'Unknown Candidate',
+      email: attempt.studentId.email || '',
+    });
+  });
+
   const attemptIds = Array.from(latestAttemptByStudent.values()).map((attempt) => attempt._id);
   const answers = attemptIds.length
     ? await Answer.find({ attemptId: { $in: attemptIds } }).select('attemptId questionId selectedOptionId essayText')

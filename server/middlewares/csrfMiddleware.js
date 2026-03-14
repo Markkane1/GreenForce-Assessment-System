@@ -11,17 +11,37 @@ const EXEMPT_PATHS = new Set([
   '/api/invite-codes/validate',
 ]);
 
+const addOriginVariants = (origins, origin) => {
+  if (!origin) {
+    return;
+  }
+
+  const trimmedOrigin = origin.trim();
+
+  if (!trimmedOrigin) {
+    return;
+  }
+
+  origins.add(trimmedOrigin);
+
+  if (trimmedOrigin.includes('localhost')) {
+    origins.add(trimmedOrigin.replace('localhost', '127.0.0.1'));
+  }
+
+  if (trimmedOrigin.includes('127.0.0.1')) {
+    origins.add(trimmedOrigin.replace('127.0.0.1', 'localhost'));
+  }
+};
+
 const buildAllowedOrigins = () => {
-  const configuredOrigin = process.env.CLIENT_URL || 'http://localhost:5173';
-  const origins = new Set([configuredOrigin]);
+  const origins = new Set();
+  const configuredOrigins = process.env.CORS_ALLOWED_ORIGINS || process.env.CLIENT_URL || 'http://localhost:5173';
 
-  if (configuredOrigin.includes('localhost')) {
-    origins.add(configuredOrigin.replace('localhost', '127.0.0.1'));
-  }
-
-  if (configuredOrigin.includes('127.0.0.1')) {
-    origins.add(configuredOrigin.replace('127.0.0.1', 'localhost'));
-  }
+  configuredOrigins
+    .split(',')
+    .map((origin) => origin.trim())
+    .filter(Boolean)
+    .forEach((origin) => addOriginVariants(origins, origin));
 
   return origins;
 };

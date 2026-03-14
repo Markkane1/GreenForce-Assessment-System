@@ -27,6 +27,9 @@ const sanitizeOptions = (options) =>
 const getWordCount = (text = '') =>
   text.trim().length === 0 ? 0 : text.trim().split(/\s+/).length;
 
+const isAnswerAttempted = (answer) =>
+  Boolean(answer?.selectedOptionId) || Boolean(answer?.essayText?.trim());
+
 const buildAnswerSnapshot = (answer) => {
   if (!answer) {
     return null;
@@ -759,17 +762,18 @@ export const getMyAttempts = async (studentId) => {
   }, {});
 
   const questions = questionIds.length > 0
-    ? await Question.find({ _id: { $in: questionIds } }).select('_id points').lean()
+    ? await Question.find({ _id: { $in: questionIds } }).select('_id points type').lean()
     : [];
   const fallbackQuestions = fallbackSectionIds.length > 0
     ? await Question.find({ sectionId: { $in: fallbackSectionIds } }).select('sectionId points').lean()
     : [];
   const answers = attempts.length > 0
     ? await Answer.find({ attemptId: { $in: attempts.map((attempt) => attempt._id) } })
-      .select('attemptId selectedOptionId essayText')
+      .select('attemptId questionId selectedOptionId essayText gradingStatus')
       .lean()
     : [];
   const pointsByQuestionId = new Map(questions.map((question) => [question._id.toString(), question.points || 0]));
+  const questionTypeById = new Map(questions.map((question) => [question._id.toString(), question.type || 'mcq']));
   const fallbackPointsByTestId = fallbackQuestions.reduce((accumulator, question) => {
     const testId = fallbackSectionMap[question.sectionId.toString()];
 
@@ -789,6 +793,23 @@ export const getMyAttempts = async (studentId) => {
     accumulator[key] = (accumulator[key] || 0) + 1;
     return accumulator;
   }, {});
+  const pendingEssayCountByAttemptId = answers.reduce((accumulator, answer) => {
+    if (!isAnswerAttempted(answer)) {
+      return accumulator;
+    }
+
+    if (questionTypeById.get(answer.questionId?.toString()) !== 'essay') {
+      return accumulator;
+    }
+
+    if (answer.gradingStatus === 'graded') {
+      return accumulator;
+    }
+
+    const key = answer.attemptId.toString();
+    accumulator[key] = (accumulator[key] || 0) + 1;
+    return accumulator;
+  }, {});
 
   return attempts.map((attempt) => {
     const totalPointsFromAttempt = (attempt.questionOrder || []).reduce(
@@ -799,6 +820,11 @@ export const getMyAttempts = async (studentId) => {
       totalPointsFromAttempt > 0
         ? totalPointsFromAttempt
         : fallbackPointsByTestId[attempt.testId?._id?.toString()] || 0;
+    const pendingEssayCount = pendingEssayCountByAttemptId[attempt._id.toString()] || 0;
+    const passed =
+      typeof attempt.passed === 'boolean'
+        ? attempt.passed
+        : (attempt.score ?? 0) >= (attempt.testId?.passingScore ?? Number.POSITIVE_INFINITY);
 
     return {
       attemptId: attempt._id,
@@ -807,10 +833,9 @@ export const getMyAttempts = async (studentId) => {
       score: attempt.score ?? 0,
       totalPoints,
       questionsAttempted: attemptedCountByAttemptId[attempt._id.toString()] || 0,
-      passed:
-        typeof attempt.passed === 'boolean'
-          ? attempt.passed
-          : (attempt.score ?? 0) >= (attempt.testId?.passingScore ?? Number.POSITIVE_INFINITY),
+      passed,
+      pendingEssayCount,
+      resultStatus: pendingEssayCount > 0 ? 'pending' : passed ? 'passed' : 'failed',
       status: attempt.status,
       schedule: attempt.scheduleId
         ? {
