@@ -21,7 +21,7 @@ CERTBOT_EMAIL="${CERTBOT_EMAIL:-}"
 usage() {
   cat <<EOF
 Usage:
-  DOMAIN=greenforceassessment.duckdns.org JWT_SECRET='...' MONGO_URI='...' ./deploy/quick-deploy.sh
+  DOMAIN=epagreenforceassesment.duckdns.org JWT_SECRET='...' MONGO_URI='...' ./deploy/quick-deploy.sh
 
 Optional env:
   APP_NAME                 default: $APP_NAME

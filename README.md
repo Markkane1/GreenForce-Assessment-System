@@ -69,7 +69,7 @@ Important:
 ### Client
 
 - `VITE_API_BASE_URL`
-  - example: `https://greenforceassessment.duckdns.org/api`
+  - example: `https://epagreenforceassesment.duckdns.org/api`
 
 ## Build
 
@@ -100,7 +100,7 @@ On your Ubuntu server, from the checked-out repo:
 ```bash
 chmod +x deploy/quick-deploy.sh
 
-DOMAIN=greenforceassessment.duckdns.org \
+DOMAIN=epagreenforceassesment.duckdns.org \
 JWT_SECRET='replace-with-a-long-random-secret-of-at-least-32-characters' \
 MONGO_URI='mongodb://127.0.0.1:27017/green-force-assessment' \
 ./deploy/quick-deploy.sh
@@ -109,7 +109,7 @@ MONGO_URI='mongodb://127.0.0.1:27017/green-force-assessment' \
 If you want the script to also issue/refresh the certificate:
 
 ```bash
-DOMAIN=greenforceassessment.duckdns.org \
+DOMAIN=epagreenforceassesment.duckdns.org \
 JWT_SECRET='replace-with-a-long-random-secret-of-at-least-32-characters' \
 MONGO_URI='mongodb://127.0.0.1:27017/green-force-assessment' \
 ENABLE_CERTBOT=true \
@@ -134,8 +134,8 @@ Server:
 ```env
 PORT=3004
 NODE_ENV=production
-CLIENT_URL=https://greenforceassessment.duckdns.org
-CORS_ALLOWED_ORIGINS=https://greenforceassessment.duckdns.org
+CLIENT_URL=https://epagreenforceassesment.duckdns.org
+CORS_ALLOWED_ORIGINS=https://epagreenforceassesment.duckdns.org
 MONGO_URI=mongodb://127.0.0.1:27017/green-force-assessment
 JWT_SECRET=replace-with-a-long-random-secret-of-at-least-32-characters
 JWT_EXPIRES_IN=7d
@@ -148,7 +148,7 @@ AUTH_COOKIE_SECURE=true
 Client:
 
 ```env
-VITE_API_BASE_URL=https://greenforceassessment.duckdns.org/api
+VITE_API_BASE_URL=https://epagreenforceassesment.duckdns.org/api
 ```
 
 ## Deployment notes
