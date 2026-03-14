@@ -1,5 +1,5 @@
 import { CalendarPlus, Monitor, Pencil, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
@@ -55,7 +55,7 @@ const ExamScheduler = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
 
@@ -70,23 +70,25 @@ const ExamScheduler = () => {
       setTests(testData.filter((test) => test.isPublished));
       setGroups(groupData);
     } catch (error) {
-        setErrorMessage(error.message || 'Unable to load schedules.');
+      setErrorMessage(error.message || 'Unable to load schedules.');
     } finally {
       setIsLoading(false);
     }
-  };
-
-  useEffect(() => {
-    loadData();
   }, []);
 
   useEffect(() => {
-    if (searchParams.get('create') === '1') {
+    loadData();
+  }, [loadData]);
+
+  const createParam = searchParams.get('create');
+
+  useEffect(() => {
+    if (createParam === '1') {
       setSelectedSchedule(null);
       setFormData(defaultFormState);
       setIsModalOpen(true);
     }
-  }, [searchParams]);
+  }, [createParam]);
 
   const openCreateModal = () => {
     setSelectedSchedule(null);

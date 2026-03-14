@@ -1,3 +1,5 @@
+import crypto from 'crypto';
+
 const SAFE_METHODS = new Set(['GET', 'HEAD', 'OPTIONS']);
 const AUTH_COOKIE_NAME = 'auth_token';
 const CSRF_COOKIE_NAME = 'csrf_token';
@@ -22,6 +24,16 @@ const buildAllowedOrigins = () => {
   }
 
   return origins;
+};
+
+let cachedAllowedOrigins = null;
+
+const getAllowedOrigins = () => {
+  if (!cachedAllowedOrigins) {
+    cachedAllowedOrigins = buildAllowedOrigins();
+  }
+
+  return cachedAllowedOrigins;
 };
 
 const extractOrigin = (req) => {
@@ -64,7 +76,7 @@ export const csrfProtection = (req, res, next) => {
   const csrfCookie = req.cookies?.[CSRF_COOKIE_NAME];
   const csrfHeader = req.get('X-CSRF-Token');
   const requestOrigin = extractOrigin(req);
-  const allowedOrigins = buildAllowedOrigins();
+  const allowedOrigins = getAllowedOrigins();
 
   if (!csrfCookie || !csrfHeader || csrfCookie !== csrfHeader) {
     const error = new Error('CSRF validation failed.');
@@ -81,7 +93,4 @@ export const csrfProtection = (req, res, next) => {
   return next();
 };
 
-export const createCsrfToken = () => {
-  return crypto.randomBytes(24).toString('hex');
-};
-import crypto from 'crypto';
+export const createCsrfToken = () => crypto.randomBytes(24).toString('hex');

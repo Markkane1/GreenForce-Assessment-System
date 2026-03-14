@@ -1,5 +1,5 @@
 import { Pencil, Plus, Trash2 } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -48,7 +48,7 @@ const UserManagement = () => {
   const [formData, setFormData] = useState(defaultFormState);
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadUsers = async () => {
+  const loadUsers = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
 
@@ -56,15 +56,15 @@ const UserManagement = () => {
       const data = await userService.getUsers();
       setUsers(data);
     } catch (error) {
-        setErrorMessage(error.message || 'Unable to load users.');
+      setErrorMessage(error.message || 'Unable to load users.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadUsers();
-  }, []);
+  }, [loadUsers]);
 
   const openCreateModal = () => {
     setSelectedUser(null);

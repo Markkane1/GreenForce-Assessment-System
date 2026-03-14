@@ -279,4 +279,3 @@ const MonitorPage = () => {
 
 export default MonitorPage;
 
-

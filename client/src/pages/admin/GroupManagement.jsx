@@ -1,5 +1,5 @@
 import { Key, Pencil, Plus, Trash2, Users, X } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import InviteCodesPanel from '../../components/admin/InviteCodesPanel';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
@@ -25,7 +25,7 @@ const GroupManagement = () => {
   const [searchTerm, setSearchTerm] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const loadData = async () => {
+  const loadData = useCallback(async () => {
     setIsLoading(true);
     setErrorMessage('');
 
@@ -34,15 +34,15 @@ const GroupManagement = () => {
       setGroups(groupData);
       setStudents(studentData);
     } catch (error) {
-        setErrorMessage(error.message || 'Unable to load groups.');
+      setErrorMessage(error.message || 'Unable to load groups.');
     } finally {
       setIsLoading(false);
     }
-  };
+  }, []);
 
   useEffect(() => {
     loadData();
-  }, []);
+  }, [loadData]);
 
   const openCreateModal = () => {
     setSelectedGroup(null);

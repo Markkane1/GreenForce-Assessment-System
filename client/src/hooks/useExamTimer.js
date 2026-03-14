@@ -28,7 +28,7 @@ const useExamTimer = (totalSeconds, onExpire) => {
   }, [totalSeconds]);
 
   useEffect(() => {
-    if (typeof totalSeconds !== 'number' || secondsLeft <= 0) {
+    if (typeof totalSeconds !== 'number' || totalSeconds <= 0) {
       return undefined;
     }
 
@@ -52,7 +52,7 @@ const useExamTimer = (totalSeconds, onExpire) => {
     }, 1000);
 
     return () => window.clearInterval(intervalId);
-  }, [onExpire, secondsLeft, totalSeconds]);
+  }, [onExpire, totalSeconds]);
 
   const formattedTime = useMemo(() => formatTime(secondsLeft), [secondsLeft]);
 

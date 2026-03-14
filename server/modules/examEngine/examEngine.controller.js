@@ -1,5 +1,6 @@
 import asyncHandler from '../../utils/asyncHandler.js';
 import mongoose from 'mongoose';
+import { getViolationThreshold } from '../antiCheat/antiCheat.service.js';
 import {
   getMyAttempts as getMyAttemptsService,
   getAttemptResults as getAttemptResultsService,
@@ -26,6 +27,7 @@ export const startExam = asyncHandler(async (req, res) => {
     alreadySubmitted: Boolean(result.alreadySubmitted),
     resumed: result.resumed,
     remainingSeconds: result.remainingSeconds,
+    violationThreshold: getViolationThreshold(),
   });
 });
 

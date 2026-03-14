@@ -152,9 +152,9 @@ const ResultsPage = () => {
               </div>
               <div className="text-right">
                 <p className="font-heading text-6xl font-semibold text-accent">{results.attempt.score || 0}</p>
-                <p className="mt-2 text-mutedFg">out of {results.summary.totalPoints} points</p>
+                <p className="mt-2 text-mutedFg">out of {results.summary?.totalPoints ?? 0} points</p>
                 <div className="mt-4 inline-flex rounded-full border border-border bg-muted px-4 py-2 font-body text-sm font-semibold text-foreground shadow-editorialSm">
-                  Time taken: {formatDuration(results.summary.timeTakenSeconds)}
+                  Time taken: {formatDuration(results.summary?.timeTakenSeconds)}
                 </div>
               </div>
             </div>
@@ -164,19 +164,19 @@ const ResultsPage = () => {
             {[
               {
                 label: 'Correct Answers',
-                value: results.summary.correctCount,
+                value: results.summary?.correctCount ?? 0,
                 icon: CheckCircle2,
                 tone: 'bg-quaternary',
               },
               {
                 label: 'Wrong Answers',
-                value: results.summary.wrongCount,
+                value: results.summary?.wrongCount ?? 0,
                 icon: CircleX,
                 tone: 'bg-secondary',
               },
               {
                 label: 'Essay Pending',
-                value: results.summary.essayPendingCount,
+                value: results.summary?.essayPendingCount ?? 0,
                 icon: PenTool,
                 tone: 'bg-tertiary',
               },
@@ -207,7 +207,7 @@ const ResultsPage = () => {
             </div>
 
             <div className="mt-6 space-y-4">
-              {results.sections.map((section) => {
+              {(results.sections || []).map((section) => {
                 const isOpen = openSections[section._id];
 
                 return (
@@ -248,7 +248,7 @@ const ResultsPage = () => {
                             {question.type === 'mcq' ? (
                               <div className="mt-4 space-y-2 text-sm">
                                 <p className="text-foreground">Your answer: {question.selectedOptionText || 'Not answered'}</p>
-                                <p className="text-mutedFg">Correct answer: {question.correctAnswers.join(', ') || '-'}</p>
+                                <p className="text-mutedFg">Correct answer: {question.correctAnswers?.join(', ') || '-'}</p>
                               </div>
                             ) : (
                               <div className="mt-4 space-y-3">
@@ -280,5 +280,4 @@ const ResultsPage = () => {
 };
 
 export default ResultsPage;
-
 

@@ -1,5 +1,5 @@
 import { CheckCircle2, ClipboardList } from 'lucide-react';
-import { useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import EssayGradingCard from '../../components/grading/EssayGradingCard';
@@ -40,7 +40,26 @@ const GradingPage = () => {
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
 
-  const loadAttempts = async (preferredAttemptId) => {
+  const loadAttemptDetail = useCallback(async (attemptId) => {
+    if (!attemptId) {
+      return;
+    }
+
+    setIsDetailLoading(true);
+    setErrorMessage('');
+
+    try {
+      const detail = await gradingService.getAttemptDetail(attemptId);
+      setAttemptDetail(detail);
+      setDraftScores(createDraftMap(detail.answers || []));
+    } catch (error) {
+      setErrorMessage(error.message || 'Unable to load attempt detail.');
+    } finally {
+      setIsDetailLoading(false);
+    }
+  }, []);
+
+  const loadAttempts = useCallback(async (preferredAttemptId) => {
     setIsListLoading(true);
     setErrorMessage('');
 
@@ -69,41 +88,20 @@ const GradingPage = () => {
       const nextAttemptId =
         preferredAttemptId && mergedAttempts.some((attempt) => attempt._id === preferredAttemptId)
           ? preferredAttemptId
-          : selectedAttemptId && mergedAttempts.some((attempt) => attempt._id === selectedAttemptId)
-            ? selectedAttemptId
-            : mergedAttempts[0]._id;
+          : mergedAttempts[0]._id;
 
       setSelectedAttemptId(nextAttemptId);
       await loadAttemptDetail(nextAttemptId);
     } catch (error) {
-        setErrorMessage(error.message || 'Unable to load grading queue.');
+      setErrorMessage(error.message || 'Unable to load grading queue.');
     } finally {
       setIsListLoading(false);
     }
-  };
-
-  const loadAttemptDetail = async (attemptId) => {
-    if (!attemptId) {
-      return;
-    }
-
-    setIsDetailLoading(true);
-    setErrorMessage('');
-
-    try {
-      const detail = await gradingService.getAttemptDetail(attemptId);
-      setAttemptDetail(detail);
-      setDraftScores(createDraftMap(detail.answers || []));
-    } catch (error) {
-        setErrorMessage(error.message || 'Unable to load attempt detail.');
-    } finally {
-      setIsDetailLoading(false);
-    }
-  };
+  }, [loadAttemptDetail]);
 
   useEffect(() => {
     loadAttempts();
-  }, []);
+  }, [loadAttempts]);
 
   const mcqAnswers = useMemo(
     () => (attemptDetail?.answers || []).filter((answer) => answer.questionId?.type === 'mcq'),

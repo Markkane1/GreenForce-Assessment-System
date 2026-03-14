@@ -71,7 +71,7 @@ const useAutosave = ({ attemptId, questionId, answer, enabled, onError }) => {
     }, 500);
 
     return () => window.clearTimeout(timeoutId);
-  }, [answer, answerKey, attemptId, enabled, persist, questionId]);
+  }, [answerKey, attemptId, enabled, persist, questionId]);
 
   useEffect(() => {
     if (!enabled || !attemptId || !questionId) {

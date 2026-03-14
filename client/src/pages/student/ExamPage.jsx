@@ -30,7 +30,6 @@ import useFullscreen from '../../hooks/useFullscreen';
 import * as examService from '../../services/examService';
 
 const LAST_RESULT_KEY = 'last_exam_result_attempt';
-const VIOLATION_THRESHOLD = 3;
 const RESULT_REDIRECT_SECONDS = 5;
 const EXPIRING_SCREEN_MIN_MS = 1500;
 const getActiveAttemptKey = (scheduleId) => `active_exam_attempt_${scheduleId}`;
@@ -214,6 +213,7 @@ const ExamPage = () => {
   const [pendingViolationAlert, setPendingViolationAlert] = useState(null);
   const [violationAlert, setViolationAlert] = useState(null);
   const [violationDismissSeconds, setViolationDismissSeconds] = useState(8);
+  const [violationThreshold, setViolationThreshold] = useState(3);
   const [submissionReason, setSubmissionReason] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(RESULT_REDIRECT_SECONDS);
   const { enter, exit, isFullscreen, isSupported, isMobile: fullscreenIsMobile } = useFullscreen();
@@ -446,7 +446,7 @@ const ExamPage = () => {
   const violationContent = getViolationContent(violationAlert, isMobile);
   const hasServerViolationCount = typeof violationAlert?.violationsCount === 'number';
   const isNearThreshold =
-    hasServerViolationCount && violationAlert.violationsCount === VIOLATION_THRESHOLD - 1;
+    hasServerViolationCount && violationAlert.violationsCount === violationThreshold - 1;
   const shouldShowViolationOverlay = Boolean(
     violationAlert
       && !(showFullscreenRecovery && ['fullscreen_exit', 'window_blur'].includes(violationAlert.eventType)),
@@ -721,6 +721,7 @@ const ExamPage = () => {
       setAttempt(response.attempt);
       setQuestions(response.questions);
       setAnswers(createAnswerMap(response.questions));
+      setViolationThreshold(response.violationThreshold ?? 3);
       setCurrentIndex(0);
       setCurrentSectionIndex(0);
       setShowSectionTransition(false);
@@ -1329,7 +1330,7 @@ const ExamPage = () => {
               {isNearThreshold ? <span className="h-2.5 w-2.5 rounded-full bg-red-500 animate-pulse" /> : null}
               <span>
                 {hasServerViolationCount
-                  ? `Violation ${violationAlert.violationsCount} of ${VIOLATION_THRESHOLD} recorded`
+                  ? `Violation ${violationAlert.violationsCount} of ${violationThreshold} recorded`
                   : 'Violation recorded'}
               </span>
             </div>
@@ -1389,7 +1390,7 @@ const ExamPage = () => {
             <h2 className="mt-6 font-heading text-2xl font-semibold text-foreground">Fullscreen Exited</h2>
             <p className="mt-3 font-body text-mutedFg">Leaving fullscreen is a violation. This has been logged.</p>
             <div className="mt-5 inline-flex rounded-full border border-secondary bg-secondary/20 px-4 py-1 font-body text-sm font-semibold text-foreground">
-              Violations: {fullscreenViolationCount} of {VIOLATION_THRESHOLD}
+              Violations: {fullscreenViolationCount} of {violationThreshold}
             </div>
             <button
               type="button"

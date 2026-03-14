@@ -6,7 +6,7 @@
   Save,
   Trash2,
 } from 'lucide-react';
-import { useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { useLocation, useNavigate, useParams, useSearchParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
@@ -373,17 +373,17 @@ const TestBuilder = () => {
   const fileInputRefs = useRef({});
   const statusMessageTimerRef = useRef(null);
 
-  const loadTests = async () => {
+  const loadTests = useCallback(async () => {
     const testList = await testService.getTests();
     setTests(testList);
     return testList;
-  };
+  }, []);
 
-  const loadWorkspace = async (testId) => {
+  const loadWorkspace = useCallback(async (testId) => {
     const workspace = await testService.getTestWorkspace(testId);
     setCurrentTest(normalizeTestDraft(workspace));
     setDirtyQuestionIds([]);
-  };
+  }, []);
 
   const clearDraftAutosave = () => {
     if (draftSaveTimerRef.current) {
@@ -537,6 +537,9 @@ const TestBuilder = () => {
     });
   };
 
+  const searchParamTestId = searchParams.get('testId');
+  const searchParamNew = searchParams.get('new');
+
   useEffect(() => {
     const initialize = async () => {
       setIsLoading(true);
@@ -545,8 +548,8 @@ const TestBuilder = () => {
 
       try {
         const testList = await loadTests();
-        const requestedTestId = routeTestId || searchParams.get('testId');
-        const shouldCreateNew = location.pathname === '/teacher/tests/new' || (!routeTestId && searchParams.get('new') === '1');
+        const requestedTestId = routeTestId || searchParamTestId;
+        const shouldCreateNew = location.pathname === '/teacher/tests/new' || (!routeTestId && searchParamNew === '1');
 
         if (shouldCreateNew) {
           setCurrentTest(createEmptyDraft());
@@ -574,7 +577,7 @@ const TestBuilder = () => {
         clearTimeout(statusMessageTimerRef.current);
       }
     };
-  }, [location.pathname, routeTestId, searchParams]);
+  }, [loadTests, loadWorkspace, location.pathname, routeTestId, searchParamNew, searchParamTestId]);
 
   const saveDraft = async () => {
     setIsSaving(true);

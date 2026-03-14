@@ -125,7 +125,6 @@ export const login = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     user: result.user,
-    token: result.token,
   });
 });
 

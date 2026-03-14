@@ -1,0 +1,10 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npm run:*)",
+      "Bash(ls client/src/pages/**/*.jsx)",
+      "Bash(npx eslint:*)",
+      "Bash(ls .eslintrc* eslint.config* vite.config*)"
+    ]
+  }
+}

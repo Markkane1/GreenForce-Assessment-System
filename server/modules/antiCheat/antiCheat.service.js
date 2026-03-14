@@ -5,7 +5,7 @@ import { autoGradeMCQ } from '../examEngine/examEngine.service.js';
 const ALLOWED_EVENT_TYPES = ['fullscreen_exit', 'tab_switch', 'copy_attempt', 'window_blur'];
 const SERVER_COOLDOWN_MS = 1500;
 
-const getViolationThreshold = () => {
+export const getViolationThreshold = () => {
   const threshold = Number(process.env.VIOLATION_THRESHOLD ?? 3);
   return Number.isInteger(threshold) && threshold > 0 ? threshold : 3;
 };

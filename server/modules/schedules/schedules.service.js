@@ -1,3 +1,4 @@
+import mongoose from 'mongoose';
 import Answer from '../../models/Answer.js';
 import GroupMember from '../../models/GroupMember.js';
 import Section from '../../models/Section.js';
@@ -209,10 +210,11 @@ export const getSchedulesForStudent = async (studentId) => {
   }
 
   const scheduleIds = schedules.map((schedule) => schedule._id);
+  const studentObjectId = new mongoose.Types.ObjectId(studentId);
   const attemptsBySchedule = await TestAttempt.aggregate([
     {
       $match: {
-        studentId,
+        studentId: studentObjectId,
         scheduleId: { $in: scheduleIds },
         status: { $ne: 'in_progress' },
       },
