@@ -68,11 +68,13 @@ const EditorialSignupShell = ({ step, children }) => (
       </div>
 
       <div className="relative z-10 flex flex-1 items-center justify-center">
-        <img
-          src="/epa-auth-logo.svg"
-          alt="EPA logo"
-          className="w-72 max-w-[68%] opacity-[0.88]"
-        />
+        <div className="rounded-[2rem] bg-[#F5F5F0] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.28)] ring-1 ring-white/10">
+          <img
+            src="/epa-auth-logo.svg"
+            alt="EPA logo"
+            className="w-[30rem] max-w-[78vw] object-contain"
+          />
+        </div>
       </div>
 
       <div className="relative z-10 space-y-4 self-center">

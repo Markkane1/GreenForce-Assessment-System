@@ -49,15 +49,15 @@ const Sidebar = () => {
         <div className="editorial-section-label mb-5">
           <span>Navigation</span>
         </div>
-        <div className="flex items-center gap-3">
+        <div className="flex items-center gap-4">
           <img
-            src="/epa-mark.svg"
+            src="/epa-logo.svg"
             alt="EPA logo"
-            className="h-11 w-11 shrink-0 rounded-2xl shadow-editorialSm"
+            className="h-12 w-auto max-w-[4.5rem] shrink-0 object-contain"
           />
           <div className="min-w-0">
-            <p className="font-heading text-[1.55rem] font-semibold leading-none text-foreground">EPA Punjab</p>
-            <p className="mt-1 max-w-[10.5rem] font-editorialMono text-[10px] font-medium uppercase leading-4 tracking-[0.15em] text-accent">
+            <p className="font-heading text-[1.25rem] font-semibold leading-tight text-foreground">EPA Punjab</p>
+            <p className="mt-1 max-w-[10rem] font-editorialMono text-[0.65rem] font-medium uppercase leading-4 tracking-[0.13em] text-accent">
               Testing System
             </p>
           </div>
