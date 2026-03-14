@@ -1,5 +1,5 @@
-import jwt from 'jsonwebtoken';
 import asyncHandler from '../utils/asyncHandler.js';
+import { resolveAuthenticatedUser } from '../modules/auth/auth.service.js';
 
 export const protect = asyncHandler(async (req, res, next) => {
   const authHeader = req.headers.authorization;
@@ -12,28 +12,8 @@ export const protect = asyncHandler(async (req, res, next) => {
   }
 
   const token = cookieToken || authHeader.split(' ')[1];
-
-  if (!process.env.JWT_SECRET) {
-    const error = new Error('JWT_SECRET is not configured.');
-    error.statusCode = 500;
-    throw error;
-  }
-
-  try {
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    req.user = {
-      id: decoded.id ? String(decoded.id).trim() : '',
-      role: decoded.role ? String(decoded.role).trim().toLowerCase() : '',
-    };
-
-    next();
-  } catch (verifyError) {
-    const error = new Error(
-      verifyError.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token',
-    );
-    error.statusCode = 401;
-    throw error;
-  }
+  req.user = await resolveAuthenticatedUser(token);
+  next();
 });
 
 export const authorize = (...roles) => (req, res, next) => {

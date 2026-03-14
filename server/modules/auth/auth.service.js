@@ -1,5 +1,6 @@
 import bcrypt from 'bcryptjs';
 import crypto from 'crypto';
+import jwt from 'jsonwebtoken';
 import GroupMember from '../../models/GroupMember.js';
 import InviteCode from '../../models/InviteCode.js';
 import User from '../../models/User.js';
@@ -234,4 +235,37 @@ export const getCurrentUser = async (userId) => {
   }
 
   return buildSafeUser(user);
+};
+
+export const resolveAuthenticatedUser = async (token) => {
+  if (!process.env.JWT_SECRET) {
+    const error = new Error('JWT_SECRET is not configured.');
+    error.statusCode = 500;
+    throw error;
+  }
+
+  let decoded;
+
+  try {
+    decoded = jwt.verify(token, process.env.JWT_SECRET);
+  } catch (verifyError) {
+    const error = new Error(
+      verifyError.name === 'TokenExpiredError' ? 'Token expired' : 'Invalid token',
+    );
+    error.statusCode = 401;
+    throw error;
+  }
+
+  const user = await User.findById(decoded.id).select('_id role');
+
+  if (!user) {
+    const error = new Error('User not found.');
+    error.statusCode = 401;
+    throw error;
+  }
+
+  return {
+    id: user._id.toString(),
+    role: String(user.role || '').trim().toLowerCase(),
+  };
 };

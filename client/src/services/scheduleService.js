@@ -4,6 +4,12 @@ const normalizeError = (error, fallbackMessage) => {
   throw new Error(error.response?.data?.message || fallbackMessage);
 };
 
+const serializeSchedulePayload = (payload) => ({
+  ...payload,
+  startTime: payload.startTime ? new Date(payload.startTime).toISOString() : payload.startTime,
+  endTime: payload.endTime ? new Date(payload.endTime).toISOString() : payload.endTime,
+});
+
 export const getSchedules = async () => {
   try {
     const { data } = await api.get('/schedules');
@@ -24,7 +30,7 @@ export const getScheduleById = async (id) => {
 
 export const createSchedule = async (payload) => {
   try {
-    const { data } = await api.post('/schedules', payload);
+    const { data } = await api.post('/schedules', serializeSchedulePayload(payload));
     return data.schedule;
   } catch (error) {
     normalizeError(error, 'Failed to create schedule');
@@ -33,7 +39,7 @@ export const createSchedule = async (payload) => {
 
 export const updateSchedule = async (id, payload) => {
   try {
-    const { data } = await api.put(`/schedules/${id}`, payload);
+    const { data } = await api.put(`/schedules/${id}`, serializeSchedulePayload(payload));
     return data.schedule;
   } catch (error) {
     normalizeError(error, 'Failed to update schedule');
