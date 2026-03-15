@@ -85,6 +85,30 @@ const useAutosave = ({ attemptId, questionId, answer, enabled, onError }) => {
     return () => window.clearInterval(intervalId);
   }, [attemptId, enabled, persist, questionId]);
 
+  useEffect(() => {
+    if (!enabled || !attemptId || !questionId) {
+      return undefined;
+    }
+
+    const flushOnVisibilityChange = () => {
+      if (document.visibilityState === 'hidden') {
+        void persist();
+      }
+    };
+
+    const flushOnPageHide = () => {
+      void persist();
+    };
+
+    document.addEventListener('visibilitychange', flushOnVisibilityChange);
+    window.addEventListener('pagehide', flushOnPageHide);
+
+    return () => {
+      document.removeEventListener('visibilitychange', flushOnVisibilityChange);
+      window.removeEventListener('pagehide', flushOnPageHide);
+    };
+  }, [attemptId, enabled, persist, questionId]);
+
   return {
     saveStatus,
     lastSaved,
