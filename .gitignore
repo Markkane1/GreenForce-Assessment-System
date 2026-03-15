@@ -6,6 +6,8 @@ server/dist/
 !.env.example
 !client/.env.example
 !server/.env.example
+.codex-temp/
+.codex-tmp/
 AGENTS.md
 docs/
 .qa-screens/
