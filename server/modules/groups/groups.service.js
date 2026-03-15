@@ -125,7 +125,19 @@ export const addMember = async (groupId, studentId) => {
     throw error;
   }
 
-  const member = await GroupMember.create({ groupId, studentId });
+  let member;
+
+  try {
+    member = await GroupMember.create({ groupId, studentId });
+  } catch (error) {
+    if (error?.code === 11000) {
+      const duplicateError = new Error('Student is already a member of this group.');
+      duplicateError.statusCode = 409;
+      throw duplicateError;
+    }
+
+    throw error;
+  }
 
   return GroupMember.findById(member._id).populate({
     path: 'studentId',

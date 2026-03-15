@@ -38,15 +38,6 @@ export const AuthProvider = ({ children }) => {
     const restoreSession = async () => {
       setIsAuthReady(false);
 
-      if (typeof window !== 'undefined' && !window.sessionStorage.getItem(SESSION_HINT_KEY)) {
-        if (isMounted) {
-          setUser(null);
-          setToken(null);
-          setIsAuthReady(true);
-        }
-        return;
-      }
-
       try {
         const currentUser = await authService.getCurrentUser();
 
@@ -56,6 +47,10 @@ export const AuthProvider = ({ children }) => {
 
         setUser(currentUser);
         setToken('cookie-session');
+
+        if (typeof window !== 'undefined') {
+          window.sessionStorage.setItem(SESSION_HINT_KEY, '1');
+        }
       } catch {
         if (!isMounted) {
           return;

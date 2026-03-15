@@ -23,6 +23,7 @@ const defaultFormState = {
   email: '',
   password: '',
   role: 'student',
+  tag: '',
 };
 
 const EmptyState = () => (
@@ -42,6 +43,7 @@ const UserManagement = () => {
   const [users, setUsers] = useState([]);
   const [isLoading, setIsLoading] = useState(true);
   const [errorMessage, setErrorMessage] = useState('');
+  const [searchTerm, setSearchTerm] = useState('');
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isDeleteOpen, setIsDeleteOpen] = useState(false);
   const [selectedUser, setSelectedUser] = useState(null);
@@ -79,6 +81,7 @@ const UserManagement = () => {
       email: user.email,
       password: '',
       role: user.role,
+      tag: user.tag || '',
     });
     setIsFormOpen(true);
   };
@@ -105,6 +108,7 @@ const UserManagement = () => {
           email: formData.email,
           ...(formData.password ? { password: formData.password } : {}),
           role: formData.role,
+          tag: formData.tag,
         });
       } else {
         await userService.createUser(formData);
@@ -142,6 +146,24 @@ const UserManagement = () => {
   };
 
   const sortedUsers = useMemo(() => [...users].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)), [users]);
+  const searchSuggestions = useMemo(
+    () => [...new Set(users.flatMap((user) => [user.name, user.email, user.role, user.tag]).filter(Boolean))].sort((a, b) => a.localeCompare(b)),
+    [users],
+  );
+  const filteredUsers = useMemo(() => {
+    const normalizedSearch = searchTerm.trim().toLowerCase();
+
+    if (!normalizedSearch) {
+      return sortedUsers;
+    }
+
+    return sortedUsers.filter((user) => (
+      user.name.toLowerCase().includes(normalizedSearch)
+      || user.email.toLowerCase().includes(normalizedSearch)
+      || user.role.toLowerCase().includes(normalizedSearch)
+      || (user.tag || '').toLowerCase().includes(normalizedSearch)
+    ));
+  }, [searchTerm, sortedUsers]);
 
   return (
     <DashboardLayout title="User Management">
@@ -153,14 +175,34 @@ const UserManagement = () => {
           <h2 className="editorial-page-title">Team Directory</h2>
           <p className="editorial-page-copy">Create, edit, and organize every admin, teacher, and student account.</p>
         </div>
-        <button
-          type="button"
-          onClick={openCreateModal}
-          className="editorial-button-primary"
-        >
-          <Plus size={18} />
-          Add User
-        </button>
+        <div className="flex w-full flex-col gap-3 lg:w-auto lg:min-w-[28rem] lg:flex-row lg:items-center lg:justify-end">
+          <div className="w-full lg:min-w-[20rem]">
+            <label className="sr-only" htmlFor="user-directory-search">Search users</label>
+            <input
+              id="user-directory-search"
+              type="search"
+              list="user-directory-search-options"
+              value={searchTerm}
+              onChange={(event) => setSearchTerm(event.target.value)}
+              placeholder="Search by name, email, role, or tag"
+              className="editorial-input-surface w-full"
+              autoComplete="on"
+            />
+            <datalist id="user-directory-search-options">
+              {searchSuggestions.map((suggestion) => (
+                <option key={suggestion} value={suggestion} />
+              ))}
+            </datalist>
+          </div>
+          <button
+            type="button"
+            onClick={openCreateModal}
+            className="editorial-button-primary shrink-0"
+          >
+            <Plus size={18} />
+            Add User
+          </button>
+        </div>
       </section>
 
       {errorMessage ? (
@@ -173,50 +215,82 @@ const UserManagement = () => {
         {isLoading ? <LoadingSpinner /> : null}
         {!isLoading && sortedUsers.length === 0 ? <EmptyState /> : null}
         {!isLoading && sortedUsers.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="editorial-table">
-              <thead>
-                <tr>
-                  {['Name', 'Email', 'Role', 'Created', 'Actions'].map((heading) => (
-                    <th key={heading}>
-                      {heading}
-                    </th>
-                  ))}
-                </tr>
-              </thead>
-              <tbody>
-                {sortedUsers.map((user) => (
-                  <tr key={user._id}>
-                    <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4 font-bold text-foreground">{user.name}</td>
-                    <td className="border-y-2 border-border bg-background px-4 py-4 text-mutedFg">{user.email}</td>
-                    <td className="border-y-2 border-border bg-background px-4 py-4">
-                      <Badge tone={roleToneMap[user.role] || 'muted'}>{user.role}</Badge>
-                    </td>
-                    <td className="border-y-2 border-border bg-background px-4 py-4 text-mutedFg">
-                      {new Date(user.createdAt).toLocaleDateString()}
-                    </td>
-                    <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
-                      <div className="flex items-center gap-2">
-                        <button
-                          type="button"
-                          onClick={() => openEditModal(user)}
-                          className="editorial-icon-button"
-                        >
-                          <Pencil size={16} />
-                        </button>
-                        <button
-                          type="button"
-                          onClick={() => handleDeletePrompt(user)}
-                          className="editorial-icon-button editorial-icon-button--accent"
-                        >
-                          <Trash2 size={16} />
-                        </button>
-                      </div>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
+          <div className="space-y-4">
+            <div className="flex flex-col gap-2 text-sm text-mutedFg sm:flex-row sm:items-center sm:justify-between">
+              <p>
+                Showing <span className="font-semibold text-foreground">{filteredUsers.length}</span> of{' '}
+                <span className="font-semibold text-foreground">{sortedUsers.length}</span> users
+              </p>
+              {searchTerm ? (
+                <button
+                  type="button"
+                  onClick={() => setSearchTerm('')}
+                  className="font-semibold text-accent transition-colors duration-200 hover:text-accent/80"
+                >
+                  Clear search
+                </button>
+              ) : null}
+            </div>
+            <div className="overflow-x-auto">
+              {filteredUsers.length === 0 ? (
+                <div className="rounded-[1.5rem] border border-dashed border-border bg-background px-6 py-12 text-center text-sm text-mutedFg">
+                  No users match <span className="font-semibold text-foreground">{searchTerm}</span>.
+                </div>
+              ) : (
+                <table className="editorial-table">
+                  <thead>
+                    <tr>
+                      {['Name', 'Email', 'Role', 'Tag', 'Created', 'Actions'].map((heading) => (
+                        <th key={heading}>
+                          {heading}
+                        </th>
+                      ))}
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {filteredUsers.map((user) => (
+                      <tr key={user._id}>
+                        <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4 font-bold text-foreground">{user.name}</td>
+                        <td className="border-y-2 border-border bg-background px-4 py-4 text-mutedFg">{user.email}</td>
+                        <td className="border-y-2 border-border bg-background px-4 py-4">
+                          <Badge tone={roleToneMap[user.role] || 'muted'}>{user.role}</Badge>
+                        </td>
+                        <td className="border-y-2 border-border bg-background px-4 py-4 text-foreground">
+                          {user.tag ? (
+                            <span className="inline-flex rounded-full border border-border bg-muted px-3 py-1 text-xs font-semibold uppercase tracking-[0.14em] text-foreground">
+                              {user.tag}
+                            </span>
+                          ) : (
+                            <span className="text-mutedFg">—</span>
+                          )}
+                        </td>
+                        <td className="border-y-2 border-border bg-background px-4 py-4 text-mutedFg">
+                          {new Date(user.createdAt).toLocaleDateString()}
+                        </td>
+                        <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
+                          <div className="flex items-center gap-2">
+                            <button
+                              type="button"
+                              onClick={() => openEditModal(user)}
+                              className="editorial-icon-button"
+                            >
+                              <Pencil size={16} />
+                            </button>
+                            <button
+                              type="button"
+                              onClick={() => handleDeletePrompt(user)}
+                              className="editorial-icon-button editorial-icon-button--accent"
+                            >
+                              <Trash2 size={16} />
+                            </button>
+                          </div>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              )}
+            </div>
           </div>
         ) : null}
       </section>
@@ -284,6 +358,16 @@ const UserManagement = () => {
               })}
             </div>
           </fieldset>
+          <label className="block space-y-2">
+            <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Tag</span>
+            <input
+              name="tag"
+              value={formData.tag}
+              onChange={handleChange}
+              placeholder="Inspector, Assistant, Field Team"
+              className="editorial-input-surface"
+            />
+          </label>
           <button
             type="submit"
             disabled={isSubmitting}

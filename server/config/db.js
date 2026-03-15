@@ -6,6 +6,27 @@ const parseIntegerEnv = (value, fallback) => {
   return Number.isFinite(parsed) && parsed > 0 ? parsed : fallback;
 };
 
+const ensureGroupMemberIndexes = async (connection) => {
+  const collection = connection.connection.db.collection('groupmembers');
+  const indexes = await collection.indexes();
+  const indexNames = new Set(indexes.map((index) => index.name));
+
+  if (indexNames.has('groupId_1_userId_1')) {
+    await collection.dropIndex('groupId_1_userId_1');
+    logger.info('Dropped legacy groupmembers index: groupId_1_userId_1');
+  }
+
+  if (!indexNames.has('groupId_1_studentId_1')) {
+    await collection.createIndex({ groupId: 1, studentId: 1 }, { unique: true, background: true, name: 'groupId_1_studentId_1' });
+    logger.info('Created groupmembers index: groupId_1_studentId_1');
+  }
+
+  if (!indexNames.has('studentId_1_groupId_1')) {
+    await collection.createIndex({ studentId: 1, groupId: 1 }, { background: true, name: 'studentId_1_groupId_1' });
+    logger.info('Created groupmembers index: studentId_1_groupId_1');
+  }
+};
+
 export const connectDB = async () => {
   if (!process.env.MONGO_URI) {
     const error = new Error('MONGO_URI is required');
@@ -28,6 +49,7 @@ export const connectDB = async () => {
     serverSelectionTimeoutMS,
     socketTimeoutMS,
   });
+  await ensureGroupMemberIndexes(connection);
   logger.info(`MongoDB connected: ${connection.connection.host}`);
   return connection;
 };

@@ -27,6 +27,13 @@ const userSchema = new Schema(
       default: null,
       trim: true,
     },
+    tag: {
+      type: String,
+      default: null,
+      trim: true,
+      maxlength: 80,
+      index: true,
+    },
     password: {
       type: String,
       required: true,
