@@ -81,5 +81,7 @@ testAttemptSchema.index(
   },
 );
 testAttemptSchema.index({ scheduleId: 1, studentId: 1, status: 1 });
+testAttemptSchema.index({ scheduleId: 1, status: 1, startedAt: 1 });
+testAttemptSchema.index({ studentId: 1, status: 1, submittedAt: -1, createdAt: -1 });
 
 export default models.TestAttempt || model('TestAttempt', testAttemptSchema);

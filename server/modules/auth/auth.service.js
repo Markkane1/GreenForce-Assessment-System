@@ -115,7 +115,8 @@ export const registerStudent = async (name, email, phone, password, rawInviteCod
 };
 
 export const loginUser = async (email, password) => {
-  const user = await User.findOne({ email: email.toLowerCase() });
+  const user = await User.findOne({ email: email.trim().toLowerCase() })
+    .select('_id name email phone role password');
 
   if (!user) {
     const error = new Error('Invalid email or password.');

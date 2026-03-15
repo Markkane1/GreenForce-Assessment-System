@@ -72,12 +72,14 @@ const buildAllowedOrigins = () => {
   return [...origins];
 };
 
-const rateLimitHandler = (req, res) => {
+const createRateLimitHandler = (message) => (req, res) => {
   res.status(429).json({
     success: false,
-    message: 'Too many requests',
+    message,
   });
 };
+
+const rateLimitHandler = createRateLimitHandler('Too many requests');
 
 const shouldSkipGeneralRateLimit = (req) => !isProduction || req.method === 'OPTIONS';
 const shouldSkipAuthRateLimit = (req) => req.method === 'OPTIONS';
@@ -107,20 +109,33 @@ const globalLimiter = rateLimit({
   handler: rateLimitHandler,
 });
 
-const authLimiter = rateLimit({
+const buildAuthKey = (req) => {
+  const email = typeof req.body?.email === 'string'
+    ? req.body.email.trim().toLowerCase()
+    : 'anonymous';
+
+  return `${ipKeyGenerator(req.ip)}:${email}`;
+};
+
+const loginLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  max: 25,
+  standardHeaders: true,
+  legacyHeaders: false,
+  skip: shouldSkipAuthRateLimit,
+  skipSuccessfulRequests: true,
+  keyGenerator: buildAuthKey,
+  handler: createRateLimitHandler('Too many failed login attempts. Please wait and try again.'),
+});
+
+const authActionLimiter = rateLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
   standardHeaders: true,
   legacyHeaders: false,
   skip: shouldSkipAuthRateLimit,
   skipSuccessfulRequests: true,
-  keyGenerator: (req) => {
-    const email = typeof req.body?.email === 'string'
-      ? req.body.email.trim().toLowerCase()
-      : 'anonymous';
-
-    return `${ipKeyGenerator(req.ip)}:${email}`;
-  },
+  keyGenerator: buildAuthKey,
   handler: rateLimitHandler,
 });
 
@@ -140,6 +155,7 @@ app.use(globalLimiter);
 app.use(cookieParser());
 app.use(csrfProtection);
 app.use('/api/exam/save-answer', express.json({ limit: '50kb' }));
+app.use('/api/exam/save-answers-batch', express.json({ limit: '150kb' }));
 app.use('/api/sections/:sectionId/questions/import', express.json({ limit: '250kb' }));
 app.use(express.json({ limit: '10kb' }));
 app.use(mongoSanitize());
@@ -162,9 +178,9 @@ app.use(
   }),
 );
 
-app.use('/api/auth/login', authLimiter);
-app.use('/api/auth/forgot-password', authLimiter);
-app.use('/api/auth/register-student', authLimiter);
+app.use('/api/auth/login', loginLimiter);
+app.use('/api/auth/forgot-password', authActionLimiter);
+app.use('/api/auth/register-student', authActionLimiter);
 app.use('/api/auth', authRoutes);
 app.use('/api/users', usersRoutes);
 app.use('/api/groups', groupsRoutes);
@@ -176,6 +192,7 @@ app.use('/api/sections', sectionDirectRoutes);
 app.use('/api/questions', questionDirectRoutes);
 app.use('/api/schedules', schedulesRoutes);
 app.use('/api/exam/save-answer', saveAnswerLimiter);
+app.use('/api/exam/save-answers-batch', saveAnswerLimiter);
 app.use('/api/exam', examEngineRoutes);
 app.use('/api/grading', gradingRoutes);
 app.use('/api/proctor', antiCheatRoutes);

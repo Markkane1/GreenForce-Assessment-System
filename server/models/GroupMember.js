@@ -26,5 +26,6 @@ const groupMemberSchema = new Schema(
 );
 
 groupMemberSchema.index({ groupId: 1, studentId: 1 }, { unique: true });
+groupMemberSchema.index({ studentId: 1, groupId: 1 });
 
 export default models.GroupMember || model('GroupMember', groupMemberSchema);

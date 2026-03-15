@@ -24,7 +24,7 @@ import QuestionNavigator from '../../components/exam/QuestionNavigator';
 import SubmitConfirmModal from '../../components/exam/SubmitConfirmModal';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
 import useAntiCheat from '../../hooks/useAntiCheat';
-import useAutosave from '../../hooks/useAutosave';
+import useAutosave, { mergeDraftAnswers } from '../../hooks/useAutosave';
 import useExamTimer from '../../hooks/useExamTimer';
 import useFullscreen from '../../hooks/useFullscreen';
 import * as examService from '../../services/examService';
@@ -243,17 +243,6 @@ const ExamPage = () => {
     ? `Essay answers cannot exceed ${currentQuestion?.maxWordCount} words.`
     : '';
 
-  const currentAnswerPayload = useMemo(
-    () =>
-      currentQuestion
-        ? {
-            selectedOptionId: currentAnswer?.selectedOptionId || '',
-            essayText: currentAnswer?.essayText || '',
-          }
-        : null,
-    [currentAnswer, currentQuestion],
-  );
-
   const currentSectionAnsweredCount = useMemo(() => {
     if (!currentSectionInfo) {
       return 0;
@@ -283,28 +272,26 @@ const ExamPage = () => {
   const showFullscreenRecovery = examPhase === 'active' && !isFullscreen && hasBeenFullscreen;
   const submissionContent = submissionReason ? submissionContentMap[submissionReason] : null;
 
-  const persistQuestion = useCallback(
-    async (questionIndex) => {
-      const question = questions[questionIndex];
-
-      if (!attempt?._id || !question) {
-        return;
-      }
-
-      const answer = answers[question._id];
-
-      if (!hasAnswerValue(question, answer)) {
-        return;
-      }
-
-      if (question.type === 'essay' && question.maxWordCount && getWordCount(answer?.essayText || '') > question.maxWordCount) {
-        throw new Error(`Essay answers cannot exceed ${question.maxWordCount} words.`);
-      }
-
-      await examService.saveAnswer(attempt._id, question._id, answer);
-    },
-    [answers, attempt?._id, questions],
-  );
+  const {
+    lastSaved,
+    isSaving,
+    saveStatus,
+    failCount,
+    queueAnswer,
+    retrySave,
+    flushPendingAnswers,
+    clearDraftAnswers,
+    setSaveStatus,
+  } = useAutosave({
+    attemptId: attempt?._id,
+    enabled: Boolean(
+      attempt?._id
+      && attempt.status === 'in_progress'
+      && ['active', 'expiring'].includes(examPhase),
+    ),
+    onError: (error) => setErrorMessage(error.message || 'Unable to save your answers.'),
+    intervalMs: 60000,
+  });
 
   const handleQuestionChange = useCallback(
     (value) => {
@@ -312,22 +299,34 @@ const ExamPage = () => {
         return;
       }
 
+      const nextAnswer = currentQuestion.type === 'mcq'
+        ? {
+            selectedOptionId: value,
+            essayText: '',
+          }
+        : {
+            selectedOptionId: '',
+            essayText: value,
+          };
+
       setAnswers((currentAnswers) => ({
         ...currentAnswers,
-        [currentQuestion._id]: currentQuestion.type === 'mcq'
-          ? {
-              selectedOptionId: value,
-              essayText: '',
-            }
-          : {
-              selectedOptionId: '',
-              essayText: value,
-            },
+        [currentQuestion._id]: nextAnswer,
       }));
+
+      const isWithinEssayLimit = !(
+        currentQuestion.type === 'essay'
+        && currentQuestion.maxWordCount
+        && getWordCount(nextAnswer.essayText || '') > currentQuestion.maxWordCount
+      );
+
+      if (isWithinEssayLimit) {
+        queueAnswer(currentQuestion._id, nextAnswer);
+      }
 
       setErrorMessage('');
     },
-    [currentQuestion],
+    [currentQuestion, queueAnswer],
   );
 
   const finalizeSubmissionState = useCallback(
@@ -348,11 +347,12 @@ const ExamPage = () => {
       setExamPhase('submitted');
       setSubmissionReason(reason);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
+      clearDraftAnswers(resolvedAttempt._id);
       sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
       sessionStorage.setItem(LAST_RESULT_KEY, resolvedAttempt._id);
       await exit().catch(() => {});
     },
-    [attempt, exit, scheduleId],
+    [attempt, clearDraftAnswers, exit, scheduleId],
   );
 
   const handleForceSubmit = useCallback(async () => {
@@ -379,6 +379,8 @@ const ExamPage = () => {
     setIsSubmitting(true);
 
     try {
+      await flushPendingAnswers().catch(() => {});
+
       const [submission] = await Promise.allSettled([
         examService.submitExam(attempt._id),
         wait(EXPIRING_SCREEN_MIN_MS),
@@ -393,26 +395,9 @@ const ExamPage = () => {
     }
 
     await finalizeSubmissionState('timeout');
-  }, [attempt?._id, examPhase, finalizeSubmissionState]);
+  }, [attempt?._id, examPhase, finalizeSubmissionState, flushPendingAnswers]);
 
   const { secondsLeft, formattedTime } = useExamTimer(timerSeconds, handleTimerExpire);
-
-  const { lastSaved, isSaving, saveStatus, failCount, retrySave, setSaveStatus } = useAutosave({
-    attemptId: examPhase === 'active' ? attempt?._id : null,
-    questionId: examPhase === 'active' ? currentQuestion?._id : null,
-    answer: currentAnswerPayload,
-    enabled: Boolean(
-      examPhase === 'active'
-      && attempt?._id
-      && currentQuestion
-      && attempt.status === 'in_progress'
-      && !isCurrentEssayTooLong
-      && !showSectionTransition
-      && !showFullscreenGate
-      && !showFullscreenRecovery
-    ),
-    onError: (error) => setErrorMessage(error.message || 'Unable to save your answer.'),
-  });
 
   const savedStatusLabel = lastSaved
     ? `Saved ${lastSaved.toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}`
@@ -628,22 +613,16 @@ const ExamPage = () => {
   }, [location.state?.message, systemMessage]);
 
   useEffect(() => {
-    const handleOnline = () => {
-      retrySave();
-    };
-
     const handleOffline = () => {
       setSaveStatus('error');
     };
 
-    window.addEventListener('online', handleOnline);
     window.addEventListener('offline', handleOffline);
 
     return () => {
-      window.removeEventListener('online', handleOnline);
       window.removeEventListener('offline', handleOffline);
     };
-  }, [retrySave, setSaveStatus]);
+  }, [setSaveStatus]);
 
   useEffect(() => {
     const shouldApplyExamGuards = ['confirm', 'active', 'expiring', 'submitted'].includes(examPhase);
@@ -730,10 +709,15 @@ const ExamPage = () => {
       }
 
       const nextSections = buildSections(response.questions);
+      const mergedAnswers = mergeDraftAnswers(
+        response.attempt._id,
+        createAnswerMap(response.questions),
+        response.questions.map((question) => question._id),
+      );
 
       setAttempt(response.attempt);
       setQuestions(response.questions);
-      setAnswers(createAnswerMap(response.questions));
+      setAnswers(mergedAnswers);
       setViolationThreshold(response.violationThreshold ?? 3);
       setCurrentIndex(0);
       setCurrentSectionIndex(0);
@@ -769,18 +753,18 @@ const ExamPage = () => {
     }
 
     try {
-      await persistQuestion(currentIndex);
+      await flushPendingAnswers();
       setShowSectionTransition(false);
       setNextSectionInfo(null);
       setCurrentIndex(nextIndex);
     } catch (error) {
-      setErrorMessage(error.message || 'Unable to save your answer.');
+      setErrorMessage(error.message || 'Unable to save your answers.');
     }
   };
 
   const handleNext = async () => {
     try {
-      await persistQuestion(currentIndex);
+      await flushPendingAnswers();
 
       if (currentSectionInfo && currentIndex === currentSectionInfo.endIndex) {
         const upcomingSection = sections[currentSectionIndex + 1];
@@ -805,7 +789,7 @@ const ExamPage = () => {
 
       setCurrentIndex(currentIndex + 1);
     } catch (error) {
-      setErrorMessage(error.message || 'Unable to save your answer.');
+      setErrorMessage(error.message || 'Unable to save your answers.');
     }
   };
 
@@ -832,7 +816,7 @@ const ExamPage = () => {
     setExamPhase('expiring');
 
     try {
-      await persistQuestion(currentIndex);
+      await flushPendingAnswers();
       const [submittedAttempt] = await Promise.all([
         examService.submitExam(attempt._id),
         wait(EXPIRING_SCREEN_MIN_MS),
@@ -936,8 +920,8 @@ const ExamPage = () => {
                 tone: 'bg-secondary',
               },
               {
-                label: 'Passing Score',
-                value: `${schedulePreview?.testId?.passingScore || 0}%`,
+                label: 'Passing Marks',
+                value: `${schedulePreview?.testId?.passingScore || 0}`,
                 icon: Target,
                 tone: 'bg-tertiary',
               },

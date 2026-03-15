@@ -46,4 +46,6 @@ testScheduleSchema.path('endTime').validate(function validateEndTime(value) {
   return !this.startTime || value > this.startTime;
 }, 'endTime must be later than startTime.');
 
+testScheduleSchema.index({ assignedGroups: 1, endTime: 1, startTime: 1 });
+
 export default models.TestSchedule || model('TestSchedule', testScheduleSchema);

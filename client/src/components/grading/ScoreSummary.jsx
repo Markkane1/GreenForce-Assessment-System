@@ -10,7 +10,7 @@ const ScoreSummary = ({ score = 0, passingScore = 0, passed = null }) => {
         <div>
           <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">Final Score</p>
           <p className="mt-2 font-heading text-3xl font-semibold text-foreground">{score}</p>
-          <p className="mt-1 text-sm text-mutedFg">Passing score: {passingScore}</p>
+          <p className="mt-1 text-sm text-mutedFg">Passing marks: {passingScore}</p>
         </div>
         <Badge tone={statusTone}>{passed ? 'Pass' : 'Review'}</Badge>
       </div>

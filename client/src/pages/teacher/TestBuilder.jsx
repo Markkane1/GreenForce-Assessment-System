@@ -1112,7 +1112,7 @@ const TestBuilder = () => {
                 <input type="number" min="1" value={currentTest.timeLimitMinutes} onChange={(event) => updateTestField('timeLimitMinutes', Number(event.target.value))} className="editorial-input-surface" />
               </label>
               <label className="block space-y-2">
-                <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Passing Score</span>
+                <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Passing Marks</span>
                 <input type="number" min="0" value={currentTest.passingScore} onChange={(event) => updateTestField('passingScore', Number(event.target.value))} className="editorial-input-surface" />
               </label>
               <label className="block space-y-2">

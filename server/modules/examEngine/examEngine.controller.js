@@ -7,6 +7,7 @@ import {
   getAttemptQuestions as getAttemptQuestionsService,
   getAttemptStatus as getAttemptStatusService,
   saveAnswer as saveAnswerService,
+  saveAnswersBatch as saveAnswersBatchService,
   startExam as startExamService,
   submitExam as submitExamService,
 } from './examEngine.service.js';
@@ -51,6 +52,37 @@ export const saveAnswer = asyncHandler(async (req, res) => {
   res.status(200).json({
     success: true,
     answer: savedAnswer,
+  });
+});
+
+export const saveAnswersBatch = asyncHandler(async (req, res) => {
+  const { attemptId, answers } = req.body;
+
+  if (!mongoose.isValidObjectId(attemptId)) {
+    const error = new Error('A valid attemptId is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!Array.isArray(answers) || answers.length === 0) {
+    const error = new Error('At least one answer is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  answers.forEach((entry) => {
+    if (!mongoose.isValidObjectId(entry?.questionId)) {
+      const error = new Error('Each answer must include a valid questionId.');
+      error.statusCode = 400;
+      throw error;
+    }
+  });
+
+  const result = await saveAnswersBatchService(attemptId, req.user.id, answers);
+
+  res.status(200).json({
+    success: true,
+    ...result,
   });
 });
 

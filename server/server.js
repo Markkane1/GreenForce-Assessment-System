@@ -1,11 +1,14 @@
 import 'dotenv/config';
 import http from 'http';
+import mongoose from 'mongoose';
 import app from './app.js';
 import { connectDB } from './config/db.js';
 import { logger } from './utils/logger.js';
 
 const PORT = process.env.PORT || 5000;
 const PLACEHOLDER_JWT_SECRET = 'replace_with_a_long_random_secret';
+let serverInstance = null;
+let isShuttingDown = false;
 
 const validateEnvironment = () => {
   if (!process.env.JWT_SECRET) {
@@ -40,6 +43,7 @@ const startServer = async () => {
   await connectDB();
 
   const server = http.createServer(app);
+  serverInstance = server;
 
   server.on('error', (error) => {
     if (error.code === 'EADDRINUSE') {
@@ -56,6 +60,44 @@ const startServer = async () => {
     logger.info(`Server running on port ${PORT}`);
   });
 };
+
+const shutdown = async (signal) => {
+  if (isShuttingDown) {
+    return;
+  }
+
+  isShuttingDown = true;
+  logger.info(`Received ${signal}. Shutting down gracefully...`);
+
+  try {
+    if (serverInstance) {
+      await new Promise((resolve, reject) => {
+        serverInstance.close((error) => {
+          if (error) {
+            reject(error);
+            return;
+          }
+
+          resolve();
+        });
+      });
+    }
+
+    await mongoose.connection.close(false);
+    process.exit(0);
+  } catch (error) {
+    logger.error('Graceful shutdown failed', error);
+    process.exit(1);
+  }
+};
+
+process.on('SIGINT', () => {
+  void shutdown('SIGINT');
+});
+
+process.on('SIGTERM', () => {
+  void shutdown('SIGTERM');
+});
 
 startServer().catch((error) => {
   logger.error('Failed to start server', error);

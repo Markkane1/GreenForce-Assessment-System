@@ -45,7 +45,7 @@ const buildAnswerSnapshot = (answer) => {
 };
 
 const buildQuestionPayload = (question, options = [], section = null, answer = null) => ({
-  ...question.toObject(),
+  ...(typeof question?.toObject === 'function' ? question.toObject() : { ...question }),
   section: section
     ? {
         _id: section._id,
@@ -66,10 +66,19 @@ const getAttemptExpiry = (attempt) => {
   return new Date(Math.min(timeLimitExpiry.getTime(), scheduleExpiry.getTime()));
 };
 
+const applyAttemptPopulation = (query) =>
+  query
+    .populate({
+      path: 'testId',
+      select: 'title passingScore timeLimitMinutes antiCheat',
+    })
+    .populate({
+      path: 'scheduleId',
+      select: 'startTime endTime',
+    });
+
 const getAttemptById = async (attemptId) => {
-  const attempt = await TestAttempt.findById(attemptId)
-    .populate('testId')
-    .populate('scheduleId');
+  const attempt = await applyAttemptPopulation(TestAttempt.findById(attemptId));
 
   if (!attempt) {
     const error = new Error('Exam attempt not found.');
@@ -79,6 +88,22 @@ const getAttemptById = async (attemptId) => {
 
   return attempt;
 };
+
+const groupByStringKey = (items, getKey) =>
+  items.reduce((accumulator, item) => {
+    const key = getKey(item);
+
+    if (!key) {
+      return accumulator;
+    }
+
+    if (!accumulator[key]) {
+      accumulator[key] = [];
+    }
+
+    accumulator[key].push(item);
+    return accumulator;
+  }, {});
 
 const ensureAttemptOwnership = (attempt, studentId) => {
   if (attempt.studentId.toString() !== studentId.toString()) {
@@ -111,6 +136,52 @@ const getAnswerMapForAttempt = async (attemptId) => {
     accumulator[answer.questionId.toString()] = answer;
     return accumulator;
   }, {});
+};
+
+const getAttemptEssayState = async (attemptId) => {
+  const answers = await Answer.find({ attemptId }).select('questionId gradingStatus').lean();
+
+  if (answers.length === 0) {
+    return { hasPendingEssay: false };
+  }
+
+  const questionIds = [...new Set(answers.map((answer) => answer.questionId.toString()))];
+  const essayQuestions = await Question.find({
+    _id: { $in: questionIds },
+    type: 'essay',
+  }).select('_id').lean();
+  const essayQuestionIds = new Set(essayQuestions.map((question) => question._id.toString()));
+
+  if (essayQuestionIds.size === 0) {
+    return { hasPendingEssay: false };
+  }
+
+  return {
+    hasPendingEssay: answers.some(
+      (answer) =>
+        essayQuestionIds.has(answer.questionId.toString())
+        && answer.gradingStatus !== 'graded',
+    ),
+  };
+};
+
+const resolveAttemptPassed = (attempt, { hasPendingEssay = false } = {}) => {
+  if (typeof attempt?.passed === 'boolean') {
+    return attempt.passed;
+  }
+
+  if (hasPendingEssay || !['submitted', 'force_submitted', 'expired'].includes(attempt?.status)) {
+    return null;
+  }
+
+  const passingScore = Number(attempt?.testId?.passingScore);
+  const score = Number(attempt?.score);
+
+  if (!Number.isFinite(passingScore) || !Number.isFinite(score)) {
+    return null;
+  }
+
+  return score >= passingScore;
 };
 
 const buildOrderedQuestions = async (questionDocs, optionOrder = {}, answerMap = {}) => {
@@ -174,6 +245,172 @@ const buildResumePayload = async (attempt, remainingSeconds) => {
   };
 };
 
+const ensureAttemptOpenForSaving = async (attempt, attemptId) => {
+  if (attempt.status !== 'in_progress') {
+    const error = new Error('Exam attempt is not active.');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (Date.now() > new Date(attempt.scheduleId.endTime).getTime()) {
+    const score = await autoGradeMCQ(attemptId);
+    const essayState = await getAttemptEssayState(attemptId);
+    attempt.status = 'expired';
+    attempt.submittedAt = attempt.submittedAt || new Date();
+    attempt.score = score;
+    attempt.passed = resolveAttemptPassed(attempt, essayState);
+    await attempt.save();
+
+    const error = new Error('Exam window has closed');
+    error.statusCode = 409;
+    throw error;
+  }
+
+  await ensureAttemptActive(attempt);
+};
+
+const normalizeAnswerEntries = (answerEntries = []) => {
+  const deduplicatedEntries = new Map();
+
+  answerEntries.forEach((entry) => {
+    const questionId = entry?.questionId?.toString();
+
+    if (!questionId) {
+      return;
+    }
+
+    deduplicatedEntries.set(questionId, {
+      questionId,
+      answer: entry?.answer || {},
+    });
+  });
+
+  return Array.from(deduplicatedEntries.values());
+};
+
+const saveAnswerEntries = async (attempt, attemptId, answerEntries = []) => {
+  const normalizedEntries = normalizeAnswerEntries(answerEntries);
+
+  if (normalizedEntries.length === 0) {
+    const error = new Error('At least one answer is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const questionOrder = new Set((attempt.questionOrder || []).map((id) => id.toString()));
+
+  normalizedEntries.forEach(({ questionId }) => {
+    if (!questionOrder.has(questionId)) {
+      const error = new Error('Question does not belong to this exam attempt.');
+      error.statusCode = 422;
+      throw error;
+    }
+  });
+
+  const questionIds = normalizedEntries.map(({ questionId }) => questionId);
+  const questions = await Question.find({ _id: { $in: questionIds } }).select('_id type maxWordCount').lean();
+  const questionMap = new Map(questions.map((question) => [question._id.toString(), question]));
+
+  if (questionMap.size !== questionIds.length) {
+    const error = new Error('One or more questions were not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const mcqSelections = [];
+  const now = new Date();
+  const bulkOperations = normalizedEntries.map(({ questionId, answer }) => {
+    const question = questionMap.get(questionId);
+    const nextAnswer = answer || {};
+
+    if (question.type === 'mcq') {
+      const selectedOptionId = nextAnswer.selectedOptionId?.toString();
+
+      if (!selectedOptionId) {
+        const error = new Error('selectedOptionId is required for MCQ answers.');
+        error.statusCode = 422;
+        throw error;
+      }
+
+      mcqSelections.push({ questionId, selectedOptionId });
+
+      return {
+        updateOne: {
+          filter: { attemptId, questionId },
+          update: {
+            $set: {
+              selectedOptionId,
+              essayText: '',
+              gradingStatus: 'pending',
+              updatedAt: now,
+            },
+            $setOnInsert: {
+              attemptId,
+              questionId,
+              score: null,
+              feedback: '',
+              createdAt: now,
+            },
+          },
+          upsert: true,
+        },
+      };
+    }
+
+    const essayText = nextAnswer.essayText || '';
+
+    if (question.maxWordCount && getWordCount(essayText) > question.maxWordCount) {
+      const error = new Error(`Essay answers cannot exceed ${question.maxWordCount} words.`);
+      error.statusCode = 422;
+      throw error;
+    }
+
+    return {
+      updateOne: {
+        filter: { attemptId, questionId },
+        update: {
+          $set: {
+            selectedOptionId: null,
+            essayText,
+            gradingStatus: 'pending',
+            updatedAt: now,
+          },
+          $setOnInsert: {
+            attemptId,
+            questionId,
+            score: null,
+            feedback: '',
+            createdAt: now,
+          },
+        },
+        upsert: true,
+      },
+    };
+  });
+
+  if (mcqSelections.length > 0) {
+    const validOptions = await MCQOption.find({
+      _id: { $in: mcqSelections.map(({ selectedOptionId }) => selectedOptionId) },
+      questionId: { $in: mcqSelections.map(({ questionId }) => questionId) },
+    }).select('_id questionId').lean();
+    const validOptionPairs = new Set(
+      validOptions.map((option) => `${option.questionId.toString()}:${option._id.toString()}`),
+    );
+
+    mcqSelections.forEach(({ questionId, selectedOptionId }) => {
+      if (!validOptionPairs.has(`${questionId}:${selectedOptionId}`)) {
+        const error = new Error('Selected option is invalid for this question.');
+        error.statusCode = 422;
+        throw error;
+      }
+    });
+  }
+
+  await Answer.bulkWrite(bulkOperations, { ordered: false });
+
+  return normalizedEntries.map(({ questionId }) => questionId);
+};
+
 const ensureAttemptActive = async (attempt) => {
   if (attempt.status !== 'in_progress') {
     const error = new Error('Exam attempt is not active.');
@@ -184,9 +421,12 @@ const ensureAttemptActive = async (attempt) => {
   const expiresAt = getAttemptExpiry(attempt);
 
   if (Date.now() > expiresAt.getTime()) {
-    await autoGradeMCQ(attempt._id);
+    const score = await autoGradeMCQ(attempt._id);
+    const essayState = await getAttemptEssayState(attempt._id);
     attempt.status = 'expired';
     attempt.submittedAt = new Date();
+    attempt.score = score;
+    attempt.passed = resolveAttemptPassed(attempt, essayState);
     await attempt.save();
 
     const error = new Error('Exam time has expired.');
@@ -255,7 +495,7 @@ export const autoGradeMCQ = async (attemptId) => {
 
 export const startExam = async (studentId, scheduleId) => {
   const now = new Date();
-  const schedule = await TestSchedule.findById(scheduleId);
+  const schedule = await TestSchedule.findById(scheduleId).select('testId startTime endTime assignedGroups');
 
   if (!schedule) {
     const error = new Error('Schedule not found.');
@@ -269,11 +509,35 @@ export const startExam = async (studentId, scheduleId) => {
     throw error;
   }
 
-  const memberships = await GroupMember.find({
-    groupId: { $in: schedule.assignedGroups },
-    studentId,
-  }).select('_id');
-  const isAssigned = memberships.length > 0;
+  const [
+    membership,
+    test,
+    existingAttempt,
+    completedAttempt,
+  ] = await Promise.all([
+    GroupMember.exists({
+      groupId: { $in: schedule.assignedGroups },
+      studentId,
+    }),
+    Test.findById(schedule.testId).select(
+      'title timeLimitMinutes passingScore maxAttempts allowResume randomizeQuestions randomizeOptions antiCheat',
+    ),
+    applyAttemptPopulation(
+      TestAttempt.findOne({
+        studentId,
+        scheduleId,
+        status: 'in_progress',
+      }),
+    ),
+    applyAttemptPopulation(
+      TestAttempt.findOne({
+        studentId,
+        scheduleId,
+        status: { $in: ['submitted', 'force_submitted', 'expired'] },
+      }).sort({ submittedAt: -1, createdAt: -1 }),
+    ),
+  ]);
+  const isAssigned = Boolean(membership);
 
   if (!isAssigned) {
     const error = new Error('You are not assigned to this exam schedule.');
@@ -281,21 +545,11 @@ export const startExam = async (studentId, scheduleId) => {
     throw error;
   }
 
-  const test = await Test.findById(schedule.testId);
-
   if (!test) {
     const error = new Error('Test not found.');
     error.statusCode = 404;
     throw error;
   }
-
-  const existingAttempt = await TestAttempt.findOne({
-    studentId,
-    scheduleId,
-    status: 'in_progress',
-  })
-    .populate('testId')
-    .populate('scheduleId');
 
   if (existingAttempt) {
     if (test.allowResume) {
@@ -315,15 +569,6 @@ export const startExam = async (studentId, scheduleId) => {
     error.statusCode = 409;
     throw error;
   }
-
-  const completedAttempt = await TestAttempt.findOne({
-    studentId,
-    scheduleId,
-    status: { $in: ['submitted', 'force_submitted', 'expired'] },
-  })
-    .sort({ submittedAt: -1, createdAt: -1 })
-    .populate('testId')
-    .populate('scheduleId');
 
   if (completedAttempt) {
     return {
@@ -348,7 +593,10 @@ export const startExam = async (studentId, scheduleId) => {
     throw error;
   }
 
-  const sections = await Section.find({ testId: test._id }).sort({ order: 1 });
+  const sections = await Section.find({ testId: test._id })
+    .select('_id title order questionPoolSize questionsToServe')
+    .sort({ order: 1 })
+    .lean();
 
   if (sections.length === 0) {
     const error = new Error('This test has no sections configured.');
@@ -356,12 +604,23 @@ export const startExam = async (studentId, scheduleId) => {
     throw error;
   }
 
+  const allSectionQuestions = await Question.find({
+    sectionId: { $in: sections.map((section) => section._id) },
+  })
+    .select('_id sectionId type content points maxWordCount')
+    .sort({ createdAt: 1 })
+    .lean();
+  const questionsBySection = groupByStringKey(
+    allSectionQuestions,
+    (question) => question.sectionId?.toString(),
+  );
   const selectedQuestions = [];
 
   for (const section of sections) {
-    const sectionQuestions = await Question.find({ sectionId: section._id })
-      .sort({ createdAt: 1 })
-      .limit(section.questionPoolSize);
+    const sectionQuestions = (questionsBySection[section._id.toString()] || []).slice(
+      0,
+      section.questionPoolSize,
+    );
 
     if (sectionQuestions.length < section.questionsToServe) {
       const error = new Error(`Section "${section.title}" does not have enough questions configured.`);
@@ -376,20 +635,29 @@ export const startExam = async (studentId, scheduleId) => {
   const orderedQuestionDocs = test.randomizeQuestions ? shuffleArray(selectedQuestions) : selectedQuestions;
   const questionOrder = orderedQuestionDocs.map((question) => question._id.toString());
   const optionOrder = {};
-
-  const orderedQuestions = await Promise.all(
-    orderedQuestionDocs.map(async (question) => {
-      if (question.type !== 'mcq') {
-        return buildQuestionPayload(question);
-      }
-
-      const options = await MCQOption.find({ questionId: question._id }).sort({ createdAt: 1 }).lean();
-      const orderedOptions = test.randomizeOptions ? shuffleArray(options) : options;
-      optionOrder[question._id.toString()] = orderedOptions.map((option) => option._id.toString());
-
-      return buildQuestionPayload(question, orderedOptions);
-    }),
+  const mcqQuestionIds = orderedQuestionDocs
+    .filter((question) => question.type === 'mcq')
+    .map((question) => question._id);
+  const allOptions = mcqQuestionIds.length > 0
+    ? await MCQOption.find({ questionId: { $in: mcqQuestionIds } })
+      .sort({ createdAt: 1 })
+      .lean()
+    : [];
+  const optionsByQuestion = groupByStringKey(
+    allOptions,
+    (option) => option.questionId?.toString(),
   );
+  const orderedQuestions = orderedQuestionDocs.map((question) => {
+    if (question.type !== 'mcq') {
+      return buildQuestionPayload(question);
+    }
+
+    const questionOptions = optionsByQuestion[question._id.toString()] || [];
+    const orderedOptions = test.randomizeOptions ? shuffleArray(questionOptions) : questionOptions;
+    optionOrder[question._id.toString()] = orderedOptions.map((option) => option._id.toString());
+
+    return buildQuestionPayload(question, orderedOptions);
+  });
 
   let attempt;
 
@@ -412,9 +680,9 @@ export const startExam = async (studentId, scheduleId) => {
       studentId,
       scheduleId,
       status: 'in_progress',
-    })
-      .populate('testId')
-      .populate('scheduleId');
+    }).then((queryResult) =>
+      queryResult ? getAttemptById(queryResult._id) : null,
+    );
 
     if (!concurrentAttempt) {
       throw error;
@@ -453,95 +721,23 @@ export const startExam = async (studentId, scheduleId) => {
 export const saveAnswer = async (attemptId, studentId, questionId, answer) => {
   const attempt = await getAttemptById(attemptId);
   ensureAttemptOwnership(attempt, studentId);
+  await ensureAttemptOpenForSaving(attempt, attemptId);
+  await saveAnswerEntries(attempt, attemptId, [{ questionId, answer }]);
 
-  if (attempt.status !== 'in_progress') {
-    const error = new Error('Exam attempt is not active.');
-    error.statusCode = 409;
-    throw error;
-  }
+  return Answer.findOne({ attemptId, questionId });
+};
 
-  if (Date.now() > new Date(attempt.scheduleId.endTime).getTime()) {
-    const score = await autoGradeMCQ(attemptId);
-    attempt.status = 'expired';
-    attempt.submittedAt = attempt.submittedAt || new Date();
-    attempt.score = score;
-    await attempt.save();
+export const saveAnswersBatch = async (attemptId, studentId, answerEntries = []) => {
+  const attempt = await getAttemptById(attemptId);
+  ensureAttemptOwnership(attempt, studentId);
+  await ensureAttemptOpenForSaving(attempt, attemptId);
 
-    const error = new Error('Exam window has closed');
-    error.statusCode = 409;
-    throw error;
-  }
+  const savedQuestionIds = await saveAnswerEntries(attempt, attemptId, answerEntries);
 
-  await ensureAttemptActive(attempt);
-
-  const questionOrder = (attempt.questionOrder || []).map((id) => id.toString());
-
-  if (!questionOrder.includes(questionId.toString())) {
-    const error = new Error('Question does not belong to this exam attempt.');
-    error.statusCode = 422;
-    throw error;
-  }
-
-  const question = await Question.findById(questionId);
-
-  if (!question) {
-    const error = new Error('Question not found.');
-    error.statusCode = 404;
-    throw error;
-  }
-
-  const update = {
-    attemptId,
-    questionId,
+  return {
+    savedCount: savedQuestionIds.length,
+    questionIds: savedQuestionIds,
   };
-
-  if (question.type === 'mcq') {
-    const selectedOptionId = answer?.selectedOptionId;
-
-    if (!selectedOptionId) {
-      const error = new Error('selectedOptionId is required for MCQ answers.');
-      error.statusCode = 422;
-      throw error;
-    }
-
-    const option = await MCQOption.findOne({
-      _id: selectedOptionId,
-      questionId,
-    }).select('_id');
-
-    if (!option) {
-      const error = new Error('Selected option is invalid for this question.');
-      error.statusCode = 422;
-      throw error;
-    }
-
-    update.selectedOptionId = selectedOptionId;
-    update.essayText = '';
-    update.gradingStatus = 'pending';
-  } else {
-    const essayText = answer?.essayText || '';
-
-    if (question.maxWordCount && getWordCount(essayText) > question.maxWordCount) {
-      const error = new Error(`Essay answers cannot exceed ${question.maxWordCount} words.`);
-      error.statusCode = 422;
-      throw error;
-    }
-
-    update.selectedOptionId = null;
-    update.essayText = essayText;
-    update.gradingStatus = 'pending';
-  }
-
-  return Answer.findOneAndUpdate(
-    { attemptId, questionId },
-    update,
-    {
-      new: true,
-      upsert: true,
-      runValidators: true,
-      setDefaultsOnInsert: true,
-    },
-  );
 };
 
 export const getAttemptQuestions = async (attemptId, studentId) => {
@@ -584,18 +780,22 @@ export const submitExam = async (attemptId, studentId) => {
 
   if (elapsed > allowedMs || scheduleClosed) {
     const score = await autoGradeMCQ(attemptId);
+    const essayState = await getAttemptEssayState(attemptId);
     attempt.status = 'expired';
     attempt.submittedAt = attempt.submittedAt || new Date();
     attempt.score = score;
+    attempt.passed = resolveAttemptPassed(attempt, essayState);
     await attempt.save();
 
     return buildAttemptResponse(attempt);
   }
 
   const score = await autoGradeMCQ(attemptId);
+  const essayState = await getAttemptEssayState(attemptId);
   attempt.status = 'submitted';
   attempt.submittedAt = new Date();
   attempt.score = score;
+  attempt.passed = resolveAttemptPassed(attempt, essayState);
   await attempt.save();
 
   return buildAttemptResponse(attempt);
@@ -721,7 +921,10 @@ export const getAttemptResults = async (attemptId, studentId) => {
   );
 
   return {
-    attempt: buildAttemptResponse(attempt),
+    attempt: {
+      ...buildAttemptResponse(attempt),
+      passed: resolveAttemptPassed(attempt, { hasPendingEssay: essayPendingCount > 0 }),
+    },
     summary: {
       totalPoints,
       correctCount,
@@ -821,10 +1024,7 @@ export const getMyAttempts = async (studentId) => {
         ? totalPointsFromAttempt
         : fallbackPointsByTestId[attempt.testId?._id?.toString()] || 0;
     const pendingEssayCount = pendingEssayCountByAttemptId[attempt._id.toString()] || 0;
-    const passed =
-      typeof attempt.passed === 'boolean'
-        ? attempt.passed
-        : (attempt.score ?? 0) >= (attempt.testId?.passingScore ?? Number.POSITIVE_INFINITY);
+    const passed = resolveAttemptPassed(attempt, { hasPendingEssay: pendingEssayCount > 0 });
 
     return {
       attemptId: attempt._id,

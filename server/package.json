@@ -11,7 +11,8 @@
   "scripts": {
     "server": "nodemon server/server.js",
     "start": "node server.js",
-    "seed": "node utils/seed.js"
+    "seed": "node utils/seed.js",
+    "audit:schedules": "node utils/auditScheduleVisibility.js"
   },
   "dependencies": {
     "bcryptjs": "^2.4.3",

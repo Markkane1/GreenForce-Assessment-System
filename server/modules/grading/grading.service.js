@@ -9,6 +9,24 @@ import TestAttempt from '../../models/TestAttempt.js';
 const FINISHED_ATTEMPT_STATUSES = ['submitted', 'force_submitted', 'expired'];
 const isAnswerAttempted = (answer) =>
   Boolean(answer?.selectedOptionId) || Boolean(answer?.essayText?.trim());
+const resolveAttemptPassed = (attempt, passingScore, hasPendingEssay = false) => {
+  if (typeof attempt?.passed === 'boolean') {
+    return attempt.passed;
+  }
+
+  if (hasPendingEssay) {
+    return null;
+  }
+
+  const resolvedPassingScore = Number(passingScore);
+  const resolvedScore = Number(attempt?.score);
+
+  if (!Number.isFinite(resolvedPassingScore) || !Number.isFinite(resolvedScore)) {
+    return null;
+  }
+
+  return resolvedScore >= resolvedPassingScore;
+};
 
 const buildManagedTestQuery = (teacherId, role, filters = {}) => {
   const query = role === 'admin' ? {} : { createdBy: teacherId };
@@ -363,6 +381,11 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
         && !correctOptionIds.has(answer.selectedOptionId.toString()),
     ).length;
     const hasPendingEssay = essayStateMap[attempt._id.toString()]?.hasPendingEssay;
+    const passed = resolveAttemptPassed(
+      attempt,
+      schedule.testId?.passingScore ?? 0,
+      hasPendingEssay,
+    );
 
     return {
       candidateId: candidate._id,
@@ -373,7 +396,7 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
       correctQuestions,
       wrongQuestions,
       marksObtained: attempt.score || 0,
-      passFailStatus: hasPendingEssay ? 'Pending' : attempt.passed === true ? 'Pass' : 'Fail',
+      passFailStatus: hasPendingEssay ? 'Pending' : passed ? 'Pass' : 'Fail',
       cheatingTries: attempt.violationsCount || 0,
       submittedAt: attempt.submittedAt || null,
       attemptId: attempt._id,

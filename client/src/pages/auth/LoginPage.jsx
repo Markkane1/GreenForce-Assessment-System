@@ -16,58 +16,21 @@ const getRedirectPath = (role) => {
   return '/student/dashboard';
 };
 
-const EditorialShell = ({ eyebrow, title, copy, children }) => (
-  <div className="min-h-screen md:grid md:grid-cols-[1.05fr_0.95fr]">
-    <section className="editorial-auth-panel relative hidden min-h-screen overflow-hidden px-12 py-14 text-white md:flex md:flex-col md:justify-between">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,168,75,0.18),_transparent_46%)]" />
+const EditorialShell = ({ children }) => (
+  <div className="min-h-screen md:grid md:h-screen md:grid-cols-[1.15fr_0.85fr] md:overflow-hidden">
+    <section className="editorial-auth-panel relative hidden overflow-hidden md:block md:h-screen">
+      <div className="absolute inset-0 flex items-center justify-center bg-[#1f241d] p-4">
+        <img
+          src="/environmental-protection-force-auth.svg"
+          alt="Environmental Protection Force emblem"
+          className="h-full w-full object-contain object-center"
+          style={{ clipPath: 'inset(3.5% 3.5% 3.5% 3.5%)' }}
+        />
       </div>
-
-      <div className="relative z-10 mx-auto max-w-xl text-center">
-        <div className="editorial-rule-label">
-          <span>{eyebrow}</span>
-        </div>
-        <h1 className="font-editorial text-6xl font-semibold leading-[1.05] tracking-[-0.02em] text-[#FAFAF8]">
-          {title}
-        </h1>
-        <p className="mx-auto mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
-          {copy}
-        </p>
-      </div>
-
-      <div className="relative z-10 flex flex-1 items-center justify-center">
-        <div className="rounded-[2rem] bg-[#F5F5F0] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.28)] ring-1 ring-white/10">
-          <img
-            src="/epa-auth-logo.svg"
-            alt="EPA logo"
-            className="w-[30rem] max-w-[78vw] object-contain"
-          />
-        </div>
-      </div>
-
-      <div className="relative z-10 grid max-w-lg gap-4 self-center">
-        <div className="rounded-2xl border border-white/12 bg-white/4 p-6 backdrop-blur-sm">
-          <div className="editorial-auth-kicker text-[#D4A84B]">Exam integrity</div>
-          <p className="mt-4 font-editorial text-2xl text-[#FAFAF8]">Focused, secure, and intentionally quiet.</p>
-        </div>
-        <div className="grid grid-cols-2 gap-4">
-          <div className="rounded-2xl border border-white/10 bg-white/4 p-5 backdrop-blur-sm">
-            <div className="editorial-auth-kicker text-[#D4A84B]">Delivery</div>
-            <p className="mt-3 font-editorialBody text-sm leading-6 text-white/70">
-              Deterministic question order and timed exam sessions.
-            </p>
-          </div>
-          <div className="rounded-2xl border border-white/10 bg-white/4 p-5 backdrop-blur-sm">
-            <div className="editorial-auth-kicker text-[#D4A84B]">Assessment</div>
-            <p className="mt-3 font-editorialBody text-sm leading-6 text-white/70">
-              Auto-graded MCQs and structured essay review.
-            </p>
-          </div>
-        </div>
-      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.02)_18%,rgba(0,0,0,0.18)_100%)]" />
     </section>
 
-    <section className="editorial-auth-shell flex min-h-screen items-center justify-center px-6 py-10 md:px-12">
+    <section className="editorial-auth-shell flex min-h-screen items-center justify-center px-6 py-8 md:h-screen md:min-h-0 md:px-10 md:py-5">
       <div className="w-full max-w-xl">{children}</div>
     </section>
   </div>
@@ -114,20 +77,16 @@ const LoginPage = () => {
   }
 
   return (
-    <EditorialShell
-      eyebrow="ENVIRONMENTAL PROTECTION AGENCY, PUNJAB"
-      title="Green Force Assessment System"
-      copy="Access schedules, grading, and exam activity through a quieter editorial interface designed for exam delivery and review."
-    >
-      <div className="editorial-auth-card p-8 sm:p-10">
+    <EditorialShell>
+      <div className="editorial-auth-card p-6 sm:p-8">
         <div className="editorial-rule-label">
           <span>Sign In</span>
         </div>
 
         <div className="flex items-start justify-between gap-6">
           <div>
-            <h2 className="editorial-auth-title text-4xl">Welcome back</h2>
-            <p className="editorial-auth-copy mt-4 max-w-md text-base">
+            <h2 className="editorial-auth-title text-3xl sm:text-4xl">Welcome back</h2>
+            <p className="editorial-auth-copy mt-3 max-w-md text-sm sm:text-base">
               Use your institution credentials to continue with exams, monitoring, and grading.
             </p>
           </div>
@@ -136,10 +95,10 @@ const LoginPage = () => {
           </div>
         </div>
 
-        {successMessage ? <div className="editorial-status editorial-status--success mt-8">{successMessage}</div> : null}
-        {errorMessage ? <div className="editorial-status editorial-status--error mt-8">{errorMessage}</div> : null}
+        {successMessage ? <div className="editorial-status editorial-status--success mt-6">{successMessage}</div> : null}
+        {errorMessage ? <div className="editorial-status editorial-status--error mt-6">{errorMessage}</div> : null}
 
-        <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
+        <form className="mt-6 space-y-5" onSubmit={handleSubmit}>
           <label className="block">
             <span className="editorial-input-label">Email address</span>
             <input
@@ -193,7 +152,7 @@ const LoginPage = () => {
           </button>
         </form>
 
-        <p className="editorial-auth-copy mt-8 text-sm">
+        <p className="editorial-auth-copy mt-6 text-sm">
           New student?{' '}
           <Link className="editorial-link font-semibold" to="/signup">
             Sign up with an invite code

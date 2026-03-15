@@ -65,6 +65,22 @@ export const saveAnswer = async (attemptId, questionId, answer) => {
   }
 };
 
+export const saveAnswersBatch = async (attemptId, answers) => {
+  try {
+    const { data } = await api.post('/exam/save-answers-batch', {
+      attemptId,
+      answers,
+    });
+
+    return {
+      savedCount: data.savedCount || 0,
+      questionIds: data.questionIds || [],
+    };
+  } catch (error) {
+    normalizeError(error, 'Failed to save answers');
+  }
+};
+
 export const submitExam = async (attemptId) => {
   try {
     const { data } = await api.post(`/exam/${attemptId}/submit`);

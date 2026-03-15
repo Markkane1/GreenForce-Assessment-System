@@ -46,52 +46,21 @@ const getPasswordScore = (value) => {
   return score;
 };
 
-const EditorialSignupShell = ({ step, children }) => (
-  <div className="min-h-screen md:grid md:grid-cols-[1.05fr_0.95fr]">
-    <section className="editorial-auth-panel relative hidden min-h-screen overflow-hidden px-12 py-14 text-white md:flex md:flex-col md:justify-between">
-      <div className="pointer-events-none absolute inset-0">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top,_rgba(212,168,75,0.18),_transparent_46%)]" />
+const EditorialSignupShell = ({ children }) => (
+  <div className="min-h-screen md:grid md:h-screen md:grid-cols-[1.15fr_0.85fr] md:overflow-hidden">
+    <section className="editorial-auth-panel relative hidden overflow-hidden md:block md:h-screen">
+      <div className="absolute inset-0 flex items-center justify-center bg-[#1f241d] p-4">
+        <img
+          src="/environmental-protection-force-auth.svg"
+          alt="Environmental Protection Force emblem"
+          className="h-full w-full object-contain object-center"
+          style={{ clipPath: 'inset(3.5% 3.5% 3.5% 3.5%)' }}
+        />
       </div>
-
-      <div className="relative z-10 mx-auto max-w-xl text-center">
-        <div className="editorial-rule-label">
-          <span>ENVIRONMENTAL PROTECTION AGENCY, PUNJAB</span>
-        </div>
-        <h1 className="font-editorial text-6xl font-semibold leading-[1.05] tracking-[-0.02em] text-[#FAFAF8]">
-          Green Force Assessment System
-        </h1>
-        <p className="mx-auto mt-8 max-w-lg font-editorialBody text-lg leading-8 tracking-[0.01em] text-white/72">
-          {step === 1
-            ? 'Student registration is invite-gated. Validate your code first, then continue with your account details for the correct group.'
-            : 'Your invite defines the group context. Complete your details once and the system will place you into the assigned cohort.'}
-        </p>
-      </div>
-
-      <div className="relative z-10 flex flex-1 items-center justify-center">
-        <div className="rounded-[2rem] bg-[#F5F5F0] p-5 shadow-[0_24px_60px_rgba(0,0,0,0.28)] ring-1 ring-white/10">
-          <img
-            src="/epa-auth-logo.svg"
-            alt="EPA logo"
-            className="w-[30rem] max-w-[78vw] object-contain"
-          />
-        </div>
-      </div>
-
-      <div className="relative z-10 space-y-4 self-center">
-        <div className="rounded-2xl border border-white/12 bg-white/4 p-6 backdrop-blur-sm">
-          <div className="editorial-auth-kicker text-[#D4A84B]">Process</div>
-          <p className="mt-4 font-editorial text-2xl text-[#FAFAF8]">
-            {step === 1 ? 'Validate before you create.' : 'Create once, join the correct group.'}
-          </p>
-        </div>
-        <div className="flex gap-2">
-          <span className={`editorial-progress-dot ${step >= 1 ? 'editorial-progress-dot--active' : ''}`} />
-          <span className={`editorial-progress-dot ${step >= 2 ? 'editorial-progress-dot--active' : ''}`} />
-        </div>
-      </div>
+      <div className="pointer-events-none absolute inset-0 bg-[linear-gradient(180deg,rgba(0,0,0,0.12)_0%,rgba(0,0,0,0.02)_18%,rgba(0,0,0,0.18)_100%)]" />
     </section>
 
-    <section className="editorial-auth-shell flex min-h-screen items-center justify-center px-6 py-10 md:px-12">
+    <section className="editorial-auth-shell flex min-h-screen items-center justify-center px-6 py-8 md:h-screen md:min-h-0 md:px-10 md:py-5">
       <div className="w-full max-w-xl">{children}</div>
     </section>
   </div>
@@ -269,8 +238,8 @@ const SignupPage = () => {
   }
 
   return (
-    <EditorialSignupShell step={step}>
-      <div className="editorial-auth-card p-8 sm:p-10">
+    <EditorialSignupShell>
+      <div className="editorial-auth-card p-6 sm:p-8">
         {step === 1 ? (
           <>
             <div className="editorial-rule-label">
@@ -281,14 +250,14 @@ const SignupPage = () => {
               <KeyRound size={28} strokeWidth={2.5} />
             </div>
 
-            <h2 className="editorial-auth-title mt-8 text-center text-4xl">Enter invite code</h2>
-            <p className="editorial-auth-copy mx-auto mt-4 max-w-md text-center text-base">
+            <h2 className="editorial-auth-title mt-6 text-center text-3xl sm:text-4xl">Enter invite code</h2>
+            <p className="editorial-auth-copy mx-auto mt-3 max-w-md text-center text-sm sm:text-base">
               You need an invite code from your institution before a student account can be created.
             </p>
 
-            {errorMessage ? <div className="editorial-status editorial-status--error mt-8 text-center">{errorMessage}</div> : null}
+            {errorMessage ? <div className="editorial-status editorial-status--error mt-6 text-center">{errorMessage}</div> : null}
 
-            <form className="mt-8 space-y-6" onSubmit={handleInviteSubmit}>
+            <form className="mt-6 space-y-5" onSubmit={handleInviteSubmit}>
               <label className="block">
                 <span className="editorial-input-label text-center">Invite code</span>
                 <div className={`relative ${shouldShake ? 'animate-shake' : ''}`}>
@@ -315,7 +284,7 @@ const SignupPage = () => {
               </button>
             </form>
 
-            <p className="editorial-auth-copy mt-8 text-center text-sm">
+            <p className="editorial-auth-copy mt-6 text-center text-sm">
               Already have an account?{' '}
               <Link className="editorial-link font-semibold" to="/login">
                 Sign in
@@ -332,8 +301,8 @@ const SignupPage = () => {
               <CheckCircle size={38} strokeWidth={2.5} />
             </div>
 
-            <h2 className="editorial-auth-title mt-8 text-4xl">Welcome aboard</h2>
-            <p className="editorial-auth-copy mx-auto mt-4 max-w-md text-base">
+            <h2 className="editorial-auth-title mt-6 text-3xl sm:text-4xl">Welcome aboard</h2>
+            <p className="editorial-auth-copy mx-auto mt-3 max-w-md text-sm sm:text-base">
               Your account has been created. You have been added to {inviteData?.groupName}.
             </p>
             <p className="editorial-auth-copy mt-4 text-sm">
@@ -348,7 +317,7 @@ const SignupPage = () => {
                   state: { successMessage: 'Account created successfully. Sign in to continue.' },
                 })
               }
-              className="editorial-primary-button mt-8"
+              className="editorial-primary-button mt-6"
             >
               Go to Login
             </button>
@@ -370,18 +339,18 @@ const SignupPage = () => {
               <div className="editorial-auth-pill">Joining: {inviteData?.groupName}</div>
             </div>
 
-            <div className="editorial-rule-label mt-6">
+            <div className="editorial-rule-label mt-4">
               <span>Step Two</span>
             </div>
 
-            <h2 className="editorial-auth-title text-4xl">Create your account</h2>
-            <p className="editorial-auth-copy mt-4 max-w-md text-base">
+            <h2 className="editorial-auth-title text-3xl sm:text-4xl">Create your account</h2>
+            <p className="editorial-auth-copy mt-3 max-w-md text-sm sm:text-base">
               Finish your student account with your name, contact details, and a password.
             </p>
 
-            {errorMessage ? <div className="editorial-status editorial-status--error mt-8">{errorMessage}</div> : null}
+            {errorMessage ? <div className="editorial-status editorial-status--error mt-6">{errorMessage}</div> : null}
 
-            <form className="mt-8 space-y-6" onSubmit={handleAccountSubmit}>
+            <form className="mt-6 space-y-4" onSubmit={handleAccountSubmit}>
               <label className="block">
                 <span className="editorial-input-label">Full name</span>
                 <input

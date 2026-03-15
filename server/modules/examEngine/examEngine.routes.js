@@ -6,6 +6,7 @@ import {
   getAttemptStatus,
   getMyAttempts,
   saveAnswer,
+  saveAnswersBatch,
   startExam,
   submitExam,
 } from './examEngine.controller.js';
@@ -15,6 +16,7 @@ const router = Router();
 router.use(protect, authorize('student'));
 
 router.post('/start', startExam);
+router.post('/save-answers-batch', saveAnswersBatch);
 router.get('/my-attempts', getMyAttempts);
 router.get('/:attemptId/questions', getAttemptQuestions);
 router.get('/:attemptId/results', getAttemptResults);

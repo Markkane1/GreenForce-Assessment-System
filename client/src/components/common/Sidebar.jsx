@@ -51,9 +51,9 @@ const Sidebar = () => {
         </div>
         <div className="flex items-center gap-4">
           <img
-            src="/epa-logo.svg"
-            alt="EPA logo"
-            className="h-12 w-auto max-w-[4.5rem] shrink-0 object-contain"
+            src="/environmental-protection-force-circular.svg"
+            alt="Environmental Protection Force logo"
+            className="h-12 w-12 shrink-0 rounded-full border border-border bg-card object-cover shadow-editorialSm"
           />
           <div className="min-w-0">
             <p className="font-heading text-[1.25rem] font-semibold leading-tight text-foreground">EPA Punjab</p>

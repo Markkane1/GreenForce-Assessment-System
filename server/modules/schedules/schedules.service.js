@@ -6,6 +6,17 @@ import StudentGroup from '../../models/StudentGroup.js';
 import Test from '../../models/Test.js';
 import TestAttempt from '../../models/TestAttempt.js';
 import TestSchedule from '../../models/TestSchedule.js';
+import { createTtlCache } from '../../utils/ttlCache.js';
+
+const STUDENT_SCHEDULE_BASE_CACHE_TTL_MS = Number.parseInt(
+  process.env.STUDENT_SCHEDULE_CACHE_TTL_MS || '15000',
+  10,
+);
+const studentScheduleBaseCache = createTtlCache({
+  ttlMs: Number.isFinite(STUDENT_SCHEDULE_BASE_CACHE_TTL_MS)
+    ? STUDENT_SCHEDULE_BASE_CACHE_TTL_MS
+    : 15000,
+});
 
 const buildPopulatedScheduleQuery = (query) =>
   query
@@ -183,6 +194,7 @@ export const createSchedule = async (testId, startTime, endTime, assignedGroups,
     endTime: end,
     assignedGroups: validGroupIds,
   });
+  studentScheduleBaseCache.clear();
 
   return buildPopulatedScheduleQuery(TestSchedule.findById(schedule._id));
 };
@@ -195,14 +207,33 @@ export const getSchedulesForTeacher = async (teacherId) => {
 };
 
 export const getSchedulesForStudent = async (studentId) => {
-  const memberships = await GroupMember.find({ studentId }).select('groupId');
-  const groupIds = memberships.map((membership) => membership.groupId);
+  const groupIds = await GroupMember
+    .distinct('groupId', { studentId });
 
-  const schedules = await buildPopulatedScheduleQuery(
+  if (groupIds.length === 0) {
+    return [];
+  }
+
+  const scheduleCacheKey = `student-schedules:${groupIds.map((groupId) => groupId.toString()).sort().join(',')}`;
+  const schedules = await studentScheduleBaseCache.getOrSet(scheduleCacheKey, async () =>
     TestSchedule.find({
       assignedGroups: { $in: groupIds },
       endTime: { $gte: new Date() },
-    }).sort({ startTime: 1 }),
+    })
+      .sort({ startTime: 1 })
+      .populate({
+        path: 'testId',
+        select: 'title timeLimitMinutes passingScore maxAttempts allowResume antiCheat createdBy',
+        populate: {
+          path: 'createdBy',
+          select: 'name email',
+        },
+      })
+      .populate({
+        path: 'assignedGroups',
+        select: 'name',
+      })
+      .lean(),
   );
 
   if (schedules.length === 0) {
@@ -235,7 +266,7 @@ export const getSchedulesForStudent = async (studentId) => {
     const maxAttempts = schedule.testId?.maxAttempts || 0;
 
     return {
-      ...schedule.toObject(),
+      ...schedule,
       attemptsTaken,
       hasAttemptsLeft: attemptsTaken < maxAttempts,
     };
@@ -292,6 +323,7 @@ export const updateSchedule = async (id, data, teacherId, role = 'teacher') => {
   }
 
   await schedule.save();
+  studentScheduleBaseCache.clear();
 
   return buildPopulatedScheduleQuery(TestSchedule.findById(schedule._id));
 };
@@ -301,6 +333,7 @@ export const deleteSchedule = async (id, teacherId, role = 'teacher') => {
   ensureTeacherOwnsTest(schedule.testId, teacherId, role);
 
   await TestSchedule.findByIdAndDelete(id);
+  studentScheduleBaseCache.clear();
 
   return {
     success: true,
@@ -322,36 +355,51 @@ export const getActiveAttempts = async (scheduleId, teacherId, role = 'teacher')
   })
     .populate('studentId', 'name email')
     .sort({ startedAt: 1 });
+  const answeredCounts = attempts.length > 0
+    ? await Answer.aggregate([
+      {
+        $match: {
+          attemptId: { $in: attempts.map((attempt) => attempt._id) },
+        },
+      },
+      {
+        $group: {
+          _id: '$attemptId',
+          answeredCount: { $sum: 1 },
+        },
+      },
+    ])
+    : [];
+  const answeredCountByAttemptId = new Map(
+    answeredCounts.map((entry) => [entry._id.toString(), entry.answeredCount]),
+  );
   const scheduleEndTime = new Date(schedule.endTime).getTime();
   const examDurationSeconds = schedule.testId.timeLimitMinutes * 60;
 
-  const attemptsWithMetrics = await Promise.all(
-    attempts.map(async (attempt) => {
-      const answeredCount = await Answer.countDocuments({ attemptId: attempt._id });
-      const elapsedSeconds = Math.max(
-        Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000),
-        0,
-      );
-      const timeRemainingByLimit = Math.max(examDurationSeconds - elapsedSeconds, 0);
-      const timeRemainingBySchedule = Math.max(
-        Math.floor((scheduleEndTime - Date.now()) / 1000),
-        0,
-      );
+  const attemptsWithMetrics = attempts.map((attempt) => {
+    const elapsedSeconds = Math.max(
+      Math.floor((Date.now() - new Date(attempt.startedAt).getTime()) / 1000),
+      0,
+    );
+    const timeRemainingByLimit = Math.max(examDurationSeconds - elapsedSeconds, 0);
+    const timeRemainingBySchedule = Math.max(
+      Math.floor((scheduleEndTime - Date.now()) / 1000),
+      0,
+    );
 
-      return {
-        attemptId: attempt._id,
-        studentName: attempt.studentId?.name || 'Unknown Student',
-        studentEmail: attempt.studentId?.email || '',
-        startedAt: attempt.startedAt,
-        elapsedSeconds,
-        remainingSeconds: Math.min(timeRemainingByLimit, timeRemainingBySchedule),
-        answeredCount,
-        totalQuestions: Array.isArray(attempt.questionOrder) ? attempt.questionOrder.length : 0,
-        violationsCount: attempt.violationsCount || 0,
-        status: attempt.status,
-      };
-    }),
-  );
+    return {
+      attemptId: attempt._id,
+      studentName: attempt.studentId?.name || 'Unknown Student',
+      studentEmail: attempt.studentId?.email || '',
+      startedAt: attempt.startedAt,
+      elapsedSeconds,
+      remainingSeconds: Math.min(timeRemainingByLimit, timeRemainingBySchedule),
+      answeredCount: answeredCountByAttemptId.get(attempt._id.toString()) || 0,
+      totalQuestions: Array.isArray(attempt.questionOrder) ? attempt.questionOrder.length : 0,
+      violationsCount: attempt.violationsCount || 0,
+      status: attempt.status,
+    };
+  });
 
   return {
     schedule: {
@@ -363,4 +411,8 @@ export const getActiveAttempts = async (scheduleId, teacherId, role = 'teacher')
     violationThreshold,
     attempts: attemptsWithMetrics,
   };
+};
+
+export const invalidateStudentScheduleCache = () => {
+  studentScheduleBaseCache.clear();
 };
