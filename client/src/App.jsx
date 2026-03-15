@@ -146,6 +146,14 @@ const AppRoutes = () => (
               </RoleRoute>
             }
           />
+          <Route
+            path="/teacher/grade/:scheduleId"
+            element={
+              <RoleRoute allowedRoles={['teacher', 'admin']}>
+                <GradingPage />
+              </RoleRoute>
+            }
+          />
           <Route path="/teacher/grading" element={<Navigate to="/teacher/grade" replace />} />
           <Route
             path="/teacher/monitor/:id"

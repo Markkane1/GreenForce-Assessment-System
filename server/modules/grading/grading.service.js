@@ -361,6 +361,8 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
         marksObtained: 0,
         passFailStatus: 'Fail',
         cheatingTries: 0,
+        disruptedByCheating: 'No',
+        startedAt: null,
         submittedAt: null,
         attemptId: null,
       };
@@ -398,6 +400,8 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
       marksObtained: attempt.score || 0,
       passFailStatus: hasPendingEssay ? 'Pending' : passed ? 'Pass' : 'Fail',
       cheatingTries: attempt.violationsCount || 0,
+      disruptedByCheating: attempt.status === 'force_submitted' ? 'Yes' : 'No',
+      startedAt: attempt.startedAt || null,
       submittedAt: attempt.submittedAt || null,
       attemptId: attempt._id,
     };

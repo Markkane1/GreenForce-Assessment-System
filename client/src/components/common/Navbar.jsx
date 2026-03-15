@@ -16,7 +16,7 @@ const Navbar = ({ title }) => {
     <header className="sticky top-0 z-30 flex flex-col gap-3 border-b border-border bg-card/95 px-4 py-4 backdrop-blur-sm sm:px-6 lg:h-20 lg:flex-row lg:items-center lg:justify-between lg:px-8 lg:py-0">
       <div className="flex min-w-0 items-center gap-4">
         <img
-          src="/environmental-protection-force-circular.svg"
+          src="/environmental-protection-force-circular.png"
           alt="Environmental Protection Force logo"
           className="h-12 w-12 shrink-0 rounded-full border border-border bg-card object-cover shadow-editorialSm"
         />

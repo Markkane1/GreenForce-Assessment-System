@@ -187,11 +187,35 @@ const submissionContentMap = {
   },
 };
 
+const INACTIVE_ATTEMPT_MESSAGES = [
+  'Exam attempt is not active.',
+  'Exam time has expired.',
+  'Exam window has closed',
+  'Exam already submitted',
+];
+
+const isInactiveAttemptError = (error) =>
+  error?.statusCode === 409
+  && INACTIVE_ATTEMPT_MESSAGES.some((message) => error.message?.includes(message));
+
+const getSubmissionReasonFromStatus = (status) => {
+  if (status === 'force_submitted') {
+    return 'force';
+  }
+
+  if (status === 'expired') {
+    return 'timeout';
+  }
+
+  return 'manual';
+};
+
 const ExamPage = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const { id: scheduleId } = useParams();
   const prevFullscreenRef = useRef(false);
+  const inactiveAttemptResolutionRef = useRef(false);
 
   const [examPhase, setExamPhase] = useState('confirm');
   const [schedulePreview, setSchedulePreview] = useState(null);
@@ -217,6 +241,7 @@ const ExamPage = () => {
   const [violationThreshold, setViolationThreshold] = useState(3);
   const [submissionReason, setSubmissionReason] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(RESULT_REDIRECT_SECONDS);
+  const [isAttemptInactive, setIsAttemptInactive] = useState(false);
   const { enter, exit, isFullscreen, isSupported, isMobile: fullscreenIsMobile } = useFullscreen();
 
   const sections = useMemo(() => buildSections(questions), [questions]);
@@ -287,9 +312,17 @@ const ExamPage = () => {
     enabled: Boolean(
       attempt?._id
       && attempt.status === 'in_progress'
-      && ['active', 'expiring'].includes(examPhase),
+      && ['active', 'expiring'].includes(examPhase)
+      && !isAttemptInactive
     ),
-    onError: (error) => setErrorMessage(error.message || 'Unable to save your answers.'),
+    onError: (error) => {
+      if (isInactiveAttemptError(error)) {
+        void resolveInactiveAttemptState(error);
+        return;
+      }
+
+      setErrorMessage(error.message || 'Unable to save your answers.');
+    },
     intervalMs: 60000,
   });
 
@@ -347,12 +380,43 @@ const ExamPage = () => {
       setExamPhase('submitted');
       setSubmissionReason(reason);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
+      setIsAttemptInactive(true);
       clearDraftAnswers(resolvedAttempt._id);
       sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
       sessionStorage.setItem(LAST_RESULT_KEY, resolvedAttempt._id);
       await exit().catch(() => {});
     },
     [attempt, clearDraftAnswers, exit, scheduleId],
+  );
+
+  const resolveInactiveAttemptState = useCallback(
+    async (sourceError = null) => {
+      if (!attempt?._id || inactiveAttemptResolutionRef.current) {
+        return;
+      }
+
+      inactiveAttemptResolutionRef.current = true;
+      setIsAttemptInactive(true);
+
+      try {
+        const nextAttempt = await examService.getAttemptStatus(attempt._id);
+        setAttempt(nextAttempt);
+
+        if (['submitted', 'force_submitted', 'expired'].includes(nextAttempt.status)) {
+          await finalizeSubmissionState(getSubmissionReasonFromStatus(nextAttempt.status), nextAttempt);
+          return;
+        }
+
+        setIsAttemptInactive(false);
+        setErrorMessage(sourceError?.message || 'The exam state changed. Please try again.');
+      } catch {
+        setErrorMessage(sourceError?.message || 'Your exam is no longer active.');
+        sessionStorage.removeItem(getActiveAttemptKey(scheduleId));
+      } finally {
+        inactiveAttemptResolutionRef.current = false;
+      }
+    },
+    [attempt?._id, finalizeSubmissionState, scheduleId],
   );
 
   const handleForceSubmit = useCallback(async () => {
@@ -725,6 +789,7 @@ const ExamPage = () => {
       setNextSectionInfo(null);
       setSubmissionReason(null);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
+      setIsAttemptInactive(false);
       setTimerSeconds(response.resumed ? response.remainingSeconds : response.attempt.remainingTimeSeconds);
       setResumeBanner(response.resumed ? `Resuming your exam — ${formatMmSs(response.remainingSeconds)} remaining` : '');
       setHasBeenFullscreen(false);
@@ -758,6 +823,11 @@ const ExamPage = () => {
       setNextSectionInfo(null);
       setCurrentIndex(nextIndex);
     } catch (error) {
+      if (isInactiveAttemptError(error)) {
+        await resolveInactiveAttemptState(error);
+        return;
+      }
+
       setErrorMessage(error.message || 'Unable to save your answers.');
     }
   };
@@ -789,6 +859,11 @@ const ExamPage = () => {
 
       setCurrentIndex(currentIndex + 1);
     } catch (error) {
+      if (isInactiveAttemptError(error)) {
+        await resolveInactiveAttemptState(error);
+        return;
+      }
+
       setErrorMessage(error.message || 'Unable to save your answers.');
     }
   };
@@ -823,6 +898,11 @@ const ExamPage = () => {
       ]);
       await finalizeSubmissionState('manual', submittedAttempt);
     } catch (error) {
+      if (isInactiveAttemptError(error)) {
+        await resolveInactiveAttemptState(error);
+        return;
+      }
+
       setErrorMessage(error.message || 'Unable to submit the exam.');
       setIsSubmitting(false);
       setExamPhase('active');
@@ -840,8 +920,10 @@ const ExamPage = () => {
   const handleRetrySave = async () => {
     try {
       await retrySave();
-    } catch {
-      // The hook already updates save state and error handling.
+    } catch (error) {
+      if (isInactiveAttemptError(error)) {
+        await resolveInactiveAttemptState(error);
+      }
     }
   };
 

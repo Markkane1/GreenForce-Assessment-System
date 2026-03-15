@@ -1,6 +1,11 @@
 node_modules
 client/dist/
 server/dist/
+.env
+.env.*
+!.env.example
+!client/.env.example
+!server/.env.example
 AGENTS.md
 docs/
 .qa-screens/

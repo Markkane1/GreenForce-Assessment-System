@@ -1,5 +1,6 @@
-import { ArrowRight, CheckCircle2, FileSpreadsheet, FileText, GraduationCap, ShieldAlert, UserX } from 'lucide-react';
+import { ArrowLeft, ArrowRight, CheckCircle2, FileSpreadsheet, FileText, GraduationCap, ShieldAlert, UserX } from 'lucide-react';
 import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate, useParams } from 'react-router-dom';
 import Badge from '../../components/common/Badge';
 import DashboardLayout from '../../components/common/DashboardLayout';
 import LoadingSpinner from '../../components/common/LoadingSpinner';
@@ -39,10 +40,13 @@ const buildPrintableReportHtml = (report) => {
         <tr>
           <td>${escapeHtml(row.candidateName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
+          <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
           <td>${row.questionsAttempted}</td>
           <td>${row.correctQuestions}</td>
           <td>${row.wrongQuestions}</td>
           <td>${row.marksObtained}</td>
+          <td>${row.cheatingTries || 0}</td>
+          <td>${escapeHtml(row.disruptedByCheating || 'No')}</td>
           <td>${escapeHtml(row.passFailStatus)}</td>
         </tr>
       `,
@@ -150,7 +154,30 @@ const buildPrintableReportHtml = (report) => {
             padding: 14px 12px;
             border-top: 1px solid var(--border);
           }
+          @media print {
+            body {
+              padding: 0;
+              background: #FFFFFF;
+            }
+            .page {
+              border: none;
+              border-radius: 0;
+              padding: 0;
+            }
+          }
         </style>
+        <script>
+          window.addEventListener('load', () => {
+            window.setTimeout(() => {
+              window.focus();
+              window.print();
+            }, 250);
+          });
+
+          window.addEventListener('afterprint', () => {
+            window.close();
+          });
+        </script>
       </head>
       <body>
         <div class="page">
@@ -158,7 +185,7 @@ const buildPrintableReportHtml = (report) => {
           <h1>${escapeHtml(report.test.title)}</h1>
           <div class="meta">
             Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}<br />
-            Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} — ${escapeHtml(formatDateTime(report.schedule.endTime))}<br />
+            Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}<br />
             Cheating Tries Recorded: ${report.totalViolations}
           </div>
           <div class="summary">
@@ -184,10 +211,13 @@ const buildPrintableReportHtml = (report) => {
               <tr>
                 <th>Candidate Name</th>
                 <th>Attendance Status</th>
+                <th>Start Time</th>
                 <th>Questions Attempted</th>
                 <th>Correct Questions</th>
                 <th>Wrong Questions</th>
                 <th>Marks Obtained</th>
+                <th>Cheating Tries</th>
+                <th>Disrupted by Cheating</th>
                 <th>Pass/Fail Status</th>
               </tr>
             </thead>
@@ -206,10 +236,13 @@ const exportScheduleAsExcel = (report) => {
         <tr>
           <td>${escapeHtml(row.candidateName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
+          <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
           <td>${row.questionsAttempted}</td>
           <td>${row.correctQuestions}</td>
           <td>${row.wrongQuestions}</td>
           <td>${row.marksObtained}</td>
+          <td>${row.cheatingTries || 0}</td>
+          <td>${escapeHtml(row.disruptedByCheating || 'No')}</td>
           <td>${escapeHtml(row.passFailStatus)}</td>
         </tr>
       `,
@@ -223,10 +256,10 @@ const exportScheduleAsExcel = (report) => {
       </head>
       <body>
         <table>
-          <tr><td colspan="7"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
-          <tr><td colspan="7">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
-          <tr><td colspan="7">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} — ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
-          <tr><td colspan="7">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
+          <tr><td colspan="10"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
+          <tr><td colspan="10">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
+          <tr><td colspan="10">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
+          <tr><td colspan="10">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
         </table>
         <br />
         <table border="1">
@@ -234,10 +267,13 @@ const exportScheduleAsExcel = (report) => {
             <tr>
               <th>Candidate Name</th>
               <th>Attendance Status</th>
+              <th>Start Time</th>
               <th>Questions Attempted</th>
               <th>Correct Questions</th>
               <th>Wrong Questions</th>
               <th>Marks Obtained</th>
+              <th>Cheating Tries</th>
+              <th>Disrupted by Cheating</th>
               <th>Pass/Fail Status</th>
             </tr>
           </thead>
@@ -257,7 +293,7 @@ const exportScheduleAsExcel = (report) => {
 };
 
 const exportScheduleAsPdf = (report) => {
-  const printableWindow = window.open('', '_blank', 'noopener,noreferrer,width=1100,height=900');
+  const printableWindow = window.open('', '_blank', 'width=1280,height=900');
 
   if (!printableWindow) {
     throw new Error('Unable to open the print window. Please allow pop-ups and try again.');
@@ -266,11 +302,11 @@ const exportScheduleAsPdf = (report) => {
   printableWindow.document.open();
   printableWindow.document.write(buildPrintableReportHtml(report));
   printableWindow.document.close();
-  printableWindow.focus();
-  printableWindow.print();
 };
 
 const GradingPage = () => {
+  const navigate = useNavigate();
+  const { scheduleId = '' } = useParams();
   const [schedules, setSchedules] = useState([]);
   const [selectedScheduleId, setSelectedScheduleId] = useState('');
   const [scheduleReport, setScheduleReport] = useState(null);
@@ -285,6 +321,7 @@ const GradingPage = () => {
   const [isFinalizing, setIsFinalizing] = useState(false);
   const [statusMessage, setStatusMessage] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
+  const isDetailView = Boolean(scheduleId);
 
   const loadAttemptDetail = useCallback(async (attemptId) => {
     if (!attemptId) {
@@ -348,24 +385,34 @@ const GradingPage = () => {
     try {
       const concludedSchedules = await gradingService.getConcludedSchedules();
       setSchedules(concludedSchedules);
-
-      const firstScheduleId = concludedSchedules[0]?._id || '';
-      setSelectedScheduleId(firstScheduleId);
-      await loadScheduleWorkspace(firstScheduleId);
     } catch (error) {
       setErrorMessage(error.message || 'Unable to load concluded schedules.');
     } finally {
       setIsSchedulesLoading(false);
     }
-  }, [loadScheduleWorkspace]);
+  }, []);
 
   useEffect(() => {
     loadSchedules();
   }, [loadSchedules]);
 
-  const handleSelectSchedule = async (scheduleId) => {
+  useEffect(() => {
     setSelectedScheduleId(scheduleId);
-    await loadScheduleWorkspace(scheduleId);
+
+    if (!scheduleId) {
+      loadScheduleWorkspace('');
+      return;
+    }
+
+    loadScheduleWorkspace(scheduleId);
+  }, [loadScheduleWorkspace, scheduleId]);
+
+  const handleOpenSchedule = (nextScheduleId) => {
+    navigate(`/teacher/grade/${nextScheduleId}`);
+  };
+
+  const handleBackToQueue = () => {
+    navigate('/teacher/grade');
   };
 
   const handleDraftChange = (answerId, field, value) => {
@@ -444,7 +491,7 @@ const GradingPage = () => {
           </div>
           <h2 className="editorial-page-title">Concluded Schedules</h2>
           <p className="editorial-page-copy">
-            Review finished schedules, grade pending essays, and export complete result reports.
+            Review finished schedules and open a dedicated result workspace for grading and exports.
           </p>
         </div>
       </section>
@@ -461,89 +508,115 @@ const GradingPage = () => {
         </div>
       ) : null}
 
-      <section className="mt-8 grid gap-8 xl:grid-cols-[360px,1fr]">
-        <aside className="editorial-panel p-5">
-          <div className="flex items-center gap-3">
-            <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-accentSubtle shadow-card">
-              <GraduationCap size={20} strokeWidth={2.5} className="text-accent" />
-            </div>
-            <div>
-              <h3 className="text-2xl font-semibold text-foreground">Schedule Queue</h3>
-              <p className="text-sm text-mutedFg">Every completed schedule appears here.</p>
-            </div>
-          </div>
-
-          <div className="mt-6 space-y-3">
-            {isSchedulesLoading ? <LoadingSpinner /> : null}
-            {!isSchedulesLoading && schedules.length === 0 ? (
-              <div className="rounded-lg border border-dashed border-border bg-surfaceAlt p-6 text-center text-sm text-mutedFg">
-                No concluded schedules are ready yet.
+      <section className="mt-8 space-y-8">
+        {!isDetailView ? (
+          <aside className="editorial-panel p-5">
+            <div className="flex items-center gap-3">
+              <div className="flex h-12 w-12 items-center justify-center rounded-md border border-border bg-accentSubtle shadow-card">
+                <GraduationCap size={20} strokeWidth={2.5} className="text-accent" />
               </div>
-            ) : null}
-            {!isSchedulesLoading &&
-              schedules.map((schedule) => (
-                <button
-                  key={schedule._id}
-                  type="button"
-                  onClick={() => handleSelectSchedule(schedule._id)}
-                  className={`w-full rounded-lg border p-4 text-left transition-colors ${
-                    selectedScheduleId === schedule._id
-                      ? 'border-accent bg-accentSubtle'
-                      : 'border-border bg-surface hover:bg-surfaceAlt'
-                  }`}
-                >
-                  <div className="flex items-start justify-between gap-4">
-                    <div>
-                      <p className="font-semibold text-foreground">{schedule.testTitle}</p>
-                      <p className="mt-1 text-sm text-mutedFg">
-                        {formatDateTime(schedule.startTime)} {'\u2014'} {formatDateTime(schedule.endTime)}
-                      </p>
-                    </div>
-                    <Badge tone={schedule.gradingStatus === 'ready' ? 'quaternary' : 'tertiary'}>
-                      {schedule.gradingStatus === 'ready' ? 'Ready' : 'Pending'}
-                    </Badge>
-                  </div>
-                  <div className="mt-4 flex flex-wrap gap-2 text-xs text-mutedFg">
-                    <span>{schedule.attendanceCount} present</span>
-                    <span>&bull;</span>
-                    <span>{schedule.absentCount} absent</span>
-                    <span>&bull;</span>
-                    <span>{schedule.totalViolations} cheating tries</span>
-                  </div>
-                  <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent">
-                    {schedule.gradingStatus === 'ready' ? 'Open Report' : 'Review Grading'}
-                    <ArrowRight size={16} strokeWidth={2.5} />
-                  </div>
-                </button>
-              ))}
-          </div>
-        </aside>
+              <div>
+                <h3 className="text-2xl font-semibold text-foreground">Schedule Queue</h3>
+                <p className="text-sm text-mutedFg">Every completed schedule appears here.</p>
+              </div>
+            </div>
 
-        <section className="space-y-6">
-          <div className="editorial-panel p-6">
+            <div className="mt-6">
+              {isSchedulesLoading ? <LoadingSpinner /> : null}
+              {!isSchedulesLoading && schedules.length === 0 ? (
+                <div className="rounded-lg border border-dashed border-border bg-surfaceAlt p-6 text-center text-sm text-mutedFg">
+                  No concluded schedules are ready yet.
+                </div>
+              ) : null}
+              {!isSchedulesLoading ? (
+                <div className="grid gap-4 lg:grid-cols-2 2xl:grid-cols-3">
+                  {schedules.map((schedule) => (
+                    <button
+                      key={schedule._id}
+                      type="button"
+                      onClick={() => handleOpenSchedule(schedule._id)}
+                      className={`rounded-lg border p-5 text-left transition-colors ${
+                        selectedScheduleId === schedule._id
+                          ? 'border-accent bg-accentSubtle'
+                          : 'border-border bg-surface hover:bg-surfaceAlt'
+                      }`}
+                    >
+                      <div className="flex items-start justify-between gap-4">
+                        <div>
+                          <p className="font-semibold text-foreground">{schedule.testTitle}</p>
+                          <p className="mt-1 text-sm text-mutedFg">
+                            {formatDateTime(schedule.startTime)} {'\u2014'} {formatDateTime(schedule.endTime)}
+                          </p>
+                        </div>
+                        <Badge tone={schedule.gradingStatus === 'ready' ? 'quaternary' : 'tertiary'}>
+                          {schedule.gradingStatus === 'ready' ? 'Ready' : 'Pending'}
+                        </Badge>
+                      </div>
+                      <div className="mt-4 flex flex-wrap gap-2 text-xs text-mutedFg">
+                        <span>{schedule.attendanceCount} present</span>
+                        <span>&bull;</span>
+                        <span>{schedule.absentCount} absent</span>
+                        <span>&bull;</span>
+                        <span>{schedule.totalViolations} cheating tries</span>
+                      </div>
+                      <div className="mt-4 inline-flex items-center gap-2 text-sm font-semibold text-accent">
+                        {schedule.gradingStatus === 'ready' ? 'Open Report' : 'Review Grading'}
+                        <ArrowRight size={16} strokeWidth={2.5} />
+                      </div>
+                    </button>
+                  ))}
+                </div>
+              ) : null}
+            </div>
+          </aside>
+        ) : null}
+
+        {isDetailView ? (
+          <section className="space-y-6">
+          <div className="editorial-panel p-5">
             {isReportLoading ? <LoadingSpinner /> : null}
 
             {!isReportLoading && !scheduleReport ? (
               <div className="flex min-h-[320px] items-center justify-center text-center text-mutedFg">
-                Select a concluded schedule to review grading and export results.
+                Unable to load this schedule workspace.
               </div>
             ) : null}
 
             {!isReportLoading && scheduleReport ? (
               <div>
-                <div className="flex flex-col gap-6 lg:flex-row lg:items-start lg:justify-between">
-                  <div>
+                <button
+                  type="button"
+                  onClick={handleBackToQueue}
+                  className="editorial-button-secondary mb-5"
+                >
+                  <ArrowLeft size={18} strokeWidth={2.5} />
+                  Back to Queue
+                </button>
+
+                <div className="flex flex-col items-center gap-4 text-center">
+                  <div className="max-w-4xl">
                     <div className="editorial-section-label">
                       <span>Schedule Report</span>
                     </div>
-                    <h3 className="mt-3 text-3xl font-semibold text-foreground">{scheduleReport.test.title}</h3>
-                    <p className="mt-3 text-sm leading-7 text-mutedFg">
-                      Conducting Officer: {scheduleReport.test.conductingOfficer}
-                      <br />
-                      Schedule Window: {formatDateTime(scheduleReport.schedule.startTime)} {'\u2014'} {formatDateTime(scheduleReport.schedule.endTime)}
-                      <br />
-                      Assigned Groups: {scheduleReport.schedule.assignedGroups.map((group) => group.name).join(', ')}
-                    </p>
+                    <h3 className="mt-2 text-3xl font-semibold text-foreground">{scheduleReport.test.title}</h3>
+                    <div className="mt-3 space-y-1 text-base leading-7 text-mutedFg">
+                      <p>
+                        Conducting Officer:{' '}
+                        <span className="font-semibold text-foreground">{scheduleReport.test.conductingOfficer}</span>
+                      </p>
+                      <p>
+                        Schedule Window:{' '}
+                        <span className="font-semibold text-foreground">
+                          {formatDateTime(scheduleReport.schedule.startTime)} {'\u2014'} {formatDateTime(scheduleReport.schedule.endTime)}
+                        </span>
+                      </p>
+                      <p>
+                        Assigned Groups:{' '}
+                        <span className="font-semibold text-foreground">
+                          {scheduleReport.schedule.assignedGroups.map((group) => group.name).join(', ')}
+                        </span>
+                      </p>
+                    </div>
                   </div>
                   <div className="grid gap-3 sm:grid-cols-2">
                     <button
@@ -567,7 +640,7 @@ const GradingPage = () => {
                   </div>
                 </div>
 
-                <div className="mt-6 grid gap-4 md:grid-cols-4">
+                <div className="mt-5 grid gap-4 md:grid-cols-4">
                   {[
                     { label: 'Assigned', value: scheduleReport.candidateRows.length, icon: GraduationCap },
                     {
@@ -598,17 +671,20 @@ const GradingPage = () => {
                   })}
                 </div>
 
-                <div className="mt-6 overflow-x-auto">
+                <div className="mt-5 overflow-x-auto">
                   <table className="editorial-table">
                     <thead>
                       <tr>
                         {[
                           'Candidate Name',
                           'Attendance Status',
+                          'Start Time',
                           'Questions Attempted',
                           'Correct Questions',
                           'Wrong Questions',
                           'Marks Obtained',
+                          'Cheating Tries',
+                          'Disrupted by Cheating',
                           'Pass/Fail Status',
                         ].map((heading) => (
                           <th key={heading}>{heading}</th>
@@ -629,6 +705,9 @@ const GradingPage = () => {
                               {row.attendanceStatus}
                             </Badge>
                           </td>
+                          <td className="border-y-2 border-border bg-background px-4 py-4 text-sm text-foreground">
+                            {formatDateTime(row.startedAt)}
+                          </td>
                           <td className="border-y-2 border-border bg-background px-4 py-4 font-semibold text-foreground">
                             {row.questionsAttempted}
                           </td>
@@ -640,6 +719,14 @@ const GradingPage = () => {
                           </td>
                           <td className="border-y-2 border-border bg-background px-4 py-4 font-semibold text-foreground">
                             {row.marksObtained}
+                          </td>
+                          <td className="border-y-2 border-border bg-background px-4 py-4 font-semibold text-foreground">
+                            {row.cheatingTries || 0}
+                          </td>
+                          <td className="border-y-2 border-border bg-background px-4 py-4">
+                            <Badge tone={row.disruptedByCheating === 'Yes' ? 'secondary' : 'neutral'}>
+                              {row.disruptedByCheating || 'No'}
+                            </Badge>
                           </td>
                           <td className="rounded-r-[1.25rem] border-y-2 border-r-2 border-border bg-background px-4 py-4">
                             <Badge
@@ -766,7 +853,8 @@ const GradingPage = () => {
               </div>
             </div>
           ) : null}
-        </section>
+          </section>
+        ) : null}
       </section>
     </DashboardLayout>
   );

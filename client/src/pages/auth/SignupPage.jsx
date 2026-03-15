@@ -51,7 +51,7 @@ const EditorialSignupShell = ({ children }) => (
     <section className="editorial-auth-panel relative hidden overflow-hidden md:block md:h-screen">
       <div className="absolute inset-0 flex items-center justify-center bg-[#1f241d] p-4">
         <img
-          src="/environmental-protection-force-auth.svg"
+          src="/environmental-protection-force-auth.jpg"
           alt="Environmental Protection Force emblem"
           className="h-full w-full object-contain object-center"
           style={{ clipPath: 'inset(3.5% 3.5% 3.5% 3.5%)' }}

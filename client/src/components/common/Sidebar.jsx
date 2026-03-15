@@ -51,7 +51,7 @@ const Sidebar = () => {
         </div>
         <div className="flex items-center gap-4">
           <img
-            src="/environmental-protection-force-circular.svg"
+            src="/environmental-protection-force-circular.png"
             alt="Environmental Protection Force logo"
             className="h-12 w-12 shrink-0 rounded-full border border-border bg-card object-cover shadow-editorialSm"
           />

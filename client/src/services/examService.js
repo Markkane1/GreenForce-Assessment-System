@@ -1,7 +1,11 @@
 import api from './api';
 
 const normalizeError = (error, fallbackMessage) => {
-  throw new Error(error.response?.data?.message || fallbackMessage);
+  const normalizedError = new Error(error.response?.data?.message || fallbackMessage);
+  normalizedError.statusCode = error.response?.status || null;
+  normalizedError.code = error.code || null;
+  normalizedError.details = error.response?.data || null;
+  throw normalizedError;
 };
 
 const sanitizeQuestions = (questions = []) =>

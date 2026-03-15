@@ -2,6 +2,11 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { saveAnswersBatch as saveAnswersBatchRequest } from '../services/examService';
 
 const DEFAULT_INTERVAL_MS = 60000;
+const INACTIVE_ATTEMPT_MESSAGES = [
+  'Exam attempt is not active.',
+  'Exam time has expired.',
+  'Exam window has closed',
+];
 
 const hasSavableAnswer = (answer) => {
   if (!answer) {
@@ -25,6 +30,10 @@ const normalizeAnswer = (answer = {}) => ({
 });
 
 const getDraftStorageKey = (attemptId) => `exam_pending_answers_${attemptId}`;
+
+const isInactiveAttemptError = (error) =>
+  error?.statusCode === 409
+  && INACTIVE_ATTEMPT_MESSAGES.some((message) => error.message?.includes(message));
 
 const readDraftEntries = (attemptId) => {
   if (!attemptId || typeof window === 'undefined') {
@@ -94,10 +103,12 @@ const useAutosave = ({
   const activeAttemptIdRef = useRef(attemptId);
   const flushPromiseRef = useRef(null);
   const flushQueuedRef = useRef(false);
+  const autosaveHaltedRef = useRef(false);
 
   useEffect(() => {
     activeAttemptIdRef.current = attemptId;
     dirtyAnswersRef.current = readDraftEntries(attemptId);
+    autosaveHaltedRef.current = false;
 
     if (!attemptId) {
       setLastSaved(null);
@@ -110,7 +121,7 @@ const useAutosave = ({
   const queueAnswer = useCallback((questionId, answer) => {
     const activeAttemptId = activeAttemptIdRef.current;
 
-    if (!activeAttemptId || !questionId) {
+    if (!activeAttemptId || !questionId || autosaveHaltedRef.current) {
       return;
     }
 
@@ -148,7 +159,7 @@ const useAutosave = ({
   const flushPendingAnswers = useCallback(async () => {
     const activeAttemptId = activeAttemptIdRef.current;
 
-    if (!enabled || !activeAttemptId) {
+    if (!enabled || !activeAttemptId || autosaveHaltedRef.current) {
       return { savedCount: 0, questionIds: [] };
     }
 
@@ -200,8 +211,15 @@ const useAutosave = ({
 
         return response;
       } catch (error) {
-        setSaveStatus('error');
-        setFailCount((current) => current + 1);
+        if (isInactiveAttemptError(error)) {
+          autosaveHaltedRef.current = true;
+          flushQueuedRef.current = false;
+          setSaveStatus('idle');
+        } else {
+          setSaveStatus('error');
+          setFailCount((current) => current + 1);
+        }
+
         onError?.(error);
         throw error;
       } finally {
