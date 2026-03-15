@@ -16,3 +16,5 @@ docs/
 *.pid
 .claude
 .playwright-cli
+server/.env
+package-lock.json
