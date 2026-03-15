@@ -36,8 +36,9 @@ const escapeHtml = (value) =>
 const buildPrintableReportHtml = (report) => {
   const rows = report.candidateRows
     .map(
-      (row) => `
+      (row, index) => `
         <tr>
+          <td>${index + 1}</td>
           <td>${escapeHtml(row.candidateName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
           <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
@@ -209,6 +210,7 @@ const buildPrintableReportHtml = (report) => {
           <table>
             <thead>
               <tr>
+                <th>Sr. No.</th>
                 <th>Candidate Name</th>
                 <th>Attendance Status</th>
                 <th>Start Time</th>
@@ -232,8 +234,9 @@ const buildPrintableReportHtml = (report) => {
 const exportScheduleAsExcel = (report) => {
   const tableRows = report.candidateRows
     .map(
-      (row) => `
+      (row, index) => `
         <tr>
+          <td>${index + 1}</td>
           <td>${escapeHtml(row.candidateName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
           <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
@@ -256,15 +259,16 @@ const exportScheduleAsExcel = (report) => {
       </head>
       <body>
         <table>
-          <tr><td colspan="10"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
-          <tr><td colspan="10">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
-          <tr><td colspan="10">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
-          <tr><td colspan="10">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
+          <tr><td colspan="11"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
+          <tr><td colspan="11">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
+          <tr><td colspan="11">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
+          <tr><td colspan="11">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
         </table>
         <br />
         <table border="1">
           <thead>
             <tr>
+              <th>Sr. No.</th>
               <th>Candidate Name</th>
               <th>Attendance Status</th>
               <th>Start Time</th>
@@ -676,6 +680,7 @@ const GradingPage = () => {
                     <thead>
                       <tr>
                         {[
+                          'Sr. No.',
                           'Candidate Name',
                           'Attendance Status',
                           'Start Time',
@@ -692,9 +697,12 @@ const GradingPage = () => {
                       </tr>
                     </thead>
                     <tbody>
-                      {scheduleReport.candidateRows.map((row) => (
+                      {scheduleReport.candidateRows.map((row, index) => (
                         <tr key={row.candidateId}>
                           <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4">
+                            <span className="font-semibold text-foreground">{index + 1}</span>
+                          </td>
+                          <td className="border-y-2 border-border bg-background px-4 py-4">
                             <div>
                               <p className="font-semibold text-foreground">{row.candidateName}</p>
                               <p className="text-sm text-mutedFg">{row.candidateEmail}</p>

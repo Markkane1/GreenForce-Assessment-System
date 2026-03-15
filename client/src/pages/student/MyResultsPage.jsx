@@ -88,18 +88,21 @@ const MyResultsPage = () => {
             <table className="editorial-table">
               <thead>
                 <tr>
-                  {['Test', 'Submitted', 'Questions Attempted', 'Marks Obtained', 'Status', 'Action'].map((heading) => (
+                  {['Sr. No.', 'Test', 'Submitted', 'Questions Attempted', 'Marks Obtained', 'Status', 'Action'].map((heading) => (
                     <th key={heading}>{heading}</th>
                   ))}
                 </tr>
               </thead>
               <tbody>
-                {attempts.map((attempt) => {
+                {attempts.map((attempt, index) => {
                   const resultBadge = getResultTone(attempt);
 
                   return (
                   <tr key={attempt.attemptId}>
                     <td className="rounded-l-[1.25rem] border-y-2 border-l-2 border-border bg-background px-4 py-4">
+                      <span className="text-sm font-semibold text-foreground">{index + 1}</span>
+                    </td>
+                    <td className="border-y-2 border-border bg-background px-4 py-4">
                       <div className="flex items-start gap-3">
                         <div className="mt-1 flex h-10 w-10 items-center justify-center rounded-full border border-border bg-muted shadow-editorialSm">
                           <BookOpen size={16} strokeWidth={2.5} className="text-accent" />
