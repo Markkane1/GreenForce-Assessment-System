@@ -331,7 +331,12 @@ const GroupManagement = () => {
         </div>
       </Modal>
 
-      <Modal isOpen={isDetailOpen} onClose={() => setIsDetailOpen(false)} title={selectedGroup?.name || 'Group Detail'}>
+      <Modal
+        isOpen={isDetailOpen}
+        onClose={() => setIsDetailOpen(false)}
+        title={selectedGroup?.name || 'Group Detail'}
+        panelClassName="max-w-4xl"
+      >
         <div className="space-y-6">
           <div>
             <p className="text-sm leading-7 text-mutedFg">{selectedGroup?.description || 'No description yet.'}</p>
@@ -351,7 +356,7 @@ const GroupManagement = () => {
               />
             </label>
             {searchTerm ? (
-              <div className="space-y-2">
+              <div className="max-h-64 space-y-2 overflow-y-auto pr-1">
                 {filteredStudents.slice(0, 5).map((student) => (
                   <div key={student._id} className="flex items-center justify-between rounded-xl border border-border bg-card px-4 py-3 shadow-editorialSm">
                     <div>
@@ -372,7 +377,12 @@ const GroupManagement = () => {
             ) : null}
           </div>
 
-          <div className="space-y-3">
+          <div>
+            <div className="mb-3 flex items-center justify-between gap-3">
+              <span className="text-sm font-semibold uppercase tracking-[0.18em] text-mutedFg">Current Members</span>
+              <span className="text-xs text-mutedFg">Scroll to review and remove students.</span>
+            </div>
+            <div className="max-h-[26rem] space-y-3 overflow-y-auto pr-1">
             {(selectedGroup?.members || []).map((member) => (
               <div key={member._id} className="flex items-center justify-between rounded-[1.5rem] border border-border bg-background px-4 py-3 shadow-editorialSm">
                 <div>
@@ -382,6 +392,7 @@ const GroupManagement = () => {
                 <button
                   type="button"
                   onClick={() => handleRemoveMember(member.studentId?._id)}
+                  aria-label={`Remove ${member.studentId?.name || 'student'} from ${selectedGroup?.name || 'group'}`}
                   className="editorial-icon-button editorial-icon-button--accent"
                 >
                   <X size={16} />
@@ -389,6 +400,7 @@ const GroupManagement = () => {
               </div>
             ))}
             {selectedGroup?.members?.length === 0 ? <p className="text-sm text-mutedFg">No members in this group yet.</p> : null}
+            </div>
           </div>
         </div>
       </Modal>

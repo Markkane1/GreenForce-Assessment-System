@@ -55,7 +55,7 @@ const EditorialSignupShell = ({ step, children }) => (
 
       <div className="relative z-10 mx-auto max-w-xl text-center">
         <div className="editorial-rule-label">
-          <span>EPA Punjab's Testing System</span>
+          <span>ENVIRONMENTAL PROTECTION AGENCY, PUNJAB</span>
         </div>
         <h1 className="font-editorial text-6xl font-semibold leading-[1.05] tracking-[-0.02em] text-[#FAFAF8]">
           Green Force Assessment System

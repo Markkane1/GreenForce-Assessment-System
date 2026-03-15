@@ -115,7 +115,7 @@ const LoginPage = () => {
 
   return (
     <EditorialShell
-      eyebrow="EPA Punjab's Testing System"
+      eyebrow="ENVIRONMENTAL PROTECTION AGENCY, PUNJAB"
       title="Green Force Assessment System"
       copy="Access schedules, grading, and exam activity through a quieter editorial interface designed for exam delivery and review."
     >
