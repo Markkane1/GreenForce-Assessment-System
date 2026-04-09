@@ -1,11 +1,16 @@
 const getOptionLabel = (index) => String.fromCharCode(65 + index);
 
 const MCQQuestion = ({ question, value, onChange, disableTranslate = true }) => (
-  <div translate={disableTranslate ? 'no' : undefined} className={disableTranslate ? 'notranslate' : undefined}>
+  <div
+    translate={disableTranslate ? 'no' : undefined}
+    className={disableTranslate ? 'min-w-0 notranslate' : 'min-w-0'}
+  >
     <div className="editorial-section-label mb-6">
       <span>Multiple choice</span>
     </div>
-    <h2 className="mb-6 font-heading text-2xl font-semibold text-foreground sm:text-3xl">{question.content}</h2>
+    <h2 className="mb-6 break-words font-heading text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+      {question.content}
+    </h2>
     <div className="space-y-4">
       {(question.options || []).map((option, index) => {
         const isSelected = value === option._id;
@@ -15,7 +20,7 @@ const MCQQuestion = ({ question, value, onChange, disableTranslate = true }) => 
             key={option._id}
             type="button"
             onClick={() => onChange(option._id)}
-            className={`flex w-full items-start gap-3 rounded-xl border p-4 text-left font-body transition-all duration-200 ease-out sm:gap-4 sm:p-5 ${
+            className={`flex min-w-0 w-full items-start gap-3 rounded-xl border p-4 text-left font-body transition-all duration-200 ease-out sm:gap-4 sm:p-5 ${
               isSelected
                 ? 'border-accent bg-accent/10 text-foreground shadow-editorialMd'
                 : 'border-border bg-card hover:border-accent/40 hover:bg-muted/70'
@@ -27,10 +32,12 @@ const MCQQuestion = ({ question, value, onChange, disableTranslate = true }) => 
                   ? 'border-accent bg-accent text-accentFg'
                   : 'border-border bg-muted text-mutedFg'
               }`}
-            >
+              >
               {getOptionLabel(index)}
             </span>
-            <span className="pt-0.5 text-sm leading-7 text-foreground sm:pt-1 sm:text-base">{option.text}</span>
+            <span className="min-w-0 flex-1 break-words pt-0.5 text-sm leading-6 text-foreground sm:pt-1 sm:text-base sm:leading-7">
+              {option.text}
+            </span>
           </button>
         );
       })}

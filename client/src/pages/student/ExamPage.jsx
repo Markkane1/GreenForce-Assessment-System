@@ -7,6 +7,7 @@
   CircleHelp,
   Clipboard,
   Clock,
+  LayoutList,
   EyeOff,
   Maximize,
   Minimize2,
@@ -248,6 +249,7 @@ const ExamPage = () => {
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitModalOpen, setIsSubmitModalOpen] = useState(false);
+  const [isMobileNavigatorOpen, setIsMobileNavigatorOpen] = useState(false);
   const [systemMessage, setSystemMessage] = useState(location.state?.message || '');
   const [resumeBanner, setResumeBanner] = useState('');
   const [timerSeconds, setTimerSeconds] = useState(null);
@@ -306,6 +308,15 @@ const ExamPage = () => {
     () => questions.filter((question) => !hasAnswerValue(question, answers[question._id])).length,
     [answers, questions],
   );
+  const prevButtonDisabled = currentIndex === 0 || isCurrentEssayTooLong;
+  const nextButtonDisabled = isCurrentEssayTooLong;
+  const nextButtonLabel = currentSectionInfo && currentIndex === currentSectionInfo.endIndex
+    ? currentSectionIndex === sections.length - 1
+      ? 'Review & Submit'
+      : 'Next'
+    : currentIndex === questions.length - 1
+      ? 'Review & Submit'
+      : 'Next';
 
   const showFullscreenGate =
     examPhase === 'active'
@@ -816,6 +827,7 @@ const ExamPage = () => {
       setSubmissionReason(null);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
       setIsAttemptInactive(false);
+      setIsMobileNavigatorOpen(false);
       setTimerSeconds(response.resumed ? response.remainingSeconds : nextAttempt.remainingTimeSeconds);
       setResumeBanner(response.resumed ? `Resuming your exam — ${formatMmSs(response.remainingSeconds)} remaining` : '');
       setHasBeenFullscreen(false);
@@ -847,6 +859,7 @@ const ExamPage = () => {
       await flushPendingAnswers();
       setShowSectionTransition(false);
       setNextSectionInfo(null);
+      setIsMobileNavigatorOpen(false);
       setCurrentIndex(nextIndex);
     } catch (error) {
       if (isInactiveAttemptError(error)) {
@@ -905,6 +918,7 @@ const ExamPage = () => {
     setCurrentSectionIndex(nextSectionInfo.sectionIndex);
     setCurrentIndex(nextSection?.startIndex ?? currentIndex);
     setNextSectionInfo(null);
+    setIsMobileNavigatorOpen(false);
   };
 
   const handleManualSubmit = async () => {
@@ -1262,8 +1276,8 @@ const ExamPage = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 min-h-0 flex-col lg:flex-row lg:overflow-hidden">
-        <aside className="order-2 border-t border-border bg-card px-4 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6 lg:order-none lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-t-0 lg:px-5 lg:py-6">
+      <div className="flex flex-1 min-h-0 flex-col overflow-hidden lg:flex-row">
+        <aside className="hidden border-t border-border bg-card px-4 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6 lg:order-none lg:block lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-t-0 lg:px-5 lg:py-6">
           <QuestionNavigator
             questions={questions}
             currentQuestionId={currentQuestion?._id}
@@ -1279,7 +1293,9 @@ const ExamPage = () => {
 
         <main
           className={`order-1 min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:order-none lg:px-8 lg:py-10 ${
-            showNetworkLossBanner ? 'pb-28 sm:pb-24' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
+            showNetworkLossBanner
+              ? 'pb-[calc(11rem+env(safe-area-inset-bottom))] sm:pb-24'
+              : 'pb-[calc(7rem+env(safe-area-inset-bottom))] sm:pb-6'
           }`}
         >
           <div className="mx-auto max-w-[800px]">
@@ -1294,6 +1310,49 @@ const ExamPage = () => {
                 {resumeBanner}
               </div>
             ) : null}
+
+            <div className="mb-6 lg:hidden">
+              <div className="editorial-panel overflow-hidden p-4">
+                <button
+                  type="button"
+                  onClick={() => setIsMobileNavigatorOpen((current) => !current)}
+                  className="flex w-full items-center justify-between gap-3 rounded-md border border-border bg-muted/70 px-4 py-3 text-left transition-colors duration-200 ease-out hover:border-accent hover:bg-muted"
+                >
+                  <div className="min-w-0">
+                    <p className="font-editorialMono text-[11px] font-medium uppercase tracking-[0.15em] text-accent">
+                      Question Map
+                    </p>
+                    <p className="mt-1 truncate font-body text-sm font-semibold text-foreground">
+                      {currentSectionInfo?.title || currentQuestion?.section?.title || 'Current section'}
+                    </p>
+                    <p className="mt-1 font-body text-xs text-mutedFg">
+                      {Math.min(currentIndex + 1, questions.length)} of {questions.length} questions
+                    </p>
+                  </div>
+                  <div className="flex h-11 w-11 shrink-0 items-center justify-center rounded-md border border-border bg-card text-foreground shadow-sm">
+                    <LayoutList size={18} strokeWidth={2.5} />
+                  </div>
+                </button>
+
+                {isMobileNavigatorOpen ? (
+                  <div className="mt-4 space-y-4 border-t border-border pt-4">
+                    <div className="max-h-[50vh] overflow-y-auto pr-1">
+                      <QuestionNavigator
+                        questions={questions}
+                        currentQuestionId={currentQuestion?._id}
+                        answers={answers}
+                        onSelectQuestion={moveToQuestion}
+                      />
+                    </div>
+                    <div className="rounded-2xl border border-border bg-muted/60 p-4 shadow-sm">
+                      <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">Session</p>
+                      <p className="mt-3 font-body text-sm text-mutedFg">{isSaving ? 'Saving...' : formatSavedTime(lastSaved)}</p>
+                      {systemMessage ? <p className="mt-3 font-body text-sm leading-7 text-foreground">{systemMessage}</p> : null}
+                    </div>
+                  </div>
+                ) : null}
+              </div>
+            </div>
 
             {showSectionTransition && nextSectionInfo ? (
               <div className="flex flex-col items-center justify-center py-10 sm:py-16">
@@ -1369,13 +1428,13 @@ const ExamPage = () => {
                   )}
                 </div>
 
-                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
+                <div className="mt-6 hidden sm:flex sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <button
                     type="button"
-                    disabled={currentIndex === 0 || isCurrentEssayTooLong}
+                    disabled={prevButtonDisabled}
                     onClick={() => moveToQuestion(currentIndex - 1)}
                     className={`min-h-[44px] w-full rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out sm:w-auto ${
-                      currentIndex === 0 || isCurrentEssayTooLong
+                      prevButtonDisabled
                         ? 'border-border bg-muted text-mutedFg'
                         : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
                     }`}
@@ -1384,21 +1443,15 @@ const ExamPage = () => {
                   </button>
                   <button
                     type="button"
-                    disabled={isCurrentEssayTooLong}
+                    disabled={nextButtonDisabled}
                     onClick={handleNext}
                     className={`min-h-[44px] w-full rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out sm:w-auto ${
-                      isCurrentEssayTooLong
+                      nextButtonDisabled
                         ? 'border-border bg-muted text-mutedFg'
                         : 'border-accent bg-accent text-accentFg shadow-sm hover:bg-accent-secondary'
                     }`}
                   >
-                    {currentSectionInfo && currentIndex === currentSectionInfo.endIndex
-                      ? currentSectionIndex === sections.length - 1
-                        ? 'Review & Submit'
-                        : 'Next'
-                      : currentIndex === questions.length - 1
-                        ? 'Review & Submit'
-                        : 'Next'}
+                    {nextButtonLabel}
                   </button>
                 </div>
               </>
@@ -1406,6 +1459,43 @@ const ExamPage = () => {
           </div>
         </main>
       </div>
+
+      {!showSectionTransition && currentQuestion ? (
+        <div
+          className={`fixed inset-x-0 z-20 border-t border-border bg-card/95 px-4 py-3 backdrop-blur sm:hidden ${
+            showNetworkLossBanner
+              ? 'bottom-[calc(5.5rem+env(safe-area-inset-bottom))]'
+              : 'bottom-0 pb-[calc(0.75rem+env(safe-area-inset-bottom))]'
+          }`}
+        >
+          <div className="mx-auto flex max-w-[800px] gap-3">
+            <button
+              type="button"
+              disabled={prevButtonDisabled}
+              onClick={() => moveToQuestion(currentIndex - 1)}
+              className={`min-h-[48px] flex-1 rounded-md border px-4 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+                prevButtonDisabled
+                  ? 'border-border bg-muted text-mutedFg'
+                  : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
+              }`}
+            >
+              Prev
+            </button>
+            <button
+              type="button"
+              disabled={nextButtonDisabled}
+              onClick={handleNext}
+              className={`min-h-[48px] flex-1 rounded-md border px-4 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+                nextButtonDisabled
+                  ? 'border-border bg-muted text-mutedFg'
+                  : 'border-accent bg-accent text-accentFg shadow-sm hover:bg-accent-secondary'
+              }`}
+            >
+              {nextButtonLabel}
+            </button>
+          </div>
+        </div>
+      ) : null}
 
       <SubmitConfirmModal
         isOpen={isSubmitModalOpen}

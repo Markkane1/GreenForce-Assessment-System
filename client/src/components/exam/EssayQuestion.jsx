@@ -16,11 +16,16 @@ const EssayQuestion = ({
   const isExceeded = Boolean(question.maxWordCount) && currentWordCount > question.maxWordCount;
 
   return (
-    <div translate={disableTranslate ? 'no' : undefined} className={disableTranslate ? 'notranslate' : undefined}>
+    <div
+      translate={disableTranslate ? 'no' : undefined}
+      className={disableTranslate ? 'min-w-0 notranslate' : 'min-w-0'}
+    >
       <div className="editorial-section-label mb-6">
         <span>Essay response</span>
       </div>
-      <h2 className="font-heading text-2xl font-semibold text-foreground sm:text-3xl">{question.content}</h2>
+      <h2 className="break-words font-heading text-2xl font-semibold leading-tight text-foreground sm:text-3xl">
+        {question.content}
+      </h2>
       <div className="relative mt-6">
         <textarea
           value={value}
