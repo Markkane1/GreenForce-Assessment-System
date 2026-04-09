@@ -16,7 +16,7 @@ import * as testService from '../../services/testService';
 const stripTones = ['border-accent', 'border-secondary', 'border-tertiary', 'border-quaternary'];
 const DEFAULT_MCQ_OPTION_COUNT = 4;
 const DEFAULT_ANTI_CHEAT_SETTINGS = {
-  violationThreshold: 3,
+  violationThreshold: 5,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,

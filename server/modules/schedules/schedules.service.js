@@ -343,7 +343,7 @@ export const deleteSchedule = async (id, teacherId, role = 'teacher') => {
 
 export const getActiveAttempts = async (scheduleId, teacherId, role = 'teacher') => {
   const schedule = await ensureScheduleExists(scheduleId);
-  const violationThreshold = Number.parseInt(process.env.VIOLATION_THRESHOLD || '3', 10);
+  const violationThreshold = Number.parseInt(process.env.VIOLATION_THRESHOLD || '5', 10);
 
   if (role !== 'admin') {
     ensureTeacherOwnsTest(schedule.testId, teacherId);

@@ -34,7 +34,7 @@ const RESULT_REDIRECT_SECONDS = 5;
 const EXPIRING_SCREEN_MIN_MS = 1500;
 const getActiveAttemptKey = (scheduleId) => `active_exam_attempt_${scheduleId}`;
 const DEFAULT_ANTI_CHEAT_SETTINGS = {
-  violationThreshold: 3,
+  violationThreshold: 5,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,
@@ -111,6 +111,24 @@ const buildSections = (questions) => {
   });
 
   return sections;
+};
+
+const getResolvedQuestionPayload = async (attemptId, initialQuestions = []) => {
+  const normalizedQuestions = Array.isArray(initialQuestions) ? initialQuestions : [];
+
+  if (normalizedQuestions.length > 0 || !attemptId) {
+    return {
+      attempt: null,
+      questions: normalizedQuestions,
+    };
+  }
+
+  const questionPayload = await examService.getQuestions(attemptId);
+
+  return {
+    attempt: questionPayload.attempt || null,
+    questions: Array.isArray(questionPayload.questions) ? questionPayload.questions : [],
+  };
 };
 
 const getSectionIndexForQuestion = (sections, questionIndex) =>
@@ -238,7 +256,7 @@ const ExamPage = () => {
   const [pendingViolationAlert, setPendingViolationAlert] = useState(null);
   const [violationAlert, setViolationAlert] = useState(null);
   const [violationDismissSeconds, setViolationDismissSeconds] = useState(8);
-  const [violationThreshold, setViolationThreshold] = useState(3);
+  const [violationThreshold, setViolationThreshold] = useState(5);
   const [submissionReason, setSubmissionReason] = useState(null);
   const [redirectCountdown, setRedirectCountdown] = useState(RESULT_REDIRECT_SECONDS);
   const [isAttemptInactive, setIsAttemptInactive] = useState(false);
@@ -772,17 +790,25 @@ const ExamPage = () => {
         return;
       }
 
-      const nextSections = buildSections(response.questions);
+      const questionPayload = await getResolvedQuestionPayload(response.attempt?._id, response.questions);
+      const nextAttempt = questionPayload.attempt || response.attempt;
+      const nextQuestions = questionPayload.questions;
+
+      if (nextQuestions.length === 0) {
+        throw new Error('No questions are available for this exam attempt.');
+      }
+
+      const nextSections = buildSections(nextQuestions);
       const mergedAnswers = mergeDraftAnswers(
-        response.attempt._id,
-        createAnswerMap(response.questions),
-        response.questions.map((question) => question._id),
+        nextAttempt._id,
+        createAnswerMap(nextQuestions),
+        nextQuestions.map((question) => question._id),
       );
 
-      setAttempt(response.attempt);
-      setQuestions(response.questions);
+      setAttempt(nextAttempt);
+      setQuestions(nextQuestions);
       setAnswers(mergedAnswers);
-      setViolationThreshold(response.violationThreshold ?? 3);
+      setViolationThreshold(response.violationThreshold ?? 5);
       setCurrentIndex(0);
       setCurrentSectionIndex(0);
       setShowSectionTransition(false);
@@ -790,14 +816,14 @@ const ExamPage = () => {
       setSubmissionReason(null);
       setRedirectCountdown(RESULT_REDIRECT_SECONDS);
       setIsAttemptInactive(false);
-      setTimerSeconds(response.resumed ? response.remainingSeconds : response.attempt.remainingTimeSeconds);
+      setTimerSeconds(response.resumed ? response.remainingSeconds : nextAttempt.remainingTimeSeconds);
       setResumeBanner(response.resumed ? `Resuming your exam — ${formatMmSs(response.remainingSeconds)} remaining` : '');
       setHasBeenFullscreen(false);
-      setFullscreenViolationCount(response.attempt.violationsCount || 0);
+      setFullscreenViolationCount(nextAttempt.violationsCount || 0);
       setViolationAlert(null);
       setPendingViolationAlert(null);
       prevFullscreenRef.current = false;
-      sessionStorage.setItem(getActiveAttemptKey(scheduleId), response.attempt._id);
+      sessionStorage.setItem(getActiveAttemptKey(scheduleId), nextAttempt._id);
 
       if (nextSections.length > 0) {
         setCurrentSectionIndex(0);
@@ -1189,19 +1215,19 @@ const ExamPage = () => {
 
   return (
     <div
-      className={`fixed inset-0 flex flex-col bg-background ${antiCheatSettings.disableTranslate ? 'notranslate' : ''}`}
+      className={`fixed inset-0 flex flex-col overflow-x-hidden bg-background ${antiCheatSettings.disableTranslate ? 'notranslate' : ''}`}
       translate={antiCheatSettings.disableTranslate ? 'no' : undefined}
     >
-      <header className="flex h-20 items-center justify-between border-b border-border bg-card/95 px-6 backdrop-blur">
-        <div>
-          <p className="font-heading text-2xl font-semibold text-foreground">
+      <header className="sticky top-0 z-20 flex flex-col gap-4 border-b border-border bg-card/95 px-4 py-4 backdrop-blur sm:px-6 lg:h-20 lg:flex-row lg:items-center lg:justify-between lg:px-6 lg:py-0">
+        <div className="min-w-0">
+          <p className="truncate font-heading text-xl font-semibold text-foreground sm:text-2xl">
             {currentSectionInfo?.title || currentQuestion?.section?.title || 'Exam Section'}
           </p>
-          <p className="font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-accent">
+          <p className="font-editorialMono text-[11px] font-medium uppercase tracking-[0.15em] text-accent sm:text-xs">
             Question {Math.min(currentIndex + 1, questions.length)} of {questions.length}
           </p>
         </div>
-        <div className="flex items-center gap-4">
+        <div className="flex w-full flex-wrap items-center gap-3 lg:w-auto lg:justify-end">
           {saveStatus === 'saving' ? (
             <div className="inline-flex items-center gap-2 font-body text-xs text-mutedFg">
               <CloudUpload size={16} strokeWidth={2.5} className="animate-pulse" />
@@ -1225,7 +1251,7 @@ const ExamPage = () => {
             type="button"
             disabled={isCurrentEssayTooLong || showSectionTransition || examPhase !== 'active'}
             onClick={() => setIsSubmitModalOpen(true)}
-            className={`min-h-[44px] rounded-md border px-5 py-2.5 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+            className={`min-h-[44px] flex-1 rounded-md border px-4 py-2.5 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out sm:flex-none sm:px-5 ${
               isCurrentEssayTooLong || showSectionTransition || examPhase !== 'active'
                 ? 'border-border bg-muted text-mutedFg'
                 : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
@@ -1236,8 +1262,8 @@ const ExamPage = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 overflow-hidden">
-        <aside className="w-72 overflow-y-auto border-r border-border bg-card px-5 py-6">
+      <div className="flex flex-1 min-h-0 flex-col lg:flex-row lg:overflow-hidden">
+        <aside className="order-2 border-t border-border bg-card px-4 py-5 pb-[calc(1.25rem+env(safe-area-inset-bottom))] sm:px-6 lg:order-none lg:w-72 lg:shrink-0 lg:overflow-y-auto lg:border-r lg:border-t-0 lg:px-5 lg:py-6">
           <QuestionNavigator
             questions={questions}
             currentQuestionId={currentQuestion?._id}
@@ -1251,7 +1277,11 @@ const ExamPage = () => {
           </div>
         </aside>
 
-        <main className="flex-1 overflow-y-auto px-8 py-10">
+        <main
+          className={`order-1 min-w-0 flex-1 overflow-y-auto px-4 py-5 sm:px-6 sm:py-6 lg:order-none lg:px-8 lg:py-10 ${
+            showNetworkLossBanner ? 'pb-28 sm:pb-24' : 'pb-[calc(1.25rem+env(safe-area-inset-bottom))]'
+          }`}
+        >
           <div className="mx-auto max-w-[800px]">
             {errorMessage ? (
               <div className="mb-6 rounded-2xl border border-secondary bg-secondary/15 px-5 py-3 font-body text-sm font-medium text-foreground">
@@ -1259,20 +1289,20 @@ const ExamPage = () => {
               </div>
             ) : null}
             {resumeBanner ? (
-              <div className="mb-6 inline-flex items-center gap-3 rounded-full border border-tertiary bg-tertiary/15 px-4 py-2 font-body text-sm font-semibold text-foreground shadow-sm">
+              <div className="mb-6 inline-flex max-w-full flex-wrap items-center gap-3 rounded-2xl border border-tertiary bg-tertiary/15 px-4 py-2 font-body text-sm font-semibold text-foreground shadow-sm">
                 <RotateCcw size={16} strokeWidth={2.5} />
                 {resumeBanner}
               </div>
             ) : null}
 
             {showSectionTransition && nextSectionInfo ? (
-              <div className="flex flex-col items-center justify-center py-16">
-                <div className="editorial-panel w-full p-10 text-center animate-pop-in">
-                  <div className="mx-auto flex h-20 w-20 items-center justify-center rounded-full border border-border bg-quaternary shadow-sm">
-                    <CheckCircle size={48} strokeWidth={2.5} className="text-white" />
+              <div className="flex flex-col items-center justify-center py-10 sm:py-16">
+                <div className="editorial-panel w-full p-6 text-center animate-pop-in sm:p-10">
+                  <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border bg-quaternary shadow-sm sm:h-20 sm:w-20">
+                    <CheckCircle size={40} strokeWidth={2.5} className="text-white sm:h-12 sm:w-12" />
                   </div>
-                  <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">Section Complete!</h2>
-                  <div className="mt-4 inline-flex rounded-full border border-border bg-muted px-4 py-1 font-body text-sm font-semibold text-foreground">
+                  <h2 className="mt-6 font-heading text-2xl font-semibold text-foreground sm:text-3xl">Section Complete!</h2>
+                  <div className="mt-4 inline-flex max-w-full rounded-full border border-border bg-muted px-4 py-1 font-body text-sm font-semibold text-foreground">
                     {currentSectionInfo?.title || 'Current Section'}
                   </div>
 
@@ -1298,7 +1328,7 @@ const ExamPage = () => {
                   <div className="my-8 border-t border-dashed border-border" />
 
                   <p className="font-editorialMono text-xs uppercase tracking-[0.15em] text-accent">Up Next</p>
-                  <h3 className="mt-2 font-heading text-2xl font-semibold text-foreground">{nextSectionInfo.title}</h3>
+                  <h3 className="mt-2 break-words font-heading text-xl font-semibold text-foreground sm:text-2xl">{nextSectionInfo.title}</h3>
                   <div className="mt-3 inline-flex rounded-full border border-accent bg-accent/10 px-3 py-1 font-body text-sm font-semibold text-foreground">
                     {nextSectionInfo.questionCount} questions
                   </div>
@@ -1306,7 +1336,7 @@ const ExamPage = () => {
                   <button
                     type="button"
                     onClick={handleContinueToNextSection}
-                    className="editorial-button-primary mt-8"
+                    className="editorial-button-primary mt-8 w-full sm:w-auto"
                   >
                     Continue to Next Section
                   </button>
@@ -1314,7 +1344,7 @@ const ExamPage = () => {
               </div>
             ) : (
               <>
-                <div className="editorial-panel p-8">
+                <div className="editorial-panel p-5 sm:p-6 lg:p-8">
                   {currentQuestion ? (
                     currentQuestion.type === 'mcq' ? (
                       <MCQQuestion
@@ -1339,12 +1369,12 @@ const ExamPage = () => {
                   )}
                 </div>
 
-                <div className="mt-6 flex items-center justify-between gap-4">
+                <div className="mt-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between sm:gap-4">
                   <button
                     type="button"
                     disabled={currentIndex === 0 || isCurrentEssayTooLong}
                     onClick={() => moveToQuestion(currentIndex - 1)}
-                    className={`min-h-[44px] rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+                    className={`min-h-[44px] w-full rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out sm:w-auto ${
                       currentIndex === 0 || isCurrentEssayTooLong
                         ? 'border-border bg-muted text-mutedFg'
                         : 'border-foreground bg-transparent text-foreground hover:border-accent hover:bg-muted hover:text-accent'
@@ -1356,7 +1386,7 @@ const ExamPage = () => {
                     type="button"
                     disabled={isCurrentEssayTooLong}
                     onClick={handleNext}
-                    className={`min-h-[44px] rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out ${
+                    className={`min-h-[44px] w-full rounded-md border px-6 py-3 font-body text-sm font-semibold tracking-[0.04em] transition-all duration-200 ease-out sm:w-auto ${
                       isCurrentEssayTooLong
                         ? 'border-border bg-muted text-mutedFg'
                         : 'border-accent bg-accent text-accentFg shadow-sm hover:bg-accent-secondary'
@@ -1388,8 +1418,8 @@ const ExamPage = () => {
       {shouldShowViolationOverlay && violationContent ? (
         <div className="fixed inset-0 z-40 flex items-center justify-center bg-foreground/60 p-6 backdrop-blur-sm">
           <div
-            className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-8 shadow-lg"
-            style={isMobile ? { paddingBottom: 'calc(2rem + env(safe-area-inset-bottom))' } : undefined}
+            className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-6 shadow-lg sm:p-8"
+            style={isMobile ? { paddingBottom: 'calc(1.5rem + env(safe-area-inset-bottom))' } : undefined}
           >
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary shadow-sm">
               <violationContent.Icon size={24} strokeWidth={2.5} className="text-white" />
@@ -1399,7 +1429,7 @@ const ExamPage = () => {
             </h2>
             <p className="mt-3 text-center font-body text-mutedFg">{violationContent.body}</p>
             <div
-              className={`mt-5 inline-flex items-center gap-2 rounded-full border px-4 py-1 font-body text-sm font-semibold ${
+              className={`mt-5 inline-flex w-full flex-wrap items-center justify-center gap-2 rounded-2xl border px-4 py-2 text-center font-body text-sm font-semibold ${
                 isNearThreshold
                   ? 'border-red-500 bg-red-100 text-red-700'
                   : 'border-secondary bg-secondary/20 text-foreground'
@@ -1435,11 +1465,11 @@ const ExamPage = () => {
 
       {showFullscreenGate ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-background p-6">
-          <div className="editorial-panel w-full max-w-sm p-10 text-center">
+          <div className="editorial-panel w-full max-w-sm p-6 text-center sm:p-10">
             <div className="mx-auto flex h-16 w-16 items-center justify-center rounded-full border border-border bg-tertiary shadow-sm">
               <Maximize size={40} strokeWidth={2.5} className="text-white" />
             </div>
-            <h2 className="mt-6 font-heading text-3xl font-semibold text-foreground">Fullscreen Required</h2>
+            <h2 className="mt-6 font-heading text-2xl font-semibold text-foreground sm:text-3xl">Fullscreen Required</h2>
             <p className="mt-3 font-body text-mutedFg">
               This exam must be taken in fullscreen mode. Click the button below to continue.
             </p>
@@ -1461,7 +1491,7 @@ const ExamPage = () => {
 
       {showFullscreenRecovery ? (
         <div className="fixed inset-0 z-50 flex items-center justify-center bg-foreground/80 p-6 backdrop-blur-sm">
-          <div className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-8 text-center shadow-lg">
+          <div className="w-full max-w-sm rounded-2xl border border-secondary bg-card p-6 text-center shadow-lg sm:p-8">
             <div className="mx-auto flex h-14 w-14 items-center justify-center rounded-full border border-border bg-secondary shadow-sm animate-wiggle">
               <AlertTriangle size={24} strokeWidth={2.5} className="text-white" />
             </div>
@@ -1482,8 +1512,8 @@ const ExamPage = () => {
       ) : null}
 
       {showNetworkLossBanner ? (
-        <div className="fixed bottom-0 left-0 right-0 z-30 flex items-center justify-between gap-4 border-t border-border bg-card/95 px-6 py-4 backdrop-blur">
-          <div className="flex items-center gap-3">
+        <div className="fixed bottom-0 left-0 right-0 z-30 flex flex-col items-start gap-4 border-t border-border bg-card/95 px-4 py-4 pb-[calc(1rem+env(safe-area-inset-bottom))] backdrop-blur sm:flex-row sm:items-center sm:justify-between sm:px-6">
+          <div className="flex items-start gap-3">
             <div className="flex h-10 w-10 items-center justify-center rounded-full border border-secondary bg-secondary/15 text-secondary">
               <WifiOff size={18} strokeWidth={2.5} />
             </div>
@@ -1492,7 +1522,7 @@ const ExamPage = () => {
           <button
             type="button"
             onClick={handleRetrySave}
-            className="editorial-button-secondary px-4 py-2 text-sm"
+            className="editorial-button-secondary w-full px-4 py-2 text-sm sm:w-auto"
           >
             Retry Now
           </button>

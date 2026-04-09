@@ -52,7 +52,7 @@ const testSchema = new Schema(
       violationThreshold: {
         type: Number,
         min: 1,
-        default: 3,
+        default: 5,
       },
       disableContextMenu: {
         type: Boolean,

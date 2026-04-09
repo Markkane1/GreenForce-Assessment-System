@@ -20,7 +20,7 @@ const EssayQuestion = ({
       <div className="editorial-section-label mb-6">
         <span>Essay response</span>
       </div>
-      <h2 className="font-heading text-3xl font-semibold text-foreground">{question.content}</h2>
+      <h2 className="font-heading text-2xl font-semibold text-foreground sm:text-3xl">{question.content}</h2>
       <div className="relative mt-6">
         <textarea
           value={value}
@@ -32,11 +32,11 @@ const EssayQuestion = ({
           data-gramm={disableSpellcheck ? 'false' : undefined}
           data-gramm_editor={disableSpellcheck ? 'false' : undefined}
           data-enable-grammarly={disableSpellcheck ? 'false' : undefined}
-          className="min-h-[220px] w-full resize-y rounded-xl border border-border bg-background px-4 py-4 text-foreground shadow-editorialSm outline-none transition-all duration-200 ease-out focus:border-accent focus:shadow-editorialMd"
+          className="min-h-[220px] w-full resize-y rounded-xl border border-border bg-background px-4 py-4 text-sm leading-7 text-foreground shadow-editorialSm outline-none transition-all duration-200 ease-out focus:border-accent focus:shadow-editorialMd sm:text-base"
           placeholder="Write your answer here..."
         />
         <span
-          className={`absolute bottom-3 right-3 rounded-full px-3 py-1 font-body text-xs font-medium ${
+          className={`absolute bottom-3 right-3 rounded-full px-3 py-1 font-body text-[11px] font-medium sm:text-xs ${
             isExceeded
               ? 'bg-red-500 text-white'
               : isWarning

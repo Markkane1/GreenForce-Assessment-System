@@ -3,7 +3,7 @@ const CountdownTimer = ({ secondsLeft = 0, formattedTime = '00:00' }) => {
 
   return (
     <div
-      className={`inline-flex items-center rounded-full border px-5 py-2 font-heading text-lg font-semibold tabular-nums shadow-editorialSm ${
+      className={`inline-flex min-h-[44px] items-center justify-center rounded-full border px-4 py-2 font-heading text-base font-semibold tabular-nums shadow-editorialSm sm:px-5 sm:text-lg ${
         isCritical ? 'animate-pulse border-red-500 bg-red-500 text-white' : 'border-accent bg-accent text-accentFg'
       }`}
     >

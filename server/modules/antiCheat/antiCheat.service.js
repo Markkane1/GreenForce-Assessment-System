@@ -8,8 +8,8 @@ const SERVER_COOLDOWN_MS = 1500;
 export const getViolationThreshold = (testOrAntiCheat = null) => {
   const configuredThreshold =
     testOrAntiCheat?.antiCheat?.violationThreshold ?? testOrAntiCheat?.violationThreshold;
-  const threshold = Number(configuredThreshold ?? process.env.VIOLATION_THRESHOLD ?? 3);
-  return Number.isInteger(threshold) && threshold > 0 ? threshold : 3;
+  const threshold = Number(configuredThreshold ?? process.env.VIOLATION_THRESHOLD ?? 5);
+  return Number.isInteger(threshold) && threshold > 0 ? threshold : 5;
 };
 
 const getAttemptWithTest = async (attemptId) => {

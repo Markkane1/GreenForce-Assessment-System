@@ -37,7 +37,7 @@ const QuestionNavigator = ({ questions, currentQuestionId, answers, onSelectQues
           <div className="mb-3 inline-flex rounded-full border border-border bg-muted px-3 py-1 font-editorialMono text-xs font-medium uppercase tracking-[0.15em] text-mutedFg">
             {section.title}
           </div>
-          <div className="grid grid-cols-5 gap-2">
+          <div className="grid grid-cols-4 gap-2 sm:grid-cols-5">
             {section.items.map(({ question, index }) => {
               const answered = isAnswered(question, answers);
               const isCurrent = question._id === currentQuestionId;
@@ -47,7 +47,7 @@ const QuestionNavigator = ({ questions, currentQuestionId, answers, onSelectQues
                   key={question._id}
                   type="button"
                   onClick={() => onSelectQuestion(index)}
-                  className={`min-h-10 min-w-10 rounded-md border font-heading text-sm font-semibold transition-all duration-200 ease-out ${
+                  className={`min-h-11 min-w-11 rounded-md border font-heading text-sm font-semibold transition-all duration-200 ease-out ${
                     isCurrent
                       ? 'border-accent bg-accent text-accentFg shadow-editorialMd'
                       : answered

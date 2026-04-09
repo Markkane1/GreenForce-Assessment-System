@@ -25,7 +25,7 @@ const MonitorPage = () => {
   const { id } = useParams();
   const [schedule, setSchedule] = useState(null);
   const [attempts, setAttempts] = useState([]);
-  const [violationThreshold, setViolationThreshold] = useState(3);
+  const [violationThreshold, setViolationThreshold] = useState(5);
   const [lastUpdated, setLastUpdated] = useState(null);
   const [selectedAttempt, setSelectedAttempt] = useState(null);
   const [logs, setLogs] = useState([]);
@@ -51,7 +51,7 @@ const MonitorPage = () => {
 
         setSchedule(activeAttemptData.schedule || null);
         setAttempts(activeAttemptData.attempts || []);
-        setViolationThreshold(activeAttemptData.violationThreshold || 3);
+        setViolationThreshold(activeAttemptData.violationThreshold || 5);
         setLastUpdated(new Date());
         setErrorMessage('');
       } catch (error) {
@@ -278,4 +278,3 @@ const MonitorPage = () => {
 };
 
 export default MonitorPage;
-

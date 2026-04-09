@@ -10,7 +10,7 @@ const SubmitConfirmModal = ({
 }) => (
   <Modal isOpen={isOpen} onClose={onClose} title="Submit Exam">
     <div className="space-y-5">
-      <div className="flex items-center gap-3">
+      <div className="flex flex-col gap-3 sm:flex-row sm:items-center">
         <p className="font-body text-sm text-mutedFg">You are about to submit your attempt.</p>
         <Badge tone="tertiary">{unansweredCount} unanswered</Badge>
       </div>
@@ -26,10 +26,10 @@ const SubmitConfirmModal = ({
       )}
 
       <div className="flex flex-col-reverse gap-3 sm:flex-row sm:justify-end">
-        <button type="button" onClick={onClose} className="editorial-button-secondary">
+        <button type="button" onClick={onClose} className="editorial-button-secondary w-full sm:w-auto">
           Go Back
         </button>
-        <button type="button" onClick={onConfirm} disabled={isSubmitting} className="editorial-button-primary">
+        <button type="button" onClick={onConfirm} disabled={isSubmitting} className="editorial-button-primary w-full sm:w-auto">
           {isSubmitting ? 'Submitting...' : 'Submit Exam'}
         </button>
       </div>

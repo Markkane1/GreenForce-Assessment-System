@@ -8,7 +8,7 @@ import TestAttempt from '../../models/TestAttempt.js';
 import TestSchedule from '../../models/TestSchedule.js';
 
 const DEFAULT_ANTI_CHEAT = {
-  violationThreshold: 3,
+  violationThreshold: 5,
   disableContextMenu: true,
   disableCopyPaste: true,
   disableTranslate: true,

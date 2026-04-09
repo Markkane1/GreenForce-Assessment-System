@@ -61,15 +61,29 @@ const GroupManagement = () => {
     setIsDeleteOpen(true);
   };
 
+  const refreshSelectedGroup = useCallback(async (groupId) => {
+    const refreshedGroup = await groupService.getGroupById(groupId);
+    setSelectedGroup(refreshedGroup);
+    setGroups((current) => current.map((group) => (group._id === groupId ? refreshedGroup : group)));
+  }, []);
+
+  const syncSelectedGroup = useCallback((groupId) => {
+    void refreshSelectedGroup(groupId).catch((error) => {
+      setErrorMessage(error.message || 'Unable to refresh group details.');
+    });
+  }, [refreshSelectedGroup]);
+
   const openDetailModal = (group) => {
     setSelectedGroup(group);
     setSearchTerm('');
     setIsDetailOpen(true);
+    syncSelectedGroup(group._id);
   };
 
   const openInviteCodesModal = (group) => {
     setSelectedGroup(group);
     setIsInviteCodesOpen(true);
+    syncSelectedGroup(group._id);
   };
 
   const handleFormChange = (event) => {
@@ -77,11 +91,29 @@ const GroupManagement = () => {
     setFormData((current) => ({ ...current, [name]: value }));
   };
 
-  const refreshSelectedGroup = async (groupId) => {
-    const refreshedGroup = await groupService.getGroupById(groupId);
-    setSelectedGroup(refreshedGroup);
-    setGroups((current) => current.map((group) => (group._id === groupId ? refreshedGroup : group)));
-  };
+  useEffect(() => {
+    const refreshGroupState = () => {
+      void loadData();
+
+      if (selectedGroup?._id) {
+        syncSelectedGroup(selectedGroup._id);
+      }
+    };
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') {
+        refreshGroupState();
+      }
+    };
+
+    window.addEventListener('focus', refreshGroupState);
+    document.addEventListener('visibilitychange', handleVisibilityChange);
+
+    return () => {
+      window.removeEventListener('focus', refreshGroupState);
+      document.removeEventListener('visibilitychange', handleVisibilityChange);
+    };
+  }, [loadData, selectedGroup?._id, syncSelectedGroup]);
 
   const handleSaveGroup = async (event) => {
     event.preventDefault();
@@ -407,7 +439,13 @@ const GroupManagement = () => {
 
       <InviteCodesPanel
         isOpen={isInviteCodesOpen}
-        onClose={() => setIsInviteCodesOpen(false)}
+        onClose={() => {
+          setIsInviteCodesOpen(false);
+
+          if (selectedGroup?._id) {
+            syncSelectedGroup(selectedGroup._id);
+          }
+        }}
         group={selectedGroup}
       />
     </DashboardLayout>
