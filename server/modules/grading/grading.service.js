@@ -271,6 +271,7 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
   const memberships = await GroupMember.find({
     groupId: { $in: (schedule.assignedGroups || []).map((group) => group._id) },
   })
+    .populate({ path: 'groupId', select: 'name' })
     .populate({ path: 'studentId', select: 'name email' })
     .sort({ createdAt: 1 });
 
@@ -286,7 +287,15 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
         _id: student._id,
         name: student.name,
         email: student.email,
+        groupNames: [],
       });
+    }
+
+    const candidate = accumulator.get(student._id.toString());
+    const groupName = membership.groupId?.name;
+
+    if (groupName && !candidate.groupNames.includes(groupName)) {
+      candidate.groupNames.push(groupName);
     }
 
     return accumulator;
@@ -318,6 +327,7 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
       _id: attempt.studentId._id || attempt.studentId,
       name: attempt.studentId.name || 'Unknown Candidate',
       email: attempt.studentId.email || '',
+      groupNames: [],
     });
   });
 
@@ -354,6 +364,8 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
         candidateId: candidate._id,
         candidateName: candidate.name,
         candidateEmail: candidate.email,
+        candidateGroupName: candidate.groupNames.join(', '),
+        candidateGroupNames: candidate.groupNames,
         attendanceStatus: 'Absent',
         questionsAttempted: 0,
         correctQuestions: 0,
@@ -393,6 +405,8 @@ export const getScheduleReport = async (scheduleId, teacherId, role = 'teacher')
       candidateId: candidate._id,
       candidateName: candidate.name,
       candidateEmail: candidate.email,
+      candidateGroupName: candidate.groupNames.join(', '),
+      candidateGroupNames: candidate.groupNames,
       attendanceStatus: 'Present',
       questionsAttempted,
       correctQuestions,

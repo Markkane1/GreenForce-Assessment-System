@@ -40,6 +40,8 @@ const buildPrintableReportHtml = (report) => {
         <tr>
           <td>${index + 1}</td>
           <td>${escapeHtml(row.candidateName)}</td>
+          <td>${escapeHtml(row.candidateEmail)}</td>
+          <td>${escapeHtml(row.candidateGroupName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
           <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
           <td>${row.questionsAttempted}</td>
@@ -212,6 +214,8 @@ const buildPrintableReportHtml = (report) => {
               <tr>
                 <th>Sr. No.</th>
                 <th>Candidate Name</th>
+                <th>Candidate Email</th>
+                <th>Group Name</th>
                 <th>Attendance Status</th>
                 <th>Start Time</th>
                 <th>Questions Attempted</th>
@@ -238,6 +242,8 @@ const exportScheduleAsExcel = (report) => {
         <tr>
           <td>${index + 1}</td>
           <td>${escapeHtml(row.candidateName)}</td>
+          <td>${escapeHtml(row.candidateEmail)}</td>
+          <td>${escapeHtml(row.candidateGroupName)}</td>
           <td>${escapeHtml(row.attendanceStatus)}</td>
           <td>${escapeHtml(formatDateTime(row.startedAt))}</td>
           <td>${row.questionsAttempted}</td>
@@ -259,10 +265,10 @@ const exportScheduleAsExcel = (report) => {
       </head>
       <body>
         <table>
-          <tr><td colspan="11"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
-          <tr><td colspan="11">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
-          <tr><td colspan="11">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
-          <tr><td colspan="11">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
+          <tr><td colspan="13"><strong>${escapeHtml(report.test.title)}</strong></td></tr>
+          <tr><td colspan="13">Conducting Officer: ${escapeHtml(report.test.conductingOfficer)}</td></tr>
+          <tr><td colspan="13">Schedule Window: ${escapeHtml(formatDateTime(report.schedule.startTime))} &#8212; ${escapeHtml(formatDateTime(report.schedule.endTime))}</td></tr>
+          <tr><td colspan="13">Cheating Tries Recorded: ${report.totalViolations}</td></tr>
         </table>
         <br />
         <table border="1">
@@ -270,6 +276,8 @@ const exportScheduleAsExcel = (report) => {
             <tr>
               <th>Sr. No.</th>
               <th>Candidate Name</th>
+              <th>Candidate Email</th>
+              <th>Group Name</th>
               <th>Attendance Status</th>
               <th>Start Time</th>
               <th>Questions Attempted</th>
@@ -682,6 +690,7 @@ const GradingPage = () => {
                         {[
                           'Sr. No.',
                           'Candidate Name',
+                          'Group Name',
                           'Attendance Status',
                           'Start Time',
                           'Questions Attempted',
@@ -707,6 +716,9 @@ const GradingPage = () => {
                               <p className="font-semibold text-foreground">{row.candidateName}</p>
                               <p className="text-sm text-mutedFg">{row.candidateEmail}</p>
                             </div>
+                          </td>
+                          <td className="border-y-2 border-border bg-background px-4 py-4 text-sm text-foreground">
+                            {row.candidateGroupName || '\u2014'}
                           </td>
                           <td className="border-y-2 border-border bg-background px-4 py-4">
                             <Badge tone={row.attendanceStatus === 'Present' ? 'quaternary' : 'secondary'}>
